@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
     const sources = [
-        { url: 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json', name: 'drmlive' },
+        { url: 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json', name: 'fancode' },
         { url: 'https://raw.githubusercontent.com/drmlive/sliv-live-events/main/sonyliv.json', name: 'sonyliv' }
     ];
     let allMatches = [];
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
             }
         };
 
-        if (responses[0]) extract(responses[0], 'drmlive');
+        if (responses[0]) extract(responses[0], 'fancode');
         if (responses[1]) extract(responses[1], 'sonyliv');
 
         const uniqueMatches = [];

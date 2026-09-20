@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="no-referrer">
-    <title>FanCode Corner | Live Sports</title>
+    <title>Sports Corner | Live Streaming</title>
     <style>
-        :root { --bg: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #22c55e; --accent-hover: #16a34a; --blue: #3b82f6; --blue-hover: #2563eb; }
+        :root { --bg: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #22c55e; --blue: #3b82f6; --purple: #8b5cf6; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: system-ui, sans-serif; background-color: var(--bg); color: var(--text-main); line-height: 1.5; padding: 20px; }
         header { text-align: center; margin-bottom: 20px; }
@@ -16,19 +16,20 @@
         .alert-banner { background-color: rgba(59, 130, 246, 0.1); border: 1px solid var(--blue); color: #bfdbfe; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 25px; font-size: 0.9rem; }
         .alert-banner a { color: var(--blue); font-weight: bold; text-decoration: none; }
         
-        /* Category Filter Styles */
-        .filter-bar { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
+        .filter-bar { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 25px; -webkit-overflow-scrolling: touch; justify-content: center; }
         .filter-bar::-webkit-scrollbar { display: none; }
         .filter-btn { background: var(--card-bg); color: var(--text-muted); border: 1px solid #334155; padding: 8px 18px; border-radius: 20px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.2s; font-size: 0.9rem; }
         .filter-btn:hover { border-color: var(--blue); color: var(--text-main); }
         .filter-btn.active { background: var(--blue); color: white; border-color: var(--blue); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
 
+        .section-title { font-size: 1.4rem; font-weight: 700; margin: 30px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #334155; color: #f8fafc; display: flex; align-items: center; gap: 10px; }
+        
         #status { text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--text-muted); background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;}
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
         .card { background-color: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; transition: transform 0.2s; }
         .card-img-container { width: 100%; height: 160px; background-color: #334155; position: relative; }
         .card-img { width: 100%; height: 100%; object-fit: cover; border-bottom: 2px solid #2AABEE; }
-        .live-badge { position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; animation: pulse 2s infinite; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .live-badge { position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
         .card-content { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
         .match-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
@@ -36,47 +37,25 @@
         .btn { flex: 1; display: block; text-align: center; background-color: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; text-decoration: none; font-size: 0.95rem; }
         .btn-blue { background-color: var(--blue); }
         
-        /* Hardened Passcode Modal Overlay */
-        #mz-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 15, 25, 0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        #mz-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 15, 25, 0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
         .mz-modal { background: linear-gradient(145deg, #1e293b, #0f172a); padding: 35px 25px; border-radius: 24px; text-align: center; border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); max-width: 90%; width: 380px; position: relative; overflow: hidden; }
         .mz-modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #2AABEE, #229ED9); }
         .mz-icon { width: 54px; height: 54px; margin: 0 auto 15px; background: #2AABEE; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 10px 20px rgba(42, 171, 238, 0.3); }
         .mz-icon svg { width: 28px; height: 28px; fill: white; margin-left: 2px; }
         .mz-modal h2 { font-size: 1.1rem; margin-bottom: 5px; color: #cbd5e1; font-weight: 600; }
         .mz-highlight { color: #f8fafc; font-weight: 800; font-size: 1.5rem; display: block; margin: 2px 0 15px; }
-        .mz-input { width: 100%; padding: 12px; background: rgba(0,0,0,0.4); border: 1px solid #334155; border-radius: 8px; color: white; font-size: 1rem; text-align: center; margin-bottom: 12px; outline: none; transition: 0.2s; }
-        .mz-input:focus { border-color: #2AABEE; box-shadow: 0 0 10px rgba(42,171,238,0.2); }
+        .mz-input { width: 100%; padding: 12px; background: rgba(0,0,0,0.4); border: 1px solid #334155; border-radius: 8px; color: white; font-size: 1rem; text-align: center; margin-bottom: 12px; outline: none; }
         .mz-btn { display: block; background: #2AABEE; color: white; text-decoration: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; border: none; width: 100%; transition: 0.2s; margin-bottom: 10px; }
-        .mz-btn:hover { background: #229ED9; }
         .mz-link { color: #38bdf8; font-size: 0.85rem; text-decoration: none; display: inline-block; margin-top: 5px; }
-        .mz-link:hover { text-decoration: underline; }
         .error-msg { color: #ef4444; font-size: 0.85rem; margin-top: 8px; display: none; }
 
-        /* Custom Toast Notification */
-        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #1e293b; color: #f8fafc; padding: 12px 24px; border-radius: 30px; border: 1px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10000; font-size: 0.95rem; font-weight: 600; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 8px; pointer-events: none; }
+        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #1e293b; color: #f8fafc; padding: 12px 24px; border-radius: 30px; border: 1px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10000; font-size: 0.95rem; font-weight: 600; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; }
         #toast.show { transform: translateX(-50%) translateY(0); }
-
-        .block-card { background: var(--card-bg); padding: 30px; border-radius: 16px; border: 1px solid #ef4444; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.2); max-width: 420px; width: 90%; text-align: left; font-family: system-ui, sans-serif; }
-        .block-card h2 { color: #ef4444; margin-bottom: 10px; font-size: 1.4rem; text-align: center; }
-        .block-card p { color: #cbd5e1; font-size: 0.95rem; margin-bottom: 20px; text-align: center; }
-        .fix-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; color: #94a3b8; font-size: 0.9rem; line-height: 1.6; border-left: 4px solid #ef4444; }
-        .fix-box b { color: #f8fafc; }
     </style>
 </head>
 <body>
-    <noscript>
-        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f172a;z-index:999999;display:flex;justify-content:center;align-items:center;">
-            <div class="block-card">
-                <h2>🚨 JavaScript Disabled</h2>
-                <p>Your browser is blocking scripts required to run this site.</p>
-            </div>
-        </div>
-    </noscript>
-
-    <!-- Custom Toast Notification Container -->
     <div id="toast">✅ Link copied to clipboard!</div>
 
-    <!-- Hardened Passcode Overlay -->
     <div id="mz-overlay">
         <div class="mz-modal">
             <div class="mz-icon">
@@ -91,11 +70,10 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div id="main-content" style="display: none;">
         <header>
-            <h1>FanCode Corner</h1>
-            <p>Live matches aggregated from community sources</p>
+            <h1>Live Sports Corner</h1>
+            <p>Aggregated from FanCode & SonyLIV feeds</p>
         </header>
         
         <div class="alert-banner">
@@ -111,44 +89,25 @@
         </div>
         
         <div id="status">Connecting to server API...</div>
-        <div class="grid" id="match-grid"></div>
+        
+        <!-- FanCode Section -->
+        <div id="fancode-section">
+            <div class="section-title">🏏 FanCode Live Events</div>
+            <div class="grid" id="fancode-grid"></div>
+        </div>
+
+        <!-- SonyLIV Section -->
+        <div id="sonyliv-section" style="margin-top: 40px;">
+            <div class="section-title">📺 SonyLIV Live Events</div>
+            <div class="grid" id="sonyliv-grid"></div>
+        </div>
     </div>
 
     <script>
-        let securityViolation = "";
-        let unlocked = false;
         let globalMatches = [];
+        let activeCategory = 'All';
+        const DAILY_PASSCODE = "MODZONE2026";
 
-        // CHANGE YOUR DAILY PASSCODE HERE
-        const DAILY_PASSCODE = "MODZONE2026"; 
-
-        function triggerLockdown(htmlContent) {
-            if (securityViolation) return;
-            securityViolation = true;
-            document.body.innerHTML = `<div style="background:#0f172a;height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;">${htmlContent}</div>`;
-        }
-
-        async function testDNSHoneypot() {
-            try { await fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', { mode: 'no-cors', cache: 'no-store' }); } 
-            catch (error) { triggerLockdown(`<div class="block-card"><h2>🚨 Private DNS / Adblocker Detected</h2><p>Your network is blocking requests.</p><div class="fix-box">Turn off Private DNS or AdGuard.</div><button onclick="location.reload()" class="mz-btn" style="margin-top:15px;">Reload</button></div>`); }
-        }
-
-        async function testGeoVPN() {
-            try {
-                const res = await fetch('https://1.1.1.1/cdn-cgi/trace', { cache: 'no-store' });
-                const text = await res.text();
-                const data = Object.fromEntries(text.trim().split('\n').map(line => line.split('=')));
-                if (data.loc && data.loc !== 'IN') {
-                    triggerLockdown(`<div class="block-card"><h2>🚨 Geo-Restriction</h2><p>Restricted to India only.</p></div>`);
-                } else if (data.warp && data.warp !== 'off') {
-                    triggerLockdown(`<div class="block-card"><h2>🚨 VPN Detected</h2><p>Please disconnect your VPN.</p></div>`);
-                }
-            } catch (error) {}
-        }
-
-        testDNSHoneypot(); testGeoVPN();
-
-        // Passcode Verification Logic
         const submitBtn = document.getElementById('mz-submit-btn');
         const passInput = document.getElementById('mz-pass-input');
         const errorMsg = document.getElementById('mz-error');
@@ -157,11 +116,10 @@
         passInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyPasscode(); });
 
         function verifyPasscode() {
-            const enteredValue = passInput.value.trim();
-            if (enteredValue === DAILY_PASSCODE) {
+            const passcode = passInput.value.trim();
+            if (passcode === DAILY_PASSCODE) {
                 document.getElementById('mz-overlay').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
-                unlocked = true;
                 fetchStreams();
             } else {
                 errorMsg.style.display = 'block';
@@ -169,44 +127,42 @@
             }
         }
 
-        setInterval(() => {
-            if (!securityViolation && !unlocked && !document.getElementById('mz-overlay')) {
-                triggerLockdown(`<div class="block-card"><h2>🚨 Verification Bypassed</h2><p>You attempted to bypass the passcode check.</p></div>`);
-            }
-        }, 500);
-
         async function fetchStreams() {
-            if (securityViolation) return;
+            const status = document.getElementById('status');
+            status.style.display = 'block';
+            status.textContent = 'Fetching streams securely...';
+
             try {
                 const res = await fetch('/api/streams');
-                const data = await res.json();
-                const status = document.getElementById('status');
+                const json = await res.json();
+                
+                if (json.status !== 'success') throw new Error('Backend error');
 
-                if (data.status !== 'success' || !data.matches || data.matches.length === 0) {
-                    status.style.display = 'block';
-                    status.textContent = 'No live matches found at the moment.';
+                globalMatches = json.matches || [];
+                if (globalMatches.length === 0) {
+                    status.textContent = 'No live matches found.';
                     return;
                 }
 
                 status.style.display = 'none';
-                globalMatches = data.matches;
-                renderGrid(globalMatches);
+                applyFilter(activeCategory, document.querySelector('.filter-btn.active'));
             } catch (err) {
-                document.getElementById('status').textContent = 'Failed to load streams from API.';
+                status.textContent = 'Failed to load streams from backend proxy.';
             }
         }
 
         function applyFilter(category, clickedBtn) {
+            activeCategory = category;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            clickedBtn.classList.add('active');
+            if (clickedBtn) clickedBtn.classList.add('active');
 
             let filtered = [];
             if (category === 'All') {
                 filtered = globalMatches;
             } else {
                 filtered = globalMatches.filter(match => {
-                    const title = match.title.toLowerCase();
-                    const isCricket = /(t20|odi|test|tour|trophy|blast|league|kcc|tnpl|ipl|bbl|cricket)/i.test(title) && !/(efl|fc |championship)/i.test(title);
+                    const title = (match.title || '').toLowerCase();
+                    const isCricket = /(t20|odi|test|tour|trophy|blast|league|kcc|tnpl|ipl|bbl|cricket)/i.test(title);
                     const isFootball = /(efl|championship|fc|united|city|premier|liga|soccer|football|copa)/i.test(title);
                     const isRacing = /(grand prix|f1|formula|racing|motogp|nascar)/i.test(title);
 
@@ -217,16 +173,28 @@
                     return true;
                 });
             }
-            renderGrid(filtered);
+
+            renderSections(filtered);
         }
 
-        function renderGrid(matchesToRender) {
-            const grid = document.getElementById('match-grid');
+        function renderSections(matches) {
+            const fancodeMatches = matches.filter(m => m.source === 'fancode');
+            const sonylivMatches = matches.filter(m => m.source === 'sonyliv');
+
+            renderGrid('fancode-grid', 'fancode-section', fancodeMatches);
+            renderGrid('sonyliv-grid', 'sonyliv-section', sonylivMatches);
+        }
+
+        function renderGrid(gridId, sectionId, matchesToRender) {
+            const grid = document.getElementById(gridId);
+            const section = document.getElementById(sectionId);
             grid.innerHTML = '';
 
             if (matchesToRender.length === 0) {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 40px; border-radius: 12px; background: rgba(0,0,0,0.2);">No live matches found for this category.</div>';
+                section.style.display = 'none';
                 return;
+            } else {
+                section.style.display = 'block';
             }
 
             matchesToRender.forEach((match) => {
@@ -234,7 +202,7 @@
                 card.className = 'card';
                 
                 const fallbackImg = 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=600&q=80';
-                const imgUrl = match.src_image ? match.src_image : fallbackImg;
+                const imgUrl = match.src_image || fallbackImg;
                 const imgTag = `<img src="${imgUrl}" class="card-img" onerror="this.onerror=null; this.src='${fallbackImg}';">`;
                 
                 const cleanUrl = match.stream_url.replace(/^https?:\/\//, '');
@@ -254,17 +222,18 @@
             });
         }
 
-        // Sleek Custom Toast Notifications (Replaces ugly browser alerts)
         function showToast(message) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2500);
+            setTimeout(() => { toast.classList.remove('show'); }, 2500);
         }
 
         function copyToClipboard(text) {
+            if (!text) {
+                showToast('❌ No stream link available.');
+                return;
+            }
             navigator.clipboard.writeText(text).then(() => {
                 showToast('✅ Stream link copied to clipboard!');
             }).catch(() => {
