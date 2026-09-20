@@ -115,7 +115,6 @@
 
         async function fetchStreams() {
             try {
-                // Switched to stable active mirror endpoint
                 const res = await fetch('https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json');
                 const data = await res.json();
                 const status = document.getElementById('status');
@@ -175,27 +174,36 @@
                 card.className = 'card';
                 
                 const matchTitle = match.title || match.match_name || 'Live Event';
-                const streamUrl = match.stream_url || match.url || match.link || '';
+                // FIXED: Check all possible key names for stream URLs used in drmlive mirrors
+                const streamUrl = match.url || match.stream_url || match.link || match.daiUrl || '';
                 
                 const fallbackImg = 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=600&q=80';
                 const imgUrl = match.src_image || match.image || fallbackImg;
                 const imgTag = `<img src="${imgUrl}" class="card-img" onerror="this.onerror=null; this.src='${fallbackImg}';">`;
                 
-                const cleanUrl = streamUrl.replace(/^https?:\/\//, '');
-                const intentUrl = `intent://${cleanUrl}#Intent;package=com.genuine.leone;action=android.intent.action.VIEW;scheme=https;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.genuine.leone;end;`;
+                const cleanUrl = streamUrl ? streamUrl.replace(/^https?:\/\//, '') : '';
+                const intentUrl = cleanUrl ? `intent://${cleanUrl}#Intent;package=com.genuine.leone;action=android.intent.action.VIEW;scheme=https;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.genuine.leone;end;` : '#';
 
                 card.innerHTML = `
                     <div class="card-img-container">${imgTag}<div class="live-badge">LIVE</div></div>
                     <div class="card-content">
                         <div class="match-title">${matchTitle}</div>
                         <div class="button-group">
-                            <button class="btn" onclick="window.location.href='${intentUrl}'">▶ Open App</button>
+                            <button class="btn" onclick="openStream('${streamUrl}', '${intentUrl}')">▶ Open App</button>
                             <button class="btn btn-blue" onclick="copyToClipboard('${streamUrl}')">📋 Copy</button>
                         </div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
+        }
+
+        function openStream(url, intent) {
+            if (!url) {
+                showToast('❌ Stream link missing.');
+                return;
+            }
+            window.location.href = intent;
         }
 
         function showToast(message) {
