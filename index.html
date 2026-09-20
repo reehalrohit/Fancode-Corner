@@ -41,7 +41,7 @@
     </style>
 </head>
 <body>
-    <!-- JavaScript Blocker Guard -->
+    <!-- 1. Strict Script Blocker Guard -->
     <noscript>
         <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f172a;z-index:999999;display:flex;justify-content:center;align-items:center;color:#ef4444;text-align:center;padding:20px;">
             <h2>🚨 JavaScript is disabled. Please enable scripts to use this site.</h2>
@@ -80,23 +80,42 @@
         let securityViolation = "";
         let unlocked = false;
 
-        // Balanced Network Scanner: Checks for VPN and India IP. 
-        // If an adblocker blocks this request, it silently fails open instead of locking the site.
+        // 2. Strict Adblocker CSS Bait
+        function testAdblocker() {
+            const bait = document.createElement('div');
+            bait.innerHTML = '&nbsp;';
+            bait.className = 'adsbox ad-placement doubleclick sponsor-ad';
+            bait.style.position = 'absolute';
+            bait.style.top = '-9999px';
+            document.body.appendChild(bait);
+            
+            setTimeout(() => {
+                if (bait.offsetHeight === 0 || window.getComputedStyle(bait).display === 'none') {
+                    securityViolation = "🚨 Adblocker detected. Please disable it to access the site.";
+                }
+                bait.remove();
+            }, 600);
+        }
+
+        // 3. Strict Network Scanner (Geo-block, Anti-VPN, Anti-DNS Sinkhole)
         async function testNetwork() {
             try {
                 const res = await fetch('https://ipwhois.app/json/', { cache: 'no-store' });
+                if (!res.ok) throw new Error("Blocked by network");
                 const data = await res.json();
                 
                 if (data.country_code && data.country_code !== 'IN') {
                     securityViolation = `🚨 Access Denied. This site is restricted to India only.`;
                 } else if (data.security && (data.security.vpn || data.security.proxy || data.security.tor)) {
-                    securityViolation = "🚨 VPN or Proxy detected. Please disable it to access the site.";
+                    securityViolation = "🚨 VPN or Proxy network detected. Please disable it to access the site.";
                 }
             } catch (error) {
-                console.log("Network check bypassed by client browser.");
+                // If a DNS sinkhole blocks the IP tracking request, fail entirely.
+                securityViolation = "🚨 DNS Blocker or strict firewall detected. Please use a standard network.";
             }
         }
-        
+
+        testAdblocker();
         testNetwork();
 
         const joinBtn = document.getElementById('mz-join-btn');
@@ -108,7 +127,7 @@
             fetchStreams();
         });
 
-        // Anti-Inspect Element Guard
+        // 4. Master Guard Loop (Locks UI if ANY test fails or overlay is deleted)
         setInterval(() => {
             if (securityViolation) {
                 document.body.innerHTML = `<div style="background:#0f172a;height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;text-align:center;"><h2 style="color:#ef4444;font-family:system-ui;font-weight:bold;">${securityViolation}</h2></div>`;
