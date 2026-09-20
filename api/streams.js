@@ -3,7 +3,6 @@ export default async function handler(req, res) {
         { url: 'https://raw.githubusercontent.com/byte-capsule/FanCode-Hls-Fetcher/main/Fancode_hls_m3u8.Json', name: 'byte-capsule' },
         { url: 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json', name: 'drmlive' }
     ];
-
     let allMatches = [];
 
     try {
@@ -20,12 +19,14 @@ export default async function handler(req, res) {
                 const title = obj.title || obj.event_name || obj.name || obj.match_name || 'Live Event';
                 const img = obj.image || obj.poster || obj.thumbnail || null;
                 
-                if (url && typeof url === 'string') {
+                // ONLY accept valid video streams (.m3u8)
+                if (url && typeof url === 'string' && url.includes('.m3u8')) {
                     allMatches.push({ title, stream_url: url, src_image: img, source: sourceName });
                 } else {
                     for (const [key, value] of Object.entries(obj)) {
-                        if (typeof value === 'string' && (value.includes('.m3u8') || value.includes('http'))) {
-                            if(value.length < 500) {
+                        // Strict check to exclude image banners and flags
+                        if (typeof value === 'string' && value.includes('.m3u8')) {
+                            if (!['generated_by', 'banner', 'team_1_flag', 'team_2_flag'].includes(key)) {
                                 allMatches.push({ title: key, stream_url: value, source: sourceName });
                             }
                         } else if (typeof value === 'object') {
@@ -39,7 +40,6 @@ export default async function handler(req, res) {
         if (responses[0]) extract(responses[0], 'byte-capsule');
         if (responses[1]) extract(responses[1], 'drmlive');
 
-        // Deduplicate streams
         const uniqueMatches = [];
         const seenUrls = new Set();
         for (const match of allMatches) {
@@ -49,7 +49,6 @@ export default async function handler(req, res) {
             }
         }
 
-        // Cache the server response for 3 minutes to prevent rate-limiting from GitHub
         res.setHeader('Cache-Control', 's-maxage=180, stale-while-revalidate');
         res.status(200).json({ status: 'success', matches: uniqueMatches });
     } catch (error) {
