@@ -1,6 +1,7 @@
 export default async function handler(req, res) {
     const sources = [
         { url: 'https://raw.githubusercontent.com/byte-capsule/FanCode-Hls-Fetcher/main/Fancode_hls_m3u8.Json', name: 'byte-capsule' },
+        { url: 'https://github.com/drmlive/sliv-live-events/blob/main/sonyliv.json' },
         { url: 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json', name: 'drmlive' }
     ];
     let allMatches = [];
