@@ -16,8 +16,8 @@
         .alert-banner { background-color: rgba(59, 130, 246, 0.1); border: 1px solid var(--blue); color: #bfdbfe; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 0.9rem; }
         .alert-banner a { color: var(--blue); font-weight: bold; text-decoration: none; }
         
-        .source-bar { display: flex; justify-content: center; gap: 12px; margin-bottom: 15px; }
-        .source-btn { background: #1e293b; color: var(--text-muted); border: 1px solid #334155; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: 0.2s; }
+        .source-bar { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        .source-btn { background: #1e293b; color: var(--text-muted); border: 1px solid #334155; padding: 6px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
         .source-btn.active { background: var(--purple); color: white; border-color: var(--purple); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
 
         .filter-bar { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
@@ -83,8 +83,9 @@
         </div>
 
         <div class="source-bar">
-            <button id="src-drm" class="source-btn active" onclick="switchSource('drmlive', this)">Source 1: DRM Live</button>
-            <button id="src-byte" class="source-btn" onclick="switchSource('bytecapsule', this)">Source 2: Byte-Capsule</button>
+            <button id="src-kajju" class="source-btn active" onclick="switchSource('kajju', this)">Source 1: Kajju</button>
+            <button id="src-drm" class="source-btn" onclick="switchSource('drmlive', this)">Source 2: DRM Live</button>
+            <button id="src-byte" class="source-btn" onclick="switchSource('bytecapsule', this)">Source 3: Byte-Capsule</button>
         </div>
 
         <div class="filter-bar" id="filter-bar">
@@ -101,7 +102,7 @@
 
     <script>
         let globalMatches = [];
-        let currentSource = 'drmlive';
+        let currentSource = 'kajju';
         let activeCategory = 'All';
         const DAILY_PASSCODE = "MODZONE2026";
 
@@ -135,28 +136,26 @@
             const status = document.getElementById('status');
             const grid = document.getElementById('match-grid');
             status.style.display = 'block';
-            status.textContent = `Connecting to ${source === 'drmlive' ? 'Source 1 (DRM Live)' : 'Source 2 (Byte-Capsule)'}...`;
+            status.textContent = 'Connecting to stream feed...';
             grid.innerHTML = '';
 
-            let url = source === 'drmlive' 
-                ? 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json'
-                : 'https://raw.githubusercontent.com/byte-capsule/FanCode-Live/main/fancode.json';
+            let url = '';
+            if (source === 'kajju') {
+                url = 'https://raw.githubusercontent.com/kajju027/Fancode-Events-Json/main/fancode.json';
+            } else if (source === 'drmlive') {
+                url = 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json';
+            } else {
+                url = 'https://raw.githubusercontent.com/byte-capsule/FanCode-Live/main/fancode.json';
+            }
 
             try {
                 const res = await fetch(url);
                 const data = await res.json();
-                let matches = data.matches || data;
+                
+                let matches = Array.isArray(data) ? data : (data.matches || data.events || []);
 
                 if (!res.ok || !matches || matches.length === 0) {
                     status.textContent = 'No live matches found from this source. Try switching sources.';
-                    return;
-                }
-
-                // Filter out items that don't have any valid stream link property
-                matches = matches.filter(m => m.url || m.stream_url || m.link || m.daiUrl || m.stream);
-
-                if (matches.length === 0) {
-                    status.textContent = 'No active streams available in this source right now.';
                     return;
                 }
 
@@ -166,6 +165,27 @@
             } catch (err) {
                 status.textContent = 'Failed to load streams from this source. Try switching sources.';
             }
+        }
+
+        function extractStreamUrl(match) {
+            if (match.stream_url) return match.stream_url;
+            if (match.url) return match.url;
+            if (match.link) return match.link;
+            if (match.daiUrl) return match.daiUrl;
+            if (match.stream) return match.stream;
+            
+            // Handle Kajju / nested auto_streams formats if present
+            if (match.auto_streams) {
+                const keys = Object.keys(match.auto_streams);
+                if (keys.length > 0 && typeof match.auto_streams[keys[0]] === 'string') {
+                    return match.auto_streams[keys[0]];
+                }
+            }
+            if (match.qualities) {
+                const qKeys = Object.keys(match.qualities);
+                if (qKeys.length > 0) return match.qualities[qKeys[0]];
+            }
+            return '';
         }
 
         function applyFilter(category, clickedBtn) {
@@ -209,7 +229,7 @@
                 card.className = 'card';
                 
                 const matchTitle = match.title || match.match_name || 'Live Event';
-                const streamUrl = match.url || match.stream_url || match.link || match.daiUrl || match.stream || '';
+                const streamUrl = extractStreamUrl(match);
                 
                 const fallbackImg = 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=600&q=80';
                 const imgUrl = match.src_image || match.image || fallbackImg;
