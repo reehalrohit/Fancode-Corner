@@ -1,7 +1,9 @@
 export default async function handler(req, res) {
     const sources = [
         { url: 'https://raw.githubusercontent.com/byte-capsule/FanCode-Hls-Fetcher/main/Fancode_hls_m3u8.Json', name: 'byte-capsule' },
-        { url: 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json', name: 'drmlive' }
+        { url: 'https://raw.githubusercontent.com/kajju027/Fancode-Events-Json/main/fancode.json', name: 'kajju' },
+        { url: 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json', name: 'drmlive' },
+        { url: 'https://raw.githubusercontent.com/drmlive/sliv-live-events/main/sonyliv.json', name: 'sonyliv' }
     ];
     let allMatches = [];
 
@@ -17,18 +19,16 @@ export default async function handler(req, res) {
                 return;
             }
             if (typeof obj === 'object') {
-                // ADDED 'adfree_url' to the list of recognized stream keys
-                const url = obj.adfree_url || obj.stream_url || obj.stream_link || obj.url || obj.link || obj.m3u8 || obj.file || obj.stream;
+                const url = obj.adfree_url || obj.stream_url || obj.stream_link || obj.url || obj.link || obj.m3u8 || obj.file || obj.stream || obj.daiUrl;
                 const title = obj.title || obj.event_name || obj.name || obj.match_name || parentKey;
                 const img = obj.image || obj.poster || obj.thumbnail || obj.banner || obj.logo || obj.src_image || null;
                 
-                if (url && typeof url === 'string' && url.includes('.m3u8') && !url.includes('dai.google.com')) {
+                if (url && typeof url === 'string' && (url.includes('.m3u8') || url.startsWith('http'))) {
                     allMatches.push({ title, stream_url: url, src_image: img, source: sourceName });
                 } else {
                     for (const [key, value] of Object.entries(obj)) {
-                        if (typeof value === 'string' && value.includes('.m3u8') && !value.includes('dai.google.com')) {
-                            // ADDED 'adfree_url' to fallback list
-                            if (['adfree_url', 'stream_url', 'stream_link', 'url', 'link', 'm3u8', 'file', 'stream'].includes(key)) {
+                        if (typeof value === 'string' && (value.includes('.m3u8') || value.startsWith('http'))) {
+                            if (['adfree_url', 'stream_url', 'stream_link', 'url', 'link', 'm3u8', 'file', 'stream', 'daiUrl'].includes(key)) {
                                 allMatches.push({ title: parentKey, stream_url: value, src_image: img, source: sourceName });
                             } 
                             else if (!['generated_by', 'banner', 'team_1_flag', 'team_2_flag', 'dai_url', 'ad_url'].includes(key)) {
@@ -43,7 +43,9 @@ export default async function handler(req, res) {
         };
 
         if (responses[0]) extract(responses[0], 'byte-capsule');
-        if (responses[1]) extract(responses[1], 'drmlive');
+        if (responses[1]) extract(responses[1], 'kajju');
+        if (responses[2]) extract(responses[2], 'drmlive');
+        if (responses[3]) extract(responses[3], 'sonyliv');
 
         const uniqueMatches = [];
         const seenUrls = new Set();
