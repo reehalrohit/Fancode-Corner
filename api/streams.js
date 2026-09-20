@@ -17,20 +17,20 @@ export default async function handler(req, res) {
                 return;
             }
             if (typeof obj === 'object') {
-                const url = obj.stream_url || obj.stream_link || obj.url || obj.link || obj.m3u8 || obj.file || obj.stream;
+                // ADDED 'adfree_url' to the list of recognized stream keys
+                const url = obj.adfree_url || obj.stream_url || obj.stream_link || obj.url || obj.link || obj.m3u8 || obj.file || obj.stream;
                 const title = obj.title || obj.event_name || obj.name || obj.match_name || parentKey;
                 const img = obj.image || obj.poster || obj.thumbnail || obj.banner || obj.logo || obj.src_image || null;
                 
-                // EXCLUDE dai.google.com ad links entirely
                 if (url && typeof url === 'string' && url.includes('.m3u8') && !url.includes('dai.google.com')) {
                     allMatches.push({ title, stream_url: url, src_image: img, source: sourceName });
                 } else {
                     for (const [key, value] of Object.entries(obj)) {
                         if (typeof value === 'string' && value.includes('.m3u8') && !value.includes('dai.google.com')) {
-                            if (['stream_url', 'stream_link', 'url', 'link', 'm3u8', 'file', 'stream'].includes(key)) {
+                            // ADDED 'adfree_url' to fallback list
+                            if (['adfree_url', 'stream_url', 'stream_link', 'url', 'link', 'm3u8', 'file', 'stream'].includes(key)) {
                                 allMatches.push({ title: parentKey, stream_url: value, src_image: img, source: sourceName });
                             } 
-                            // Add dai_url and ad_url to the strict blocklist
                             else if (!['generated_by', 'banner', 'team_1_flag', 'team_2_flag', 'dai_url', 'ad_url'].includes(key)) {
                                 allMatches.push({ title: key, stream_url: value, src_image: img, source: sourceName });
                             }
