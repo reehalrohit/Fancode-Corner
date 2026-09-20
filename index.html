@@ -153,6 +153,14 @@
                     return;
                 }
 
+                // Filter out entries that do not have a valid stream link so dead cards never display
+                matches = matches.filter(match => extractStreamUrl(match) !== '');
+
+                if (matches.length === 0) {
+                    status.textContent = 'No active playable streams available right now.';
+                    return;
+                }
+
                 status.style.display = 'none';
                 globalMatches = matches;
                 applyFilter(activeCategory, document.querySelector('.filter-btn.active'));
@@ -162,13 +170,12 @@
         }
 
         function extractStreamUrl(match) {
-            if (match.daiUrl) return match.daiUrl;
-            if (match.stream_url) return match.stream_url;
-            if (match.url) return match.url;
-            if (match.link) return match.link;
-            if (match.stream) return match.stream;
+            if (match.daiUrl && typeof match.daiUrl === 'string' && match.daiUrl.startsWith('http')) return match.daiUrl;
+            if (match.stream_url && typeof match.stream_url === 'string' && match.stream_url.startsWith('http')) return match.stream_url;
+            if (match.url && typeof match.url === 'string' && match.url.startsWith('http')) return match.url;
+            if (match.link && typeof match.link === 'string' && match.link.startsWith('http')) return match.link;
+            if (match.stream && typeof match.stream === 'string' && match.stream.startsWith('http')) return match.stream;
             
-            // Deep check dictionaries
             const subObjects = [match.auto_streams, match.qualities, match.sources, match.stream_links];
             for (let obj of subObjects) {
                 if (obj && typeof obj === 'object') {
@@ -176,7 +183,7 @@
                     if (keys.length > 0) {
                         const val = obj[keys[0]];
                         if (typeof val === 'string' && val.startsWith('http')) return val;
-                        if (val && typeof val === 'object' && val.url) return val.url;
+                        if (val && typeof val === 'object' && val.url && typeof val.url === 'string' && val.url.startsWith('http')) return val.url;
                     }
                 }
             }
@@ -230,29 +237,21 @@
                 const imgUrl = match.src_image || match.image || match.poster || fallbackImg;
                 const imgTag = `<img src="${imgUrl}" class="card-img" onerror="this.onerror=null; this.src='${fallbackImg}';">`;
                 
-                const cleanUrl = streamUrl ? streamUrl.replace(/^https?:\/\//, '') : '';
-                const intentUrl = cleanUrl ? `intent://${cleanUrl}#Intent;package=com.genuine.leone;action=android.intent.action.VIEW;scheme=https;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.genuine.leone;end;` : '#';
+                const cleanUrl = streamUrl.replace(/^https?:\/\//, '');
+                const intentUrl = `intent://${cleanUrl}#Intent;package=com.genuine.leone;action=android.intent.action.VIEW;scheme=https;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.genuine.leone;end;`;
 
                 card.innerHTML = `
                     <div class="card-img-container">${imgTag}<div class="live-badge">LIVE</div></div>
                     <div class="card-content">
                         <div class="match-title">${matchTitle}</div>
                         <div class="button-group">
-                            <button class="btn" onclick="openStream('${streamUrl}', '${intentUrl}')">▶ Open App</button>
+                            <button class="btn" onclick="window.location.href='${intentUrl}'">▶ Open App</button>
                             <button class="btn btn-blue" onclick="copyToClipboard('${streamUrl}')">📋 Copy</button>
                         </div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
-        }
-
-        function openStream(url, intent) {
-            if (!url) {
-                showToast('❌ Stream link missing.');
-                return;
-            }
-            window.location.href = intent;
         }
 
         function showToast(message) {
