@@ -57,8 +57,7 @@
                 <div class="fix-box">
                     <strong>How to fix:</strong><br>
                     1. Check your browser's site settings.<br>
-                    2. Enable JavaScript for this website.<br>
-                    3. Turn off aggressive script-blocking extensions.
+                    2. Enable JavaScript for this website.
                 </div>
             </div>
         </div>
@@ -101,52 +100,56 @@
             document.body.innerHTML = `<div style="background:#0f172a;height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;">${htmlContent}</div>`;
         }
 
-        // Strict Network Scanner with Exact Error Logging
+        // Extremely robust Network Scanner using Cloudflare Infrastructure
         async function testNetwork() {
             try {
-                const res = await fetch('https://ipwhois.app/json/', { cache: 'no-store' });
+                // Cloudflare Trace endpoint - no rate limits, no 403 blocks
+                const res = await fetch('https://1.1.1.1/cdn-cgi/trace', { cache: 'no-store' });
                 if (!res.ok) throw new Error(`HTTP Error: Status ${res.status}`);
-                const data = await res.json();
                 
-                if (data.country_code && data.country_code !== 'IN') {
+                const text = await res.text();
+                // Parse Cloudflare's plain text response into an object
+                const data = Object.fromEntries(text.trim().split('\n').map(line => line.split('=')));
+                
+                if (data.loc && data.loc !== 'IN') {
                     triggerLockdown(`
                         <div class="block-card">
                             <h2>🚨 Geo-Restriction</h2>
                             <p>This service is strictly limited to users currently inside India.</p>
                             <div class="fix-box">
-                                Detected Country: <b>${data.country || 'Unknown'}</b><br>
+                                Detected Country Code: <b>${data.loc || 'Unknown'}</b><br>
                                 If you are in India, please disconnect your VPN.
                             </div>
                             <button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button>
                         </div>
                     `);
-                } else if (data.security && (data.security.vpn || data.security.proxy || data.security.tor)) {
+                } 
+                // Basic VPN check via Cloudflare WARP detection
+                else if (data.warp && data.warp !== 'off') {
                     triggerLockdown(`
                         <div class="block-card">
-                            <h2>🚨 VPN / Proxy Detected</h2>
+                            <h2>🚨 VPN Detected</h2>
                             <p>You are using a masked network connection.</p>
                             <div class="fix-box">
                                 <strong>How to fix:</strong><br>
-                                1. Disconnect your <b>VPN App</b> (e.g. TurboVPN, ExpressVPN).<br>
-                                2. Disable iCloud Private Relay or Tor.<br>
-                                3. Switch back to your standard Mobile Data or Wi-Fi.
+                                1. Disconnect your VPN App.<br>
+                                2. Switch back to your standard Mobile Data or Wi-Fi.
                             </div>
                             <button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button>
                         </div>
                     `);
                 }
             } catch (error) {
-                // Now displays the exact JavaScript error message directly in the UI
                 triggerLockdown(`
                     <div class="block-card">
                         <h2>🚨 Network Check Blocked</h2>
-                        <p>Your device's DNS, browser, or Firewall is actively blocking our security check.</p>
+                        <p>Your device's DNS or Firewall is actively blocking our security check.</p>
                         <div class="error-log">Exact Error:<br>${error.message || error}</div>
                         <div class="fix-box">
                             <strong>How to fix (Android):</strong><br>
                             1. Go to your phone <b>Settings</b> > <b>Network & Internet</b>.<br>
                             2. Tap <b>Private DNS</b> and set it to <b>Off</b>.<br>
-                            3. Turn off Brave Shields, AdGuard, or tracker blockers for this site.
+                            3. Turn off tracker blockers for this site.
                         </div>
                         <button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button>
                     </div>
