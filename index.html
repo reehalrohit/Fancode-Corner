@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FanCode Corner</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #0b0f19; color: #f3f4f6; padding: 24px; }
+        h1 { font-size: 1.5rem; margin-bottom: 8px; }
+        p { color: #9ca3af; font-size: 0.9rem; margin-top: 0; }
+        pre { background: #111827; border: 1px solid #1f2937; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <h1>FanCode Corner Live Events</h1>
+    <p>Real-time stream feed aggregating byte-capsule & drmlive sources</p>
+    <pre id="output">Fetching stream links...</pre>
+
+    <script>
+        const source1 = 'https://raw.githubusercontent.com/byte-capsule/FanCode-Hls-Fetcher/main/Fancode_hls_m3u8.Json';
+        const source2 = 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json';
+
+        async function fetchStreams() {
+            try {
+                const [res1, res2] = await Promise.all([
+                    fetch(source1).then(r => r.ok ? r.json() : null).catch(() => null),
+                    fetch(source2).then(r => r.ok ? r.json() : null).catch(() => null)
+                ]);
+
+                const payload = {
+                    status: "active",
+                    updatedAt: new Date().toISOString(),
+                    sources: {
+                        byteCapsule: res1,
+                        drmLive: res2
+                    }
+                };
+
+                document.getElementById('output').textContent = JSON.stringify(payload, null, 2);
+            } catch (err) {
+                document.getElementById('output').textContent = 'Error: ' + err.message;
+            }
+        }
+
+        fetchStreams();
+    </script>
+</body>
+</html>
