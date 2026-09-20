@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FanCode Corner | Live Sports</title>
     <style>
-        :root { --bg: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #22c55e; --accent-hover: #16a34a; }
+        :root { --bg: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #22c55e; --accent-hover: #16a34a; --blue: #3b82f6; --blue-hover: #2563eb; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: system-ui, sans-serif; background-color: var(--bg); color: var(--text-main); line-height: 1.5; padding: 20px; }
         header { text-align: center; margin-bottom: 30px; }
@@ -20,8 +20,14 @@
         .live-badge { position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; animation: pulse 2s infinite; }
         .card-content { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
         .match-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .btn { margin-top: auto; display: block; width: 100%; text-align: center; background-color: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; text-decoration: none; }
+        
+        /* New Dual Button Styles */
+        .button-group { display: flex; gap: 10px; margin-top: auto; }
+        .btn { flex: 1; display: block; text-align: center; background-color: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; text-decoration: none; font-size: 0.95rem; }
         .btn:hover { background-color: var(--accent-hover); }
+        .btn-blue { background-color: var(--blue); }
+        .btn-blue:hover { background-color: var(--blue-hover); }
+        
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
@@ -60,9 +66,9 @@
                         ? `<img src="${match.src_image}" alt="Thumbnail" class="card-img" onerror="this.style.display='none'">` 
                         : '';
 
-                    // Create an Android Intent URI to force open external media players
+                    // Fixed Android Intent: Added 'action' and explicit MIME type so Android knows it's a video stream
                     const cleanUrl = match.stream_url.replace(/^https?:\/\//, '');
-                    const intentUrl = `intent://${cleanUrl}#Intent;scheme=https;type=video/*;end`;
+                    const intentUrl = `intent://${cleanUrl}#Intent;action=android.intent.action.VIEW;scheme=https;type=application/x-mpegURL;end;`;
 
                     card.innerHTML = `
                         <div class="card-img-container">
@@ -71,7 +77,10 @@
                         </div>
                         <div class="card-content">
                             <div class="match-title">${match.title}</div>
-                            <a href="${intentUrl}" class="btn">Play</a>
+                            <div class="button-group">
+                                <a href="${intentUrl}" class="btn">▶ Open App</a>
+                                <button class="btn btn-blue" onclick="copyToClipboard('${match.stream_url}')">📋 Copy</button>
+                            </div>
                         </div>
                     `;
                     grid.appendChild(card);
@@ -79,6 +88,14 @@
             } catch (err) {
                 status.textContent = 'Failed to load streams from API. Please try again later.';
             }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Link Copied! Open Televizo, NS Player, or VLC and paste the link to play.');
+            }).catch(() => {
+                alert('Failed to copy. URL: ' + text);
+            });
         }
 
         fetchStreams();
