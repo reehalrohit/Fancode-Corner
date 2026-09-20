@@ -3,46 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FanCode Corner</title>
+    <title>FanCode Corner | Live Sports</title>
     <style>
-        body { font-family: system-ui, sans-serif; background: #0b0f19; color: #f3f4f6; padding: 24px; }
-        h1 { font-size: 1.5rem; margin-bottom: 8px; }
-        p { color: #9ca3af; font-size: 0.9rem; margin-top: 0; }
-        pre { background: #111827; border: 1px solid #1f2937; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; }
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, sans-serif; background-color: var(--bg); color: var(--text-main); line-height: 1.5; padding: 20px; }
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { font-size: 2rem; margin-bottom: 5px; background: -webkit-linear-gradient(#3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        p { color: var(--text-muted); font-size: 0.95rem; }
+        
+        #status { text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--text-muted); }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        
+        .card { background-color: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transition: transform 0.2s; display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-5px); }
+        
+        /* Fallback background if no image is provided */
+        .card-img-container { width: 100%; height: 160px; background-color: #334155; position: relative; }
+        .card-img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .live-badge { position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; animation: pulse 2s infinite; }
+        
+        .card-content { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+        .match-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .match-meta { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px; }
+        
+        .btn { margin-top: auto; display: block; width: 100%; text-align: center; background-color: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; text-decoration: none; }
+        .btn:hover { background-color: var(--accent-hover); }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
-    <h1>FanCode Corner Live Events</h1>
-    <p>Real-time stream feed aggregating byte-capsule & drmlive sources</p>
-    <pre id="output">Fetching stream links...</pre>
+
+    <header>
+        <h1>FanCode Corner</h1>
+        <p>Live matches aggregated from community sources</p>
+    </header>
+
+    <div id="status">Fetching live streams...</div>
+    <div class="grid" id="match-grid"></div>
 
     <script>
-        const source1 = 'https://raw.githubusercontent.com/byte-capsule/FanCode-Hls-Fetcher/main/Fancode_hls_m3u8.Json';
-        const source2 = 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json';
+        const grid = document.getElementById('match-grid');
+        const status = document.getElementById('status');
 
-        async function fetchStreams() {
+        // Note: The drmlive JSON structure is deeply nested, byte-capsule is usually a flat array or simple object.
+        // We will fetch both and attempt to normalize them.
+        const sources = [
+            'https://raw.githubusercontent.com/byte-capsule/FanCode-Hls-Fetcher/main/Fancode_hls_m3u8.Json',
+            'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json'
+        ];
+
+        async function fetchAndRender() {
             try {
-                const [res1, res2] = await Promise.all([
-                    fetch(source1).then(r => r.ok ? r.json() : null).catch(() => null),
-                    fetch(source2).then(r => r.ok ? r.json() : null).catch(() => null)
-                ]);
+                const responses = await Promise.all(
+                    sources.map(url => fetch(url).then(res => res.ok ? res.json() : null).catch(() => null))
+                );
 
-                const payload = {
-                    status: "active",
-                    updatedAt: new Date().toISOString(),
-                    sources: {
-                        byteCapsule: res1,
-                        drmLive: res2
+                let allMatches = [];
+
+                // Parse byte-capsule data (Source 0)
+                if (responses[0]) {
+                    // byte-capsule data is often a direct object of matches or an array.
+                    const data = responses[0];
+                    if (Array.isArray(data)) {
+                        allMatches = [...allMatches, ...data];
+                    } else if (typeof data === 'object') {
+                         // Sometimes it's formatted as { "Match 1": "url", "Match 2": "url" }
+                         for (const [key, value] of Object.entries(data)) {
+                             if (typeof value === 'string' && value.includes('m3u8')) {
+                                 allMatches.push({ title: key, stream_url: value, source: 'byte-capsule' });
+                             } else if (value && value.stream_url) {
+                                 allMatches.push({...value, title: key, source: 'byte-capsule'});
+                             }
+                         }
                     }
-                };
+                }
 
-                document.getElementById('output').textContent = JSON.stringify(payload, null, 2);
-            } catch (err) {
-                document.getElementById('output').textContent = 'Error: ' + err.message;
+                // Parse drmlive data (Source 1)
+                if (responses[1]) {
+                    // drmlive data is usually nested inside a 'matches' array
+                    const data = responses[1];
+                    if (data.matches && Array.isArray(data.matches)) {
+                        data.matches.forEach(match => {
+                            allMatches.push({
+                                title: match.event_name || match.title || 'Live Match',
+                                stream_url: match.stream_url || match.url,
+                                src_image: match.image || match.poster || null,
+                                source: 'drmlive'
+                            });
+                        });
+                    }
+                }
+
+                renderGrid(allMatches);
+
+            } catch (error) {
+                status.textContent = 'Failed to load streams. Please try again later.';
+                console.error(error);
             }
         }
 
-        fetchStreams();
+        function renderGrid(matches) {
+            if (matches.length === 0) {
+                status.textContent = 'No live matches found at the moment.';
+                return;
+            }
+
+            status.style.display = 'none';
+            grid.innerHTML = '';
+
+            matches.forEach((match, index) => {
+                // Ensure we have a URL before rendering
+                if (!match.stream_url) return;
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                // Fallback image logic
+                const imgTag = match.src_image 
+                    ? `<img src="${match.src_image}" alt="Match Thumbnail" class="card-img" onerror="this.style.display='none'">` 
+                    : '';
+
+                card.innerHTML = `
+                    <div class="card-img-container">
+                        ${imgTag}
+                        <div class="live-badge">LIVE</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="match-title">${match.title || 'Live Event ' + (index + 1)}</div>
+                        <div class="match-meta">Source: ${match.source || 'Unknown'}</div>
+                        <button class="btn" onclick="copyToClipboard('${match.stream_url}')">Copy Stream Link</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Stream link copied to clipboard! Paste it into your video player (like VLC, NS Player, or Televizo).');
+            }).catch(err => {
+                alert('Failed to copy: ' + text);
+            });
+        }
+
+        fetchAndRender();
     </script>
 </body>
 </html>
