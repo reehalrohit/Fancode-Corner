@@ -49,7 +49,6 @@
 
         #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #1e293b; color: #f8fafc; padding: 12px 24px; border-radius: 30px; border: 1px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10000; font-size: 0.95rem; font-weight: 600; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; }
         #toast.show { transform: translateX(-50%) translateY(0); }
-        .block-card { background: var(--card-bg); padding: 30px; border-radius: 16px; border: 1px solid #ef4444; max-width: 420px; width: 90%; text-align: left; }
     </style>
 </head>
 <body>
@@ -93,6 +92,8 @@
 
     <script>
         let globalMatches = [];
+        const DAILY_PASSCODE = "MODZONE2026"; // Change your daily passcode here
+
         const submitBtn = document.getElementById('mz-submit-btn');
         const passInput = document.getElementById('mz-pass-input');
         const errorMsg = document.getElementById('mz-error');
@@ -100,50 +101,33 @@
         submitBtn.addEventListener('click', verifyPasscode);
         passInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyPasscode(); });
 
-        async function verifyPasscode() {
+        function verifyPasscode() {
             const passcode = passInput.value.trim();
-            if (!passcode) return;
-
-            try {
-                const res = await fetch('/api/verify', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include', // Ensures cookie is saved
-                    body: JSON.stringify({ passcode })
-                });
-
-                const data = await res.json();
-                if (res.ok && data.status === 'success') {
-                    document.getElementById('mz-overlay').style.display = 'none';
-                    document.getElementById('main-content').style.display = 'block';
-                    fetchStreams();
-                } else {
-                    errorMsg.style.display = 'block';
-                    passInput.style.borderColor = '#ef4444';
-                }
-            } catch (err) {
-                errorMsg.textContent = 'Server connection error.';
+            if (passcode === DAILY_PASSCODE) {
+                document.getElementById('mz-overlay').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                fetchStreams();
+            } else {
                 errorMsg.style.display = 'block';
+                passInput.style.borderColor = '#ef4444';
             }
         }
 
         async function fetchStreams() {
             try {
-                // credentials: 'include' forces the browser to send the HttpOnly cookie back to the server
-                const res = await fetch('/api/streams', {
-                    credentials: 'include'
-                });
+                const res = await fetch('https://raw.githubusercontent.com/byte-capsule/FanCode-Live/main/fancode.json');
                 const data = await res.json();
                 const status = document.getElementById('status');
 
-                if (!res.ok || data.status !== 'success' || !data.matches || data.matches.length === 0) {
+                const matches = data.matches || data;
+                if (!res.ok || !matches || matches.length === 0) {
                     status.style.display = 'block';
-                    status.textContent = 'No live matches found or session expired.';
+                    status.textContent = 'No live matches found at the moment.';
                     return;
                 }
 
                 status.style.display = 'none';
-                globalMatches = data.matches;
+                globalMatches = matches;
                 renderGrid(globalMatches);
             } catch (err) {
                 document.getElementById('status').textContent = 'Failed to load streams from API.';
