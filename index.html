@@ -162,12 +162,13 @@
         }
 
         function extractStreamUrl(match) {
+            if (match.daiUrl) return match.daiUrl;
             if (match.stream_url) return match.stream_url;
             if (match.url) return match.url;
             if (match.link) return match.link;
-            if (match.daiUrl) return match.daiUrl;
             if (match.stream) return match.stream;
             
+            // Deep check dictionaries
             const subObjects = [match.auto_streams, match.qualities, match.sources, match.stream_links];
             for (let obj of subObjects) {
                 if (obj && typeof obj === 'object') {
