@@ -33,24 +33,64 @@
         .btn-blue:hover { background-color: var(--blue-hover); }
         
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* Telegram Pop-up Overlay */
+        #mz-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.98); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
+        .mz-modal { background: var(--card-bg); padding: 40px 30px; border-radius: 16px; text-align: center; border: 2px solid var(--blue); box-shadow: 0 20px 40px rgba(0,0,0,0.6); max-width: 90%; width: 400px; }
+        .mz-modal h2 { font-size: 1.6rem; margin-bottom: 25px; color: var(--text-main); line-height: 1.4; text-transform: uppercase; letter-spacing: 1px; }
+        .mz-btn { display: inline-block; background: #0088cc; color: white; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-weight: bold; font-size: 1.2rem; cursor: pointer; transition: 0.2s; border: none; box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4); }
+        .mz-btn:hover { background: #0077b5; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 136, 204, 0.6); }
     </style>
 </head>
 <body>
-    <header>
-        <h1>FanCode Corner</h1>
-        <p>Live matches aggregated from community sources</p>
-    </header>
-
-    <div class="alert-banner">
-        💡 <strong>Note:</strong> Due to security restrictions, streams will not play in Chrome. Tap <strong>Open App</strong> to play seamlessly in <a href="https://play.google.com/store/apps/details?id=com.pratyush.nsplayer" target="_blank">NS Player</a>.
+    <!-- Forced Pop-up -->
+    <div id="mz-overlay">
+        <div class="mz-modal">
+            <h2>Created BY MODZONE TELEGRAM CHANNEL</h2>
+            <button id="mz-join-btn" class="mz-btn">Join</button>
+        </div>
     </div>
-    
-    <div id="status">Connecting to server API...</div>
-    <div class="grid" id="match-grid"></div>
+
+    <!-- Main Content (Hidden until click) -->
+    <div id="main-content" style="display: none;">
+        <header>
+            <h1>FanCode Corner</h1>
+            <p>Live matches aggregated from community sources</p>
+        </header>
+
+        <div class="alert-banner">
+            💡 <strong>Note:</strong> Due to security restrictions, streams will not play in Chrome. Tap <strong>Open App</strong> to play seamlessly in <a href="https://play.google.com/store/apps/details?id=com.pratyush.nsplayer" target="_blank">NS Player</a>.
+        </div>
+        
+        <div id="status">Connecting to server API...</div>
+        <div class="grid" id="match-grid"></div>
+    </div>
 
     <script>
         const grid = document.getElementById('match-grid');
         const status = document.getElementById('status');
+        const overlay = document.getElementById('mz-overlay');
+        const mainContent = document.getElementById('main-content');
+        const joinBtn = document.getElementById('mz-join-btn');
+        
+        let unlocked = false;
+
+        // Unlock site and load API ONLY when the join button is specifically clicked
+        joinBtn.addEventListener('click', () => {
+            window.open('https://t.me/modzone01', '_blank');
+            overlay.style.display = 'none';
+            mainContent.style.display = 'block';
+            unlocked = true;
+            fetchStreams();
+        });
+
+        // Anti-Adblock & Anti-Bypass Guard
+        // Checks every second: if the user forces the overlay closed via Inspect Element, wipe the site data.
+        setInterval(() => {
+            if (!unlocked && !document.getElementById('mz-overlay')) {
+                document.body.innerHTML = '<h2 style="color:#ef4444; text-align:center; margin-top:100px; font-family:sans-serif;">Access Denied. Please disable adblockers and do not block the pop-up.</h2>';
+            }
+        }, 1000);
 
         async function fetchStreams() {
             try {
@@ -104,8 +144,6 @@
                 alert('Failed to copy. URL: ' + text);
             });
         }
-
-        fetchStreams();
     </script>
 </body>
 </html>
