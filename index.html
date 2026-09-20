@@ -38,13 +38,28 @@
         .mz-highlight { color: #f8fafc; font-weight: 800; font-size: 1.8rem; display: block; margin: 5px 0; letter-spacing: 1px; }
         .mz-modal p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px; }
         .mz-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background: #2AABEE; color: white; text-decoration: none; padding: 14px 40px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; border: none; width: 100%; box-shadow: 0 4px 15px rgba(42, 171, 238, 0.4); }
+        
+        /* Security Block Card */
+        .block-card { background: var(--card-bg); padding: 30px; border-radius: 16px; border: 1px solid #ef4444; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.2); max-width: 420px; width: 90%; text-align: left; font-family: system-ui, sans-serif; }
+        .block-card h2 { color: #ef4444; margin-bottom: 10px; font-size: 1.4rem; text-align: center; }
+        .block-card p { color: #cbd5e1; font-size: 0.95rem; margin-bottom: 20px; text-align: center; }
+        .fix-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; color: #94a3b8; font-size: 0.9rem; line-height: 1.6; border-left: 4px solid #ef4444; }
+        .fix-box b { color: #f8fafc; }
     </style>
 </head>
 <body>
-    <!-- 1. Strict Script Blocker Guard -->
     <noscript>
-        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f172a;z-index:999999;display:flex;justify-content:center;align-items:center;color:#ef4444;text-align:center;padding:20px;">
-            <h2>🚨 JavaScript is disabled. Please enable scripts to use this site.</h2>
+        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f172a;z-index:999999;display:flex;justify-content:center;align-items:center;">
+            <div class="block-card">
+                <h2>🚨 JavaScript Disabled</h2>
+                <p>Your browser is blocking the scripts required to run this site securely.</p>
+                <div class="fix-box">
+                    <strong>How to fix:</strong><br>
+                    1. Check your browser's site settings.<br>
+                    2. Enable JavaScript for this website.<br>
+                    3. Turn off aggressive script-blocking extensions (like NoScript).
+                </div>
+            </div>
         </div>
     </noscript>
 
@@ -80,6 +95,11 @@
         let securityViolation = "";
         let unlocked = false;
 
+        function triggerLockdown(htmlContent) {
+            securityViolation = true;
+            document.body.innerHTML = `<div style="background:#0f172a;height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;">${htmlContent}</div>`;
+        }
+
         // 2. Strict Adblocker CSS Bait
         function testAdblocker() {
             const bait = document.createElement('div');
@@ -91,13 +111,25 @@
             
             setTimeout(() => {
                 if (bait.offsetHeight === 0 || window.getComputedStyle(bait).display === 'none') {
-                    securityViolation = "🚨 Adblocker detected. Please disable it to access the site.";
+                    triggerLockdown(`
+                        <div class="block-card">
+                            <h2>🚨 Adblocker Detected</h2>
+                            <p>An adblocker or privacy extension is preventing this site from verifying your session.</p>
+                            <div class="fix-box">
+                                <strong>How to fix:</strong><br>
+                                1. Turn off <b>Brave Shields</b> (Lion icon) if using Brave.<br>
+                                2. Pause <b>uBlock Origin</b>, <b>AdGuard</b>, or <b>Adblock Plus</b>.<br>
+                                3. Refresh the page.
+                            </div>
+                            <button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button>
+                        </div>
+                    `);
                 }
                 bait.remove();
             }, 600);
         }
 
-        // 3. Strict Network Scanner (Geo-block, Anti-VPN, Anti-DNS Sinkhole)
+        // 3. Strict Network Scanner
         async function testNetwork() {
             try {
                 const res = await fetch('https://ipwhois.app/json/', { cache: 'no-store' });
@@ -105,13 +137,46 @@
                 const data = await res.json();
                 
                 if (data.country_code && data.country_code !== 'IN') {
-                    securityViolation = `🚨 Access Denied. This site is restricted to India only.`;
+                    triggerLockdown(`
+                        <div class="block-card">
+                            <h2>🚨 Geo-Restriction</h2>
+                            <p>This service is strictly limited to users currently inside India.</p>
+                            <div class="fix-box">
+                                Detected Country: <b>${data.country || 'Unknown'}</b><br>
+                                If you are in India, please disconnect your VPN.
+                            </div>
+                            <button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button>
+                        </div>
+                    `);
                 } else if (data.security && (data.security.vpn || data.security.proxy || data.security.tor)) {
-                    securityViolation = "🚨 VPN or Proxy network detected. Please disable it to access the site.";
+                    triggerLockdown(`
+                        <div class="block-card">
+                            <h2>🚨 VPN / Proxy Detected</h2>
+                            <p>You are using a masked network connection.</p>
+                            <div class="fix-box">
+                                <strong>How to fix:</strong><br>
+                                1. Disconnect your <b>VPN App</b> (e.g. TurboVPN, ExpressVPN).<br>
+                                2. Disable iCloud Private Relay or Tor.<br>
+                                3. Switch back to your standard Mobile Data or Wi-Fi.
+                            </div>
+                            <button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button>
+                        </div>
+                    `);
                 }
             } catch (error) {
-                // If a DNS sinkhole blocks the IP tracking request, fail entirely.
-                securityViolation = "🚨 DNS Blocker or strict firewall detected. Please use a standard network.";
+                triggerLockdown(`
+                    <div class="block-card">
+                        <h2>🚨 Network Check Blocked</h2>
+                        <p>Your device's DNS or Firewall is actively blocking our security check.</p>
+                        <div class="fix-box">
+                            <strong>How to fix (Android):</strong><br>
+                            1. Go to your phone <b>Settings</b> > <b>Network & Internet</b>.<br>
+                            2. Tap <b>Private DNS</b>.<br>
+                            3. Change it from "AdGuard" or "NextDNS" to <b>Automatic</b> or <b>Off</b>.
+                        </div>
+                        <button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button>
+                    </div>
+                `);
             }
         }
 
@@ -127,14 +192,16 @@
             fetchStreams();
         });
 
-        // 4. Master Guard Loop (Locks UI if ANY test fails or overlay is deleted)
+        // 4. Master Guard Loop (Catches Bypass Attempts)
         setInterval(() => {
-            if (securityViolation) {
-                document.body.innerHTML = `<div style="background:#0f172a;height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;text-align:center;"><h2 style="color:#ef4444;font-family:system-ui;font-weight:bold;">${securityViolation}</h2></div>`;
-                return;
-            }
-            if (!unlocked && !document.getElementById('mz-overlay')) {
-                document.body.innerHTML = '<div style="background:#0f172a;height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;text-align:center;"><h2 style="color:#ef4444;font-family:system-ui;font-weight:bold;">🚨 Access Denied. Do not attempt to bypass the Telegram verification.</h2></div>';
+            if (!securityViolation && !unlocked && !document.getElementById('mz-overlay')) {
+                triggerLockdown(`
+                    <div class="block-card">
+                        <h2>🚨 Verification Bypassed</h2>
+                        <p>You attempted to close or delete the Telegram verification prompt.</p>
+                        <button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button>
+                    </div>
+                `);
             }
         }, 500);
 
