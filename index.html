@@ -45,6 +45,7 @@
         .block-card p { color: #cbd5e1; font-size: 0.95rem; margin-bottom: 20px; text-align: center; }
         .fix-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; color: #94a3b8; font-size: 0.9rem; line-height: 1.6; border-left: 4px solid #ef4444; }
         .fix-box b { color: #f8fafc; }
+        .error-log { background: rgba(239, 68, 68, 0.1); border: 1px dashed #ef4444; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; color: #fca5a5; margin-bottom: 15px; word-break: break-all; }
     </style>
 </head>
 <body>
@@ -57,7 +58,7 @@
                     <strong>How to fix:</strong><br>
                     1. Check your browser's site settings.<br>
                     2. Enable JavaScript for this website.<br>
-                    3. Turn off aggressive script-blocking extensions (like NoScript).
+                    3. Turn off aggressive script-blocking extensions.
                 </div>
             </div>
         </div>
@@ -100,40 +101,11 @@
             document.body.innerHTML = `<div style="background:#0f172a;height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;">${htmlContent}</div>`;
         }
 
-        // 2. Strict Adblocker CSS Bait
-        function testAdblocker() {
-            const bait = document.createElement('div');
-            bait.innerHTML = '&nbsp;';
-            bait.className = 'adsbox ad-placement doubleclick sponsor-ad';
-            bait.style.position = 'absolute';
-            bait.style.top = '-9999px';
-            document.body.appendChild(bait);
-            
-            setTimeout(() => {
-                if (bait.offsetHeight === 0 || window.getComputedStyle(bait).display === 'none') {
-                    triggerLockdown(`
-                        <div class="block-card">
-                            <h2>🚨 Adblocker Detected</h2>
-                            <p>An adblocker or privacy extension is preventing this site from verifying your session.</p>
-                            <div class="fix-box">
-                                <strong>How to fix:</strong><br>
-                                1. Turn off <b>Brave Shields</b> (Lion icon) if using Brave.<br>
-                                2. Pause <b>uBlock Origin</b>, <b>AdGuard</b>, or <b>Adblock Plus</b>.<br>
-                                3. Refresh the page.
-                            </div>
-                            <button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button>
-                        </div>
-                    `);
-                }
-                bait.remove();
-            }, 600);
-        }
-
-        // 3. Strict Network Scanner
+        // Strict Network Scanner with Exact Error Logging
         async function testNetwork() {
             try {
                 const res = await fetch('https://ipwhois.app/json/', { cache: 'no-store' });
-                if (!res.ok) throw new Error("Blocked by network");
+                if (!res.ok) throw new Error(`HTTP Error: Status ${res.status}`);
                 const data = await res.json();
                 
                 if (data.country_code && data.country_code !== 'IN') {
@@ -164,15 +136,17 @@
                     `);
                 }
             } catch (error) {
+                // Now displays the exact JavaScript error message directly in the UI
                 triggerLockdown(`
                     <div class="block-card">
                         <h2>🚨 Network Check Blocked</h2>
-                        <p>Your device's DNS or Firewall is actively blocking our security check.</p>
+                        <p>Your device's DNS, browser, or Firewall is actively blocking our security check.</p>
+                        <div class="error-log">Exact Error:<br>${error.message || error}</div>
                         <div class="fix-box">
                             <strong>How to fix (Android):</strong><br>
                             1. Go to your phone <b>Settings</b> > <b>Network & Internet</b>.<br>
-                            2. Tap <b>Private DNS</b>.<br>
-                            3. Change it from "AdGuard" or "NextDNS" to <b>Automatic</b> or <b>Off</b>.
+                            2. Tap <b>Private DNS</b> and set it to <b>Off</b>.<br>
+                            3. Turn off Brave Shields, AdGuard, or tracker blockers for this site.
                         </div>
                         <button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button>
                     </div>
@@ -180,7 +154,6 @@
             }
         }
 
-        testAdblocker();
         testNetwork();
 
         const joinBtn = document.getElementById('mz-join-btn');
@@ -192,7 +165,7 @@
             fetchStreams();
         });
 
-        // 4. Master Guard Loop (Catches Bypass Attempts)
+        // Master Guard Loop
         setInterval(() => {
             if (!securityViolation && !unlocked && !document.getElementById('mz-overlay')) {
                 triggerLockdown(`
