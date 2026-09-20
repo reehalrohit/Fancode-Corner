@@ -136,26 +136,20 @@
             const status = document.getElementById('status');
             const grid = document.getElementById('match-grid');
             status.style.display = 'block';
-            status.textContent = 'Connecting to stream feed...';
+            status.textContent = 'Fetching securely via backend proxy...';
             grid.innerHTML = '';
 
-            let url = '';
-            if (source === 'kajju') {
-                url = 'https://raw.githubusercontent.com/kajju027/Fancode-Events-Json/main/fancode.json';
-            } else if (source === 'drmlive') {
-                url = 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json';
-            } else {
-                url = 'https://raw.githubusercontent.com/byte-capsule/FanCode-Live/main/fancode.json';
-            }
-
             try {
-                const res = await fetch(url);
-                const data = await res.json();
+                const res = await fetch(`/api/streams?source=${source}`);
+                const json = await res.json();
                 
+                if (json.status !== 'success') throw new Error('Backend error');
+
+                const data = json.data;
                 let matches = Array.isArray(data) ? data : (data.matches || data.events || data.data || []);
 
-                if (!res.ok || !matches || matches.length === 0) {
-                    status.textContent = 'No live matches found from this source. Try switching sources.';
+                if (!matches || matches.length === 0) {
+                    status.textContent = 'No live matches found from this source.';
                     return;
                 }
 
@@ -163,7 +157,7 @@
                 globalMatches = matches;
                 applyFilter(activeCategory, document.querySelector('.filter-btn.active'));
             } catch (err) {
-                status.textContent = 'Failed to load streams from this source. Try switching sources.';
+                status.textContent = 'Failed to load streams from backend proxy. Try switching sources.';
             }
         }
 
@@ -174,7 +168,6 @@
             if (match.daiUrl) return match.daiUrl;
             if (match.stream) return match.stream;
             
-            // Handle nested object formats (auto_streams, qualities, sources)
             const subObjects = [match.auto_streams, match.qualities, match.sources, match.stream_links];
             for (let obj of subObjects) {
                 if (obj && typeof obj === 'object') {
