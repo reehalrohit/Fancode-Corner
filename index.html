@@ -14,12 +14,10 @@
         
         .alert-banner { background-color: rgba(59, 130, 246, 0.1); border: 1px solid var(--blue); color: #bfdbfe; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 30px; font-size: 0.9rem; }
         .alert-banner a { color: var(--blue); font-weight: bold; text-decoration: none; }
-        .alert-banner a:hover { text-decoration: underline; }
-
+        
         #status { text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--text-muted); background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;}
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
         .card { background-color: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; transition: transform 0.2s; }
-        .card:hover { transform: translateY(-5px); }
         .card-img-container { width: 100%; height: 160px; background-color: #334155; position: relative; }
         .card-img { width: 100%; height: 100%; object-fit: cover; }
         .live-badge { position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; animation: pulse 2s infinite; }
@@ -27,31 +25,29 @@
         .match-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
         .button-group { display: flex; gap: 10px; margin-top: auto; }
-        .btn { flex: 1; display: block; text-align: center; background-color: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; text-decoration: none; font-size: 0.95rem; transition: 0.2s; }
-        .btn:hover { background-color: var(--accent-hover); }
+        .btn { flex: 1; display: block; text-align: center; background-color: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; text-decoration: none; font-size: 0.95rem; }
         .btn-blue { background-color: var(--blue); }
-        .btn-blue:hover { background-color: var(--blue-hover); }
         
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        /* Enhanced Telegram Pop-up Overlay */
+        /* Telegram Pop-up Overlay */
         #mz-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 15, 25, 0.85); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
         .mz-modal { background: linear-gradient(145deg, #1e293b, #0f172a); padding: 40px 30px; border-radius: 24px; text-align: center; border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), 0 0 30px rgba(42, 171, 238, 0.15); max-width: 90%; width: 360px; position: relative; overflow: hidden; }
         .mz-modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #2AABEE, #229ED9); }
-        
         .mz-icon { width: 64px; height: 64px; margin: 0 auto 20px; background: #2AABEE; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 10px 20px rgba(42, 171, 238, 0.3); }
         .mz-icon svg { width: 34px; height: 34px; fill: white; margin-right: 3px; margin-top: 2px; }
-        
         .mz-modal h2 { font-size: 1.2rem; margin-bottom: 8px; color: #cbd5e1; line-height: 1.4; font-weight: 600; letter-spacing: 0.5px; }
-        .mz-highlight { color: #f8fafc; font-weight: 800; font-size: 1.8rem; display: block; margin: 5px 0; letter-spacing: 1px; text-shadow: 0 2px 10px rgba(255,255,255,0.1); }
+        .mz-highlight { color: #f8fafc; font-weight: 800; font-size: 1.8rem; display: block; margin: 5px 0; letter-spacing: 1px; }
         .mz-modal p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px; }
-        
-        .mz-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background: #2AABEE; color: white; text-decoration: none; padding: 14px 40px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.3s; border: none; width: 100%; box-shadow: 0 4px 15px rgba(42, 171, 238, 0.4); }
-        .mz-btn svg { width: 20px; height: 20px; fill: white; }
-        .mz-btn:hover { background: #229ED9; transform: translateY(-3px); box-shadow: 0 8px 25px rgba(42, 171, 238, 0.6); }
+        .mz-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background: #2AABEE; color: white; text-decoration: none; padding: 14px 40px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; border: none; width: 100%; box-shadow: 0 4px 15px rgba(42, 171, 238, 0.4); }
     </style>
 </head>
 <body>
+    <!-- 1. Script Blocker Guard -->
+    <noscript>
+        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f172a;z-index:999999;display:flex;justify-content:center;align-items:center;color:#ef4444;text-align:center;padding:20px;">
+            <h2>🚨 JavaScript is disabled. Please enable scripts to use this site.</h2>
+        </div>
+    </noscript>
+
     <!-- Forced Pop-up -->
     <div id="mz-overlay">
         <div class="mz-modal">
@@ -67,50 +63,92 @@
         </div>
     </div>
 
-    <!-- Main Content (Hidden until click) -->
+    <!-- Main Content -->
     <div id="main-content" style="display: none;">
         <header>
             <h1>FanCode Corner</h1>
             <p>Live matches aggregated from community sources</p>
         </header>
-
         <div class="alert-banner">
-            💡 <strong>Note:</strong> Due to security restrictions, streams will not play in Chrome. Tap <strong>Open App</strong> to play seamlessly in <a href="https://play.google.com/store/apps/details?id=com.pratyush.nsplayer" target="_blank">NS Player</a>.
+            💡 <strong>Note:</strong> Tap <strong>Open App</strong> to play seamlessly in <a href="https://play.google.com/store/apps/details?id=com.pratyush.nsplayer" target="_blank">NS Player</a>.
         </div>
-        
         <div id="status">Connecting to server API...</div>
         <div class="grid" id="match-grid"></div>
     </div>
 
     <script>
-        const grid = document.getElementById('match-grid');
-        const status = document.getElementById('status');
-        const overlay = document.getElementById('mz-overlay');
-        const mainContent = document.getElementById('main-content');
-        const joinBtn = document.getElementById('mz-join-btn');
-        
+        let securityViolation = "";
         let unlocked = false;
 
-        // Unlock site and load API ONLY when the join button is specifically clicked
+        // 2. Adblocker / DNS Blocker CSS Bait
+        function testAdblocker() {
+            const bait = document.createElement('div');
+            bait.className = 'adsbox ad-placement doubleclick sponsor-ad';
+            bait.style.position = 'absolute';
+            bait.style.left = '-999px';
+            bait.style.height = '1px';
+            document.body.appendChild(bait);
+            
+            setTimeout(() => {
+                if (bait.offsetHeight === 0 || window.getComputedStyle(bait).display === 'none') {
+                    securityViolation = "🚨 Adblocker or DNS Blocker detected. Please disable it to access the site.";
+                }
+                bait.remove();
+            }, 600);
+        }
+
+        // 3. Network Scanner (Geo-block India ONLY & Anti-VPN)
+        async function testNetwork() {
+            try {
+                const res = await fetch('https://ipwhois.app/json/');
+                if (!res.ok) throw new Error("Fetch failed");
+                const data = await res.json();
+                
+                if (data.country_code !== 'IN') {
+                    securityViolation = `🚨 Access Denied. This site is restricted to India only. (Detected: ${data.country || 'Unknown'})`;
+                } else if (data.security && (data.security.vpn || data.security.proxy || data.security.tor)) {
+                    securityViolation = "🚨 VPN or Proxy detected. Please disable your VPN to access the site.";
+                }
+            } catch (error) {
+                // If the fetch fails entirely, it means a DNS sinkhole (like AdGuard) blocked the tracking API.
+                securityViolation = "🚨 Network check failed. Please disable your DNS Adblocker or VPN.";
+            }
+        }
+
+        testAdblocker();
+        testNetwork();
+
+        // Standard UI Flow
+        const joinBtn = document.getElementById('mz-join-btn');
         joinBtn.addEventListener('click', () => {
             window.open('https://t.me/modzone01', '_blank');
-            overlay.style.display = 'none';
-            mainContent.style.display = 'block';
+            document.getElementById('mz-overlay').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
             unlocked = true;
             fetchStreams();
         });
 
-        // Anti-Adblock & Anti-Bypass Guard
+        // 4. The Master Guard Loop
+        // Checks every 500ms to ensure the user didn't bypass the pop-up or fail a security scan
         setInterval(() => {
-            if (!unlocked && !document.getElementById('mz-overlay')) {
-                document.body.innerHTML = '<h2 style="color:#ef4444; text-align:center; margin-top:100px; font-family:sans-serif;">Access Denied. Please disable adblockers and do not block the pop-up.</h2>';
+            if (securityViolation) {
+                document.body.innerHTML = `<div style="background:#0f172a;height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;text-align:center;"><h2 style="color:#ef4444;font-family:system-ui;font-weight:bold;">${securityViolation}</h2></div>`;
+                return;
             }
-        }, 1000);
+            
+            if (!unlocked && !document.getElementById('mz-overlay')) {
+                document.body.innerHTML = '<div style="background:#0f172a;height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;text-align:center;"><h2 style="color:#ef4444;font-family:system-ui;font-weight:bold;">🚨 Access Denied. Do not attempt to bypass the Telegram verification.</h2></div>';
+            }
+        }, 500);
 
+        // Standard Fetch Logic
         async function fetchStreams() {
+            if (securityViolation) return;
             try {
                 const res = await fetch('/api/streams');
                 const data = await res.json();
+                const grid = document.getElementById('match-grid');
+                const status = document.getElementById('status');
 
                 if (data.status !== 'success' || !data.matches || data.matches.length === 0) {
                     status.style.display = 'block';
@@ -124,19 +162,12 @@
                 data.matches.forEach((match) => {
                     const card = document.createElement('div');
                     card.className = 'card';
-                    
-                    const imgTag = match.src_image 
-                        ? `<img src="${match.src_image}" alt="Thumbnail" class="card-img" onerror="this.style.display='none'">` 
-                        : '';
-
+                    const imgTag = match.src_image ? `<img src="${match.src_image}" class="card-img" onerror="this.style.display='none'">` : '';
                     const cleanUrl = match.stream_url.replace(/^https?:\/\//, '');
                     const intentUrl = `intent://${cleanUrl}#Intent;action=android.intent.action.VIEW;scheme=https;type=application/x-mpegURL;end;`;
 
                     card.innerHTML = `
-                        <div class="card-img-container">
-                            ${imgTag}
-                            <div class="live-badge">LIVE</div>
-                        </div>
+                        <div class="card-img-container">${imgTag}<div class="live-badge">LIVE</div></div>
                         <div class="card-content">
                             <div class="match-title">${match.title}</div>
                             <div class="button-group">
@@ -148,16 +179,12 @@
                     grid.appendChild(card);
                 });
             } catch (err) {
-                status.textContent = 'Failed to load streams from API. Please try again later.';
+                document.getElementById('status').textContent = 'Failed to load streams from API.';
             }
         }
 
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Link Copied! Open NS Player or Televizo and paste the link to play.');
-            }).catch(() => {
-                alert('Failed to copy. URL: ' + text);
-            });
+            navigator.clipboard.writeText(text).then(() => alert('Link Copied!')).catch(() => alert('Failed to copy.'));
         }
     </script>
 </body>
