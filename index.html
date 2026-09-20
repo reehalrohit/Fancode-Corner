@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- This meta tag hides your Vercel domain, tricking FanCode into unblocking their images -->
     <meta name="referrer" content="no-referrer">
     <title>FanCode Corner | Live Sports</title>
     <style>
@@ -47,8 +46,6 @@
         .block-card p { color: #cbd5e1; font-size: 0.95rem; margin-bottom: 20px; text-align: center; }
         .fix-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; color: #94a3b8; font-size: 0.9rem; line-height: 1.6; border-left: 4px solid #ef4444; }
         .fix-box b { color: #f8fafc; }
-        
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -231,22 +228,22 @@
                     const card = document.createElement('div');
                     card.className = 'card';
                     
-                    // Fallback Stadium Image for when FanCode blocks the image or JSON leaves it out
                     const fallbackImg = 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=600&q=80';
                     const imgUrl = match.src_image ? match.src_image : fallbackImg;
-                    
-                    // If FanCode image still fails to load, the onerror event replaces it with the stadium fallback instantly
                     const imgTag = `<img src="${imgUrl}" class="card-img" onerror="this.onerror=null; this.src='${fallbackImg}';">`;
                     
                     const cleanUrl = match.stream_url.replace(/^https?:\/\//, '');
-                    const intentUrl = `intent://${cleanUrl}#Intent;action=android.intent.action.VIEW;scheme=https;type=application/x-mpegURL;end;`;
+                    
+                    // STRIPPED: 'type=application/x-mpegURL' is deleted so Android doesn't default to VLC.
+                    // It will now ONLY look for the NS Player package name.
+                    const intentUrl = `intent://${cleanUrl}#Intent;package=com.pratyush.nsplayer;action=android.intent.action.VIEW;scheme=https;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.pratyush.nsplayer;end;`;
 
                     card.innerHTML = `
                         <div class="card-img-container">${imgTag}<div class="live-badge">LIVE</div></div>
                         <div class="card-content">
                             <div class="match-title">${match.title}</div>
                             <div class="button-group">
-                                <a href="${intentUrl}" class="btn">▶ Open App</a>
+                                <button class="btn" onclick="window.location.href='${intentUrl}'">▶ Open App</button>
                                 <button class="btn btn-blue" onclick="copyToClipboard('${match.stream_url}')">📋 Copy</button>
                             </div>
                         </div>
