@@ -10,36 +10,31 @@ export default async function handler(req, res) {
             sources.map(s => fetch(s.url + "?t=" + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null))
         );
 
-        // Added parentKey to remember the match name if the data is nested inside it
         const extract = (obj, sourceName, parentKey = 'Live Event') => {
             if (!obj) return;
-            
             if (Array.isArray(obj)) {
                 obj.forEach((item, index) => extract(item, sourceName, `Match ${index + 1}`));
                 return;
             }
-            
             if (typeof obj === 'object') {
-                // Look for the new 'stream_link' and 'banner' keys
                 const url = obj.stream_url || obj.stream_link || obj.url || obj.link || obj.m3u8 || obj.file || obj.stream;
                 const title = obj.title || obj.event_name || obj.name || obj.match_name || parentKey;
                 const img = obj.image || obj.poster || obj.thumbnail || obj.banner || obj.logo || obj.src_image || null;
                 
-                if (url && typeof url === 'string' && url.includes('.m3u8')) {
+                // EXCLUDE dai.google.com ad links entirely
+                if (url && typeof url === 'string' && url.includes('.m3u8') && !url.includes('dai.google.com')) {
                     allMatches.push({ title, stream_url: url, src_image: img, source: sourceName });
                 } else {
                     for (const [key, value] of Object.entries(obj)) {
-                        if (typeof value === 'string' && value.includes('.m3u8')) {
-                            // If the key is a generic technical word, use the parent's name for the title
+                        if (typeof value === 'string' && value.includes('.m3u8') && !value.includes('dai.google.com')) {
                             if (['stream_url', 'stream_link', 'url', 'link', 'm3u8', 'file', 'stream'].includes(key)) {
                                 allMatches.push({ title: parentKey, stream_url: value, src_image: img, source: sourceName });
                             } 
-                            // Otherwise, use the key itself as the title (excluding junk keys)
-                            else if (!['generated_by', 'banner', 'team_1_flag', 'team_2_flag'].includes(key)) {
+                            // Add dai_url and ad_url to the strict blocklist
+                            else if (!['generated_by', 'banner', 'team_1_flag', 'team_2_flag', 'dai_url', 'ad_url'].includes(key)) {
                                 allMatches.push({ title: key, stream_url: value, src_image: img, source: sourceName });
                             }
                         } else if (typeof value === 'object') {
-                            // Pass the current key name down to the next level (unless it's just a number like "0")
                             extract(value, sourceName, isNaN(key) ? key : parentKey);
                         }
                     }
