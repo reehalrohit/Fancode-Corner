@@ -6,16 +6,22 @@
     <meta name="referrer" content="no-referrer">
     <title>FanCode Corner | Live Sports</title>
     <style>
-        :root { --bg: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #22c55e; --blue: #3b82f6; }
+        :root { --bg: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #22c55e; --blue: #3b82f6; --purple: #8b5cf6; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: system-ui, sans-serif; background-color: var(--bg); color: var(--text-main); line-height: 1.5; padding: 20px; }
         header { text-align: center; margin-bottom: 20px; }
         h1 { font-size: 2rem; margin-bottom: 5px; background: -webkit-linear-gradient(#3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         p { color: var(--text-muted); font-size: 0.95rem; }
         
-        .alert-banner { background-color: rgba(59, 130, 246, 0.1); border: 1px solid var(--blue); color: #bfdbfe; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 25px; font-size: 0.9rem; }
+        .alert-banner { background-color: rgba(59, 130, 246, 0.1); border: 1px solid var(--blue); color: #bfdbfe; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 0.9rem; }
         .alert-banner a { color: var(--blue); font-weight: bold; text-decoration: none; }
         
+        /* Source Selector Bar */
+        .source-bar { display: flex; justify-content: center; gap: 12px; margin-bottom: 15px; }
+        .source-btn { background: #1e293b; color: var(--text-muted); border: 1px solid #334155; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: 0.2s; }
+        .source-btn.active { background: var(--purple); color: white; border-color: var(--purple); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
+
+        /* Category Filter Styles */
         .filter-bar { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
         .filter-bar::-webkit-scrollbar { display: none; }
         .filter-btn { background: var(--card-bg); color: var(--text-muted); border: 1px solid #334155; padding: 8px 18px; border-radius: 20px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.2s; font-size: 0.9rem; }
@@ -78,6 +84,13 @@
             💡 <strong>Note:</strong> Tap <strong>Open App</strong> to play seamlessly in <a href="https://play.google.com/store/apps/details?id=com.genuine.leone" target="_blank">NS Player</a>.
         </div>
 
+        <!-- Source Selector Toggle -->
+        <div class="source-bar">
+            <button id="src-drm" class="source-btn active" onclick="switchSource('drmlive', this)">Source 1: DRM Live</button>
+            <button id="src-byte" class="source-btn" onclick="switchSource('bytecapsule', this)">Source 2: Byte-Capsule</button>
+        </div>
+
+        <!-- Filter Bar -->
         <div class="filter-bar" id="filter-bar">
             <button class="filter-btn active" onclick="applyFilter('All', this)">All Live</button>
             <button class="filter-btn" onclick="applyFilter('Cricket', this)">Cricket 🏏</button>
@@ -92,6 +105,8 @@
 
     <script>
         let globalMatches = [];
+        let currentSource = 'drmlive';
+        let activeCategory = 'All';
         const DAILY_PASSCODE = "MODZONE2026";
 
         const submitBtn = document.getElementById('mz-submit-btn');
@@ -106,37 +121,53 @@
             if (passcode === DAILY_PASSCODE) {
                 document.getElementById('mz-overlay').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
-                fetchStreams();
+                fetchStreams(currentSource);
             } else {
                 errorMsg.style.display = 'block';
                 passInput.style.borderColor = '#ef4444';
             }
         }
 
-        async function fetchStreams() {
-            try {
-                const res = await fetch('https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json');
-                const data = await res.json();
-                const status = document.getElementById('status');
+        function switchSource(sourceName, btnElement) {
+            document.querySelectorAll('.source-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            currentSource = sourceName;
+            fetchStreams(currentSource);
+        }
 
+        async function fetchStreams(source) {
+            const status = document.getElementById('status');
+            const grid = document.getElementById('match-grid');
+            status.style.display = 'block';
+            status.textContent = `Connecting to ${source === 'drmlive' ? 'Source 1 (DRM Live)' : 'Source 2 (Byte-Capsule)'}...`;
+            grid.innerHTML = '';
+
+            let url = source === 'drmlive' 
+                ? 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json'
+                : 'https://raw.githubusercontent.com/byte-capsule/FanCode-Live/main/fancode.json';
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
                 const matches = data.matches || data;
+
                 if (!res.ok || !matches || matches.length === 0) {
-                    status.style.display = 'block';
-                    status.textContent = 'No live matches found at the moment.';
+                    status.textContent = 'No live matches found from this source.';
                     return;
                 }
 
                 status.style.display = 'none';
                 globalMatches = matches;
-                renderGrid(globalMatches);
+                applyFilter(activeCategory, document.querySelector('.filter-btn.active'));
             } catch (err) {
-                document.getElementById('status').textContent = 'Failed to load streams from API.';
+                status.textContent = 'Failed to load streams from this source. Try switching sources.';
             }
         }
 
         function applyFilter(category, clickedBtn) {
+            activeCategory = category;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            clickedBtn.classList.add('active');
+            if (clickedBtn) clickedBtn.classList.add('active');
 
             let filtered = [];
             if (category === 'All') {
@@ -174,7 +205,6 @@
                 card.className = 'card';
                 
                 const matchTitle = match.title || match.match_name || 'Live Event';
-                // FIXED: Check all possible key names for stream URLs used in drmlive mirrors
                 const streamUrl = match.url || match.stream_url || match.link || match.daiUrl || '';
                 
                 const fallbackImg = 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=600&q=80';
