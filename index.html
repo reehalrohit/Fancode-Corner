@@ -16,12 +16,10 @@
         .alert-banner { background-color: rgba(59, 130, 246, 0.1); border: 1px solid var(--blue); color: #bfdbfe; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 0.9rem; }
         .alert-banner a { color: var(--blue); font-weight: bold; text-decoration: none; }
         
-        /* Source Selector Bar */
         .source-bar { display: flex; justify-content: center; gap: 12px; margin-bottom: 15px; }
         .source-btn { background: #1e293b; color: var(--text-muted); border: 1px solid #334155; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: 0.2s; }
         .source-btn.active { background: var(--purple); color: white; border-color: var(--purple); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
 
-        /* Category Filter Styles */
         .filter-bar { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
         .filter-bar::-webkit-scrollbar { display: none; }
         .filter-btn { background: var(--card-bg); color: var(--text-muted); border: 1px solid #334155; padding: 8px 18px; border-radius: 20px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.2s; font-size: 0.9rem; }
@@ -84,13 +82,11 @@
             💡 <strong>Note:</strong> Tap <strong>Open App</strong> to play seamlessly in <a href="https://play.google.com/store/apps/details?id=com.genuine.leone" target="_blank">NS Player</a>.
         </div>
 
-        <!-- Source Selector Toggle -->
         <div class="source-bar">
             <button id="src-drm" class="source-btn active" onclick="switchSource('drmlive', this)">Source 1: DRM Live</button>
             <button id="src-byte" class="source-btn" onclick="switchSource('bytecapsule', this)">Source 2: Byte-Capsule</button>
         </div>
 
-        <!-- Filter Bar -->
         <div class="filter-bar" id="filter-bar">
             <button class="filter-btn active" onclick="applyFilter('All', this)">All Live</button>
             <button class="filter-btn" onclick="applyFilter('Cricket', this)">Cricket 🏏</button>
@@ -149,10 +145,18 @@
             try {
                 const res = await fetch(url);
                 const data = await res.json();
-                const matches = data.matches || data;
+                let matches = data.matches || data;
 
                 if (!res.ok || !matches || matches.length === 0) {
-                    status.textContent = 'No live matches found from this source.';
+                    status.textContent = 'No live matches found from this source. Try switching sources.';
+                    return;
+                }
+
+                // Filter out items that don't have any valid stream link property
+                matches = matches.filter(m => m.url || m.stream_url || m.link || m.daiUrl || m.stream);
+
+                if (matches.length === 0) {
+                    status.textContent = 'No active streams available in this source right now.';
                     return;
                 }
 
@@ -205,7 +209,7 @@
                 card.className = 'card';
                 
                 const matchTitle = match.title || match.match_name || 'Live Event';
-                const streamUrl = match.url || match.stream_url || match.link || match.daiUrl || '';
+                const streamUrl = match.url || match.stream_url || match.link || match.daiUrl || match.stream || '';
                 
                 const fallbackImg = 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=600&q=80';
                 const imgUrl = match.src_image || match.image || fallbackImg;
