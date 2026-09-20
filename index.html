@@ -152,7 +152,7 @@
                 const res = await fetch(url);
                 const data = await res.json();
                 
-                let matches = Array.isArray(data) ? data : (data.matches || data.events || []);
+                let matches = Array.isArray(data) ? data : (data.matches || data.events || data.data || []);
 
                 if (!res.ok || !matches || matches.length === 0) {
                     status.textContent = 'No live matches found from this source. Try switching sources.';
@@ -174,16 +174,17 @@
             if (match.daiUrl) return match.daiUrl;
             if (match.stream) return match.stream;
             
-            // Handle Kajju / nested auto_streams formats if present
-            if (match.auto_streams) {
-                const keys = Object.keys(match.auto_streams);
-                if (keys.length > 0 && typeof match.auto_streams[keys[0]] === 'string') {
-                    return match.auto_streams[keys[0]];
+            // Handle nested object formats (auto_streams, qualities, sources)
+            const subObjects = [match.auto_streams, match.qualities, match.sources, match.stream_links];
+            for (let obj of subObjects) {
+                if (obj && typeof obj === 'object') {
+                    const keys = Object.keys(obj);
+                    if (keys.length > 0) {
+                        const val = obj[keys[0]];
+                        if (typeof val === 'string' && val.startsWith('http')) return val;
+                        if (val && typeof val === 'object' && val.url) return val.url;
+                    }
                 }
-            }
-            if (match.qualities) {
-                const qKeys = Object.keys(match.qualities);
-                if (qKeys.length > 0) return match.qualities[qKeys[0]];
             }
             return '';
         }
@@ -232,7 +233,7 @@
                 const streamUrl = extractStreamUrl(match);
                 
                 const fallbackImg = 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=600&q=80';
-                const imgUrl = match.src_image || match.image || fallbackImg;
+                const imgUrl = match.src_image || match.image || match.poster || fallbackImg;
                 const imgTag = `<img src="${imgUrl}" class="card-img" onerror="this.onerror=null; this.src='${fallbackImg}';">`;
                 
                 const cleanUrl = streamUrl ? streamUrl.replace(/^https?:\/\//, '') : '';
