@@ -8,9 +8,14 @@
         :root { --bg: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #22c55e; --accent-hover: #16a34a; --blue: #3b82f6; --blue-hover: #2563eb; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: system-ui, sans-serif; background-color: var(--bg); color: var(--text-main); line-height: 1.5; padding: 20px; }
-        header { text-align: center; margin-bottom: 30px; }
+        header { text-align: center; margin-bottom: 20px; }
         h1 { font-size: 2rem; margin-bottom: 5px; background: -webkit-linear-gradient(#3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         p { color: var(--text-muted); font-size: 0.95rem; }
+        
+        .alert-banner { background-color: rgba(59, 130, 246, 0.1); border: 1px solid var(--blue); color: #bfdbfe; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 30px; font-size: 0.9rem; }
+        .alert-banner a { color: var(--blue); font-weight: bold; text-decoration: none; }
+        .alert-banner a:hover { text-decoration: underline; }
+
         #status { text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--text-muted); background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;}
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
         .card { background-color: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; transition: transform 0.2s; }
@@ -21,9 +26,8 @@
         .card-content { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
         .match-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
-        /* New Dual Button Styles */
         .button-group { display: flex; gap: 10px; margin-top: auto; }
-        .btn { flex: 1; display: block; text-align: center; background-color: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; text-decoration: none; font-size: 0.95rem; }
+        .btn { flex: 1; display: block; text-align: center; background-color: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; text-decoration: none; font-size: 0.95rem; transition: 0.2s; }
         .btn:hover { background-color: var(--accent-hover); }
         .btn-blue { background-color: var(--blue); }
         .btn-blue:hover { background-color: var(--blue-hover); }
@@ -36,6 +40,10 @@
         <h1>FanCode Corner</h1>
         <p>Live matches aggregated from community sources</p>
     </header>
+
+    <div class="alert-banner">
+        💡 <strong>Note:</strong> Due to security restrictions, streams will not play in Chrome. Tap <strong>Open App</strong> to play seamlessly in <a href="https://play.google.com/store/apps/details?id=com.pratyush.nsplayer" target="_blank">NS Player</a>.
+    </div>
     
     <div id="status">Connecting to server API...</div>
     <div class="grid" id="match-grid"></div>
@@ -66,7 +74,6 @@
                         ? `<img src="${match.src_image}" alt="Thumbnail" class="card-img" onerror="this.style.display='none'">` 
                         : '';
 
-                    // Fixed Android Intent: Added 'action' and explicit MIME type so Android knows it's a video stream
                     const cleanUrl = match.stream_url.replace(/^https?:\/\//, '');
                     const intentUrl = `intent://${cleanUrl}#Intent;action=android.intent.action.VIEW;scheme=https;type=application/x-mpegURL;end;`;
 
@@ -92,7 +99,7 @@
 
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                alert('Link Copied! Open Televizo, NS Player, or VLC and paste the link to play.');
+                alert('Link Copied! Open NS Player or Televizo and paste the link to play.');
             }).catch(() => {
                 alert('Failed to copy. URL: ' + text);
             });
