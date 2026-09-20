@@ -92,7 +92,7 @@
 
     <script>
         let globalMatches = [];
-        const DAILY_PASSCODE = "MODZONE2026"; // Change your daily passcode here
+        const DAILY_PASSCODE = "MODZONE2026";
 
         const submitBtn = document.getElementById('mz-submit-btn');
         const passInput = document.getElementById('mz-pass-input');
@@ -115,7 +115,8 @@
 
         async function fetchStreams() {
             try {
-                const res = await fetch('https://raw.githubusercontent.com/byte-capsule/FanCode-Live/main/fancode.json');
+                // Switched to stable active mirror endpoint
+                const res = await fetch('https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json');
                 const data = await res.json();
                 const status = document.getElementById('status');
 
@@ -143,10 +144,12 @@
                 filtered = globalMatches;
             } else {
                 filtered = globalMatches.filter(match => {
-                    const title = match.title.toLowerCase();
-                    const isCricket = /(t20|odi|test|tour|trophy|blast|league|kcc|tnpl|ipl|bbl|cricket)/i.test(title) && !/(efl|fc |championship)/i.test(title);
-                    const isFootball = /(efl|championship|fc|united|city|premier|liga|soccer|football|copa)/i.test(title);
-                    const isRacing = /(grand prix|f1|formula|racing|motogp|nascar)/i.test(title);
+                    const title = (match.title || match.match_name || '').toLowerCase();
+                    const categoryField = (match.event_category || match.category || '').toLowerCase();
+                    
+                    const isCricket = categoryField.includes('cricket') || /(t20|odi|test|tour|trophy|blast|league|kcc|tnpl|ipl|bbl|cricket)/i.test(title);
+                    const isFootball = categoryField.includes('football') || /(efl|championship|fc|united|city|premier|liga|soccer|football|copa)/i.test(title);
+                    const isRacing = categoryField.includes('racing') || /(grand prix|f1|formula|racing|motogp|nascar)/i.test(title);
 
                     if (category === 'Cricket') return isCricket;
                     if (category === 'Football') return isFootball;
@@ -171,20 +174,23 @@
                 const card = document.createElement('div');
                 card.className = 'card';
                 
+                const matchTitle = match.title || match.match_name || 'Live Event';
+                const streamUrl = match.stream_url || match.url || match.link || '';
+                
                 const fallbackImg = 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=600&q=80';
-                const imgUrl = match.src_image ? match.src_image : fallbackImg;
+                const imgUrl = match.src_image || match.image || fallbackImg;
                 const imgTag = `<img src="${imgUrl}" class="card-img" onerror="this.onerror=null; this.src='${fallbackImg}';">`;
                 
-                const cleanUrl = match.stream_url.replace(/^https?:\/\//, '');
+                const cleanUrl = streamUrl.replace(/^https?:\/\//, '');
                 const intentUrl = `intent://${cleanUrl}#Intent;package=com.genuine.leone;action=android.intent.action.VIEW;scheme=https;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.genuine.leone;end;`;
 
                 card.innerHTML = `
                     <div class="card-img-container">${imgTag}<div class="live-badge">LIVE</div></div>
                     <div class="card-content">
-                        <div class="match-title">${match.title}</div>
+                        <div class="match-title">${matchTitle}</div>
                         <div class="button-group">
                             <button class="btn" onclick="window.location.href='${intentUrl}'">▶ Open App</button>
-                            <button class="btn btn-blue" onclick="copyToClipboard('${match.stream_url}')">📋 Copy</button>
+                            <button class="btn btn-blue" onclick="copyToClipboard('${streamUrl}')">📋 Copy</button>
                         </div>
                     </div>
                 `;
@@ -200,6 +206,10 @@
         }
 
         function copyToClipboard(text) {
+            if (!text) {
+                showToast('❌ No stream link available.');
+                return;
+            }
             navigator.clipboard.writeText(text).then(() => {
                 showToast('✅ Stream link copied to clipboard!');
             }).catch(() => {
