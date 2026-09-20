@@ -41,14 +41,14 @@
     </style>
 </head>
 <body>
-    <!-- 1. Script Blocker Guard -->
+    <!-- JavaScript Blocker Guard -->
     <noscript>
         <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f172a;z-index:999999;display:flex;justify-content:center;align-items:center;color:#ef4444;text-align:center;padding:20px;">
             <h2>🚨 JavaScript is disabled. Please enable scripts to use this site.</h2>
         </div>
     </noscript>
 
-    <!-- Forced Pop-up -->
+    <!-- Telegram Pop-up -->
     <div id="mz-overlay">
         <div class="mz-modal">
             <div class="mz-icon">
@@ -80,45 +80,25 @@
         let securityViolation = "";
         let unlocked = false;
 
-        // 2. Adblocker / DNS Blocker CSS Bait
-        function testAdblocker() {
-            const bait = document.createElement('div');
-            bait.className = 'adsbox ad-placement doubleclick sponsor-ad';
-            bait.style.position = 'absolute';
-            bait.style.left = '-999px';
-            bait.style.height = '1px';
-            document.body.appendChild(bait);
-            
-            setTimeout(() => {
-                if (bait.offsetHeight === 0 || window.getComputedStyle(bait).display === 'none') {
-                    securityViolation = "🚨 Adblocker or DNS Blocker detected. Please disable it to access the site.";
-                }
-                bait.remove();
-            }, 600);
-        }
-
-        // 3. Network Scanner (Geo-block India ONLY & Anti-VPN)
+        // Balanced Network Scanner: Checks for VPN and India IP. 
+        // If an adblocker blocks this request, it silently fails open instead of locking the site.
         async function testNetwork() {
             try {
-                const res = await fetch('https://ipwhois.app/json/');
-                if (!res.ok) throw new Error("Fetch failed");
+                const res = await fetch('https://ipwhois.app/json/', { cache: 'no-store' });
                 const data = await res.json();
                 
-                if (data.country_code !== 'IN') {
-                    securityViolation = `🚨 Access Denied. This site is restricted to India only. (Detected: ${data.country || 'Unknown'})`;
+                if (data.country_code && data.country_code !== 'IN') {
+                    securityViolation = `🚨 Access Denied. This site is restricted to India only.`;
                 } else if (data.security && (data.security.vpn || data.security.proxy || data.security.tor)) {
-                    securityViolation = "🚨 VPN or Proxy detected. Please disable your VPN to access the site.";
+                    securityViolation = "🚨 VPN or Proxy detected. Please disable it to access the site.";
                 }
             } catch (error) {
-                // If the fetch fails entirely, it means a DNS sinkhole (like AdGuard) blocked the tracking API.
-                securityViolation = "🚨 Network check failed. Please disable your DNS Adblocker or VPN.";
+                console.log("Network check bypassed by client browser.");
             }
         }
-
-        testAdblocker();
+        
         testNetwork();
 
-        // Standard UI Flow
         const joinBtn = document.getElementById('mz-join-btn');
         joinBtn.addEventListener('click', () => {
             window.open('https://t.me/modzone01', '_blank');
@@ -128,20 +108,17 @@
             fetchStreams();
         });
 
-        // 4. The Master Guard Loop
-        // Checks every 500ms to ensure the user didn't bypass the pop-up or fail a security scan
+        // Anti-Inspect Element Guard
         setInterval(() => {
             if (securityViolation) {
                 document.body.innerHTML = `<div style="background:#0f172a;height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;text-align:center;"><h2 style="color:#ef4444;font-family:system-ui;font-weight:bold;">${securityViolation}</h2></div>`;
                 return;
             }
-            
             if (!unlocked && !document.getElementById('mz-overlay')) {
                 document.body.innerHTML = '<div style="background:#0f172a;height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;text-align:center;"><h2 style="color:#ef4444;font-family:system-ui;font-weight:bold;">🚨 Access Denied. Do not attempt to bypass the Telegram verification.</h2></div>';
             }
         }, 500);
 
-        // Standard Fetch Logic
         async function fetchStreams() {
             if (securityViolation) return;
             try {
