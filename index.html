@@ -36,18 +36,26 @@
         .btn { flex: 1; display: block; text-align: center; background-color: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; text-decoration: none; font-size: 0.95rem; }
         .btn-blue { background-color: var(--blue); }
         
-        /* Telegram Pop-up Overlay */
-        #mz-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 15, 25, 0.85); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-        .mz-modal { background: linear-gradient(145deg, #1e293b, #0f172a); padding: 40px 30px; border-radius: 24px; text-align: center; border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), 0 0 30px rgba(42, 171, 238, 0.15); max-width: 90%; width: 360px; position: relative; overflow: hidden; }
+        /* Hardened Passcode Modal Overlay */
+        #mz-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 15, 25, 0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        .mz-modal { background: linear-gradient(145deg, #1e293b, #0f172a); padding: 35px 25px; border-radius: 24px; text-align: center; border: 1px solid rgba(59, 130, 246, 0.3); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); max-width: 90%; width: 380px; position: relative; overflow: hidden; }
         .mz-modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #2AABEE, #229ED9); }
-        .mz-icon { width: 64px; height: 64px; margin: 0 auto 20px; background: #2AABEE; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 10px 20px rgba(42, 171, 238, 0.3); }
-        .mz-icon svg { width: 34px; height: 34px; fill: white; margin-right: 3px; margin-top: 2px; }
-        .mz-modal h2 { font-size: 1.2rem; margin-bottom: 8px; color: #cbd5e1; line-height: 1.4; font-weight: 600; letter-spacing: 0.5px; }
-        .mz-highlight { color: #f8fafc; font-weight: 800; font-size: 1.8rem; display: block; margin: 5px 0; letter-spacing: 1px; }
-        .mz-modal p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px; }
-        .mz-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background: #2AABEE; color: white; text-decoration: none; padding: 14px 40px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; border: none; width: 100%; box-shadow: 0 4px 15px rgba(42, 171, 238, 0.4); }
-        
-        /* Security Block Card */
+        .mz-icon { width: 54px; height: 54px; margin: 0 auto 15px; background: #2AABEE; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 10px 20px rgba(42, 171, 238, 0.3); }
+        .mz-icon svg { width: 28px; height: 28px; fill: white; margin-left: 2px; }
+        .mz-modal h2 { font-size: 1.1rem; margin-bottom: 5px; color: #cbd5e1; font-weight: 600; }
+        .mz-highlight { color: #f8fafc; font-weight: 800; font-size: 1.5rem; display: block; margin: 2px 0 15px; }
+        .mz-input { width: 100%; padding: 12px; background: rgba(0,0,0,0.4); border: 1px solid #334155; border-radius: 8px; color: white; font-size: 1rem; text-align: center; margin-bottom: 12px; outline: none; transition: 0.2s; }
+        .mz-input:focus { border-color: #2AABEE; box-shadow: 0 0 10px rgba(42,171,238,0.2); }
+        .mz-btn { display: block; background: #2AABEE; color: white; text-decoration: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; border: none; width: 100%; transition: 0.2s; margin-bottom: 10px; }
+        .mz-btn:hover { background: #229ED9; }
+        .mz-link { color: #38bdf8; font-size: 0.85rem; text-decoration: none; display: inline-block; margin-top: 5px; }
+        .mz-link:hover { text-decoration: underline; }
+        .error-msg { color: #ef4444; font-size: 0.85rem; margin-top: 8px; display: none; }
+
+        /* Custom Toast Notification */
+        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #1e293b; color: #f8fafc; padding: 12px 24px; border-radius: 30px; border: 1px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10000; font-size: 0.95rem; font-weight: 600; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 8px; pointer-events: none; }
+        #toast.show { transform: translateX(-50%) translateY(0); }
+
         .block-card { background: var(--card-bg); padding: 30px; border-radius: 16px; border: 1px solid #ef4444; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.2); max-width: 420px; width: 90%; text-align: left; font-family: system-ui, sans-serif; }
         .block-card h2 { color: #ef4444; margin-bottom: 10px; font-size: 1.4rem; text-align: center; }
         .block-card p { color: #cbd5e1; font-size: 0.95rem; margin-bottom: 20px; text-align: center; }
@@ -60,24 +68,26 @@
         <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f172a;z-index:999999;display:flex;justify-content:center;align-items:center;">
             <div class="block-card">
                 <h2>🚨 JavaScript Disabled</h2>
-                <p>Your browser is blocking the scripts required to run this site securely.</p>
-                <div class="fix-box"><strong>How to fix:</strong><br>1. Check your browser's site settings.<br>2. Enable JavaScript for this website.</div>
+                <p>Your browser is blocking scripts required to run this site.</p>
             </div>
         </div>
     </noscript>
 
-    <!-- Telegram Pop-up -->
+    <!-- Custom Toast Notification Container -->
+    <div id="toast">✅ Link copied to clipboard!</div>
+
+    <!-- Hardened Passcode Overlay -->
     <div id="mz-overlay">
         <div class="mz-modal">
             <div class="mz-icon">
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.12.03-1.96 1.25-5.54 3.67-.52.36-.99.53-1.41.52-.46-.01-1.35-.26-2.01-.48-.81-.27-1.46-.42-1.4-.88.03-.23.35-.47.96-.73 3.76-1.64 6.27-2.72 7.52-3.24 3.57-1.48 4.32-1.74 4.81-1.75.11 0 .35.03.48.14.11.09.14.22.15.33-.01.03-.01.12 0 .17z"/></svg>
             </div>
-            <h2>Created By<span class="mz-highlight">MODZONE</span>Telegram Channel</h2>
-            <p>Join the channel to unlock live streams</p>
-            <button id="mz-join-btn" class="mz-btn">
-                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                JOIN NOW
-            </button>
+            <h2>Enter Daily Passcode From</h2>
+            <span class="mz-highlight">MODZONE</span>
+            <input type="text" id="mz-pass-input" class="mz-input" placeholder="Enter Passcode..." autocomplete="off">
+            <button id="mz-submit-btn" class="mz-btn">UNLOCK SITE</button>
+            <div id="mz-error" class="error-msg">❌ Incorrect Passcode! Check Telegram channel.</div>
+            <a href="https://t.me/modzone01" target="_blank" class="mz-link">📢 Get Passcode on Telegram (@modzone01)</a>
         </div>
     </div>
 
@@ -92,7 +102,6 @@
             💡 <strong>Note:</strong> Tap <strong>Open App</strong> to play seamlessly in <a href="https://play.google.com/store/apps/details?id=com.genuine.leone" target="_blank">NS Player</a>.
         </div>
 
-        <!-- Filter Bar -->
         <div class="filter-bar" id="filter-bar">
             <button class="filter-btn active" onclick="applyFilter('All', this)">All Live</button>
             <button class="filter-btn" onclick="applyFilter('Cricket', this)">Cricket 🏏</button>
@@ -108,7 +117,10 @@
     <script>
         let securityViolation = "";
         let unlocked = false;
-        let globalMatches = []; // Store fetched matches globally for filtering
+        let globalMatches = [];
+
+        // CHANGE YOUR DAILY PASSCODE HERE
+        const DAILY_PASSCODE = "MODZONE2026"; 
 
         function triggerLockdown(htmlContent) {
             if (securityViolation) return;
@@ -118,19 +130,7 @@
 
         async function testDNSHoneypot() {
             try { await fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', { mode: 'no-cors', cache: 'no-store' }); } 
-            catch (error) { triggerLockdown(`<div class="block-card"><h2>🚨 Private DNS / Adblocker Detected</h2><p>Your network is actively blocking standard web requests.</p><div class="fix-box"><strong>How to fix:</strong><br>1. Go to Android Settings > Network & Internet > <b>Private DNS</b> and set it to <b>Off</b>.<br>2. Turn off <b>Browser Shields</b> or AdGuard.<br></div><button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button></div>`); }
-        }
-
-        function testCSSAdblock() {
-            const bait = document.createElement('div');
-            bait.innerHTML = '&nbsp;'; bait.className = 'adsbox ad-placement doubleclick sponsor-ad'; bait.style.position = 'absolute'; bait.style.top = '-9999px';
-            document.body.appendChild(bait);
-            setTimeout(() => {
-                if (bait.offsetHeight === 0 || window.getComputedStyle(bait).display === 'none') {
-                    triggerLockdown(`<div class="block-card"><h2>🚨 Adblocker Extension Detected</h2><p>An adblocker or privacy extension is preventing this site from rendering correctly.</p><div class="fix-box"><strong>How to fix:</strong><br>1. Turn off browser protection for this site.<br>2. Pause extensions like uBlock Origin.</div><button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button></div>`);
-                }
-                bait.remove();
-            }, 600);
+            catch (error) { triggerLockdown(`<div class="block-card"><h2>🚨 Private DNS / Adblocker Detected</h2><p>Your network is blocking requests.</p><div class="fix-box">Turn off Private DNS or AdGuard.</div><button onclick="location.reload()" class="mz-btn" style="margin-top:15px;">Reload</button></div>`); }
         }
 
         async function testGeoVPN() {
@@ -139,27 +139,39 @@
                 const text = await res.text();
                 const data = Object.fromEntries(text.trim().split('\n').map(line => line.split('=')));
                 if (data.loc && data.loc !== 'IN') {
-                    triggerLockdown(`<div class="block-card"><h2>🚨 Geo-Restriction</h2><p>This service is strictly limited to users currently inside India.</p><div class="fix-box">Detected Country Code: <b>${data.loc || 'Unknown'}</b><br>If you are in India, please disconnect your VPN.</div><button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button></div>`);
+                    triggerLockdown(`<div class="block-card"><h2>🚨 Geo-Restriction</h2><p>Restricted to India only.</p></div>`);
                 } else if (data.warp && data.warp !== 'off') {
-                    triggerLockdown(`<div class="block-card"><h2>🚨 VPN Detected</h2><p>You are using a masked network connection.</p><div class="fix-box"><strong>How to fix:</strong><br>1. Disconnect your VPN App.<br>2. Switch back to your standard Mobile Data or Wi-Fi.</div><button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button></div>`);
+                    triggerLockdown(`<div class="block-card"><h2>🚨 VPN Detected</h2><p>Please disconnect your VPN.</p></div>`);
                 }
             } catch (error) {}
         }
 
-        testDNSHoneypot(); testCSSAdblock(); testGeoVPN();
+        testDNSHoneypot(); testGeoVPN();
 
-        const joinBtn = document.getElementById('mz-join-btn');
-        joinBtn.addEventListener('click', () => {
-            window.open('https://t.me/modzone01', '_blank');
-            document.getElementById('mz-overlay').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            unlocked = true;
-            fetchStreams();
-        });
+        // Passcode Verification Logic
+        const submitBtn = document.getElementById('mz-submit-btn');
+        const passInput = document.getElementById('mz-pass-input');
+        const errorMsg = document.getElementById('mz-error');
+
+        submitBtn.addEventListener('click', verifyPasscode);
+        passInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyPasscode(); });
+
+        function verifyPasscode() {
+            const enteredValue = passInput.value.trim();
+            if (enteredValue === DAILY_PASSCODE) {
+                document.getElementById('mz-overlay').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                unlocked = true;
+                fetchStreams();
+            } else {
+                errorMsg.style.display = 'block';
+                passInput.style.borderColor = '#ef4444';
+            }
+        }
 
         setInterval(() => {
             if (!securityViolation && !unlocked && !document.getElementById('mz-overlay')) {
-                triggerLockdown(`<div class="block-card"><h2>🚨 Verification Bypassed</h2><p>You attempted to close or delete the Telegram verification prompt.</p><button onclick="location.reload()" class="btn btn-blue" style="margin-top:20px; width:100%;">Reload Page</button></div>`);
+                triggerLockdown(`<div class="block-card"><h2>🚨 Verification Bypassed</h2><p>You attempted to bypass the passcode check.</p></div>`);
             }
         }, 500);
 
@@ -177,22 +189,18 @@
                 }
 
                 status.style.display = 'none';
-                globalMatches = data.matches; // Save matches to memory
-                renderGrid(globalMatches); // Initial render showing All
-                
+                globalMatches = data.matches;
+                renderGrid(globalMatches);
             } catch (err) {
                 document.getElementById('status').textContent = 'Failed to load streams from API.';
             }
         }
 
-        // Filtering Logic
         function applyFilter(category, clickedBtn) {
-            // Update Active Tab Styling
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             clickedBtn.classList.add('active');
 
             let filtered = [];
-            
             if (category === 'All') {
                 filtered = globalMatches;
             } else {
@@ -212,7 +220,6 @@
             renderGrid(filtered);
         }
 
-        // Render UI
         function renderGrid(matchesToRender) {
             const grid = document.getElementById('match-grid');
             grid.innerHTML = '';
@@ -247,8 +254,22 @@
             });
         }
 
+        // Sleek Custom Toast Notifications (Replaces ugly browser alerts)
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => alert('Link Copied!')).catch(() => alert('Failed to copy.'));
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✅ Stream link copied to clipboard!');
+            }).catch(() => {
+                showToast('❌ Failed to copy link.');
+            });
         }
     </script>
 </body>
