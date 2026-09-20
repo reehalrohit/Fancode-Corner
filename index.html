@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- This meta tag hides your Vercel domain, tricking FanCode into unblocking their images -->
+    <meta name="referrer" content="no-referrer">
     <title>FanCode Corner | Live Sports</title>
     <style>
         :root { --bg: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #22c55e; --accent-hover: #16a34a; --blue: #3b82f6; --blue-hover: #2563eb; }
@@ -19,8 +21,8 @@
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
         .card { background-color: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; transition: transform 0.2s; }
         .card-img-container { width: 100%; height: 160px; background-color: #334155; position: relative; }
-        .card-img { width: 100%; height: 100%; object-fit: cover; }
-        .live-badge { position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; animation: pulse 2s infinite; }
+        .card-img { width: 100%; height: 100%; object-fit: cover; border-bottom: 2px solid #2AABEE; }
+        .live-badge { position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; animation: pulse 2s infinite; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
         .card-content { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
         .match-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
@@ -45,6 +47,8 @@
         .block-card p { color: #cbd5e1; font-size: 0.95rem; margin-bottom: 20px; text-align: center; }
         .fix-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; color: #94a3b8; font-size: 0.9rem; line-height: 1.6; border-left: 4px solid #ef4444; }
         .fix-box b { color: #f8fafc; }
+        
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -95,13 +99,11 @@
         let unlocked = false;
 
         function triggerLockdown(htmlContent) {
-            if (securityViolation) return; // Prevent overwriting
+            if (securityViolation) return;
             securityViolation = true;
             document.body.innerHTML = `<div style="background:#0f172a;height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;">${htmlContent}</div>`;
         }
 
-        // 1. NextDNS / AdGuard Honeypot Fetch
-        // This pings a Google Ad URL. If NextDNS or browser shields are active, this fetch will fail and trigger the lockdown.
         async function testDNSHoneypot() {
             try {
                 await fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', { mode: 'no-cors', cache: 'no-store' });
@@ -121,7 +123,6 @@
             }
         }
 
-        // 2. Strict CSS Adblock Bait
         function testCSSAdblock() {
             const bait = document.createElement('div');
             bait.innerHTML = '&nbsp;';
@@ -149,7 +150,6 @@
             }, 600);
         }
 
-        // 3. Cloudflare IP / VPN Scanner
         async function testGeoVPN() {
             try {
                 const res = await fetch('https://1.1.1.1/cdn-cgi/trace', { cache: 'no-store' });
@@ -182,9 +182,7 @@
                         </div>
                     `);
                 }
-            } catch (error) {
-                // Ignore errors here, because testDNSHoneypot will handle connection blocks
-            }
+            } catch (error) {}
         }
 
         testDNSHoneypot();
@@ -200,7 +198,6 @@
             fetchStreams();
         });
 
-        // 4. Master Guard Loop (Catches Bypass Attempts)
         setInterval(() => {
             if (!securityViolation && !unlocked && !document.getElementById('mz-overlay')) {
                 triggerLockdown(`
@@ -233,7 +230,14 @@
                 data.matches.forEach((match) => {
                     const card = document.createElement('div');
                     card.className = 'card';
-                    const imgTag = match.src_image ? `<img src="${match.src_image}" class="card-img" onerror="this.style.display='none'">` : '';
+                    
+                    // Fallback Stadium Image for when FanCode blocks the image or JSON leaves it out
+                    const fallbackImg = 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=600&q=80';
+                    const imgUrl = match.src_image ? match.src_image : fallbackImg;
+                    
+                    // If FanCode image still fails to load, the onerror event replaces it with the stadium fallback instantly
+                    const imgTag = `<img src="${imgUrl}" class="card-img" onerror="this.onerror=null; this.src='${fallbackImg}';">`;
+                    
                     const cleanUrl = match.stream_url.replace(/^https?:\/\//, '');
                     const intentUrl = `intent://${cleanUrl}#Intent;action=android.intent.action.VIEW;scheme=https;type=application/x-mpegURL;end;`;
 
