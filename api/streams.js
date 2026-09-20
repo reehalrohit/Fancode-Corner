@@ -1,7 +1,5 @@
 export default async function handler(req, res) {
     const sources = [
-        { url: 'https://raw.githubusercontent.com/byte-capsule/FanCode-Hls-Fetcher/main/Fancode_hls_m3u8.Json', name: 'byte-capsule' },
-        { url: 'https://raw.githubusercontent.com/kajju027/Fancode-Events-Json/main/fancode.json', name: 'kajju' },
         { url: 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json', name: 'drmlive' },
         { url: 'https://raw.githubusercontent.com/drmlive/sliv-live-events/main/sonyliv.json', name: 'sonyliv' }
     ];
@@ -42,10 +40,8 @@ export default async function handler(req, res) {
             }
         };
 
-        if (responses[0]) extract(responses[0], 'byte-capsule');
-        if (responses[1]) extract(responses[1], 'kajju');
-        if (responses[2]) extract(responses[2], 'drmlive');
-        if (responses[3]) extract(responses[3], 'sonyliv');
+        if (responses[0]) extract(responses[0], 'drmlive');
+        if (responses[1]) extract(responses[1], 'sonyliv');
 
         const uniqueMatches = [];
         const seenUrls = new Set();
