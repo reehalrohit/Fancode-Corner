@@ -108,6 +108,7 @@
                 const res = await fetch('/api/verify', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include', // Ensures cookie is saved
                     body: JSON.stringify({ passcode })
                 });
 
@@ -128,7 +129,10 @@
 
         async function fetchStreams() {
             try {
-                const res = await fetch('/api/streams');
+                // credentials: 'include' forces the browser to send the HttpOnly cookie back to the server
+                const res = await fetch('/api/streams', {
+                    credentials: 'include'
+                });
                 const data = await res.json();
                 const status = document.getElementById('status');
 
