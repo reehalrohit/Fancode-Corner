@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     } else if (source === 'drmlive') {
         url = 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json';
     } else {
-        url = 'https://raw.githubusercontent.com/byte-capsule/FanCode-Live/main/fancode.json';
+        url = 'https://raw.githubusercontent.com/byte-capsule/FanCode-Hls-Fetcher/main/Fancode_hls_m3u8.Json';
     }
 
     try {
