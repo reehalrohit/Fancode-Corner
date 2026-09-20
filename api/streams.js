@@ -10,27 +10,37 @@ export default async function handler(req, res) {
             sources.map(s => fetch(s.url + "?t=" + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null))
         );
 
-        const extract = (obj, sourceName) => {
+        // Added parentKey to remember the match name if the data is nested inside it
+        const extract = (obj, sourceName, parentKey = 'Live Event') => {
             if (!obj) return;
+            
             if (Array.isArray(obj)) {
-                obj.forEach(item => extract(item, sourceName));
-            } else if (typeof obj === 'object') {
-                const url = obj.stream_url || obj.url || obj.link || obj.m3u8 || obj.file;
-                const title = obj.title || obj.event_name || obj.name || obj.match_name || 'Live Event';
-                const img = obj.image || obj.poster || obj.thumbnail || null;
+                obj.forEach((item, index) => extract(item, sourceName, `Match ${index + 1}`));
+                return;
+            }
+            
+            if (typeof obj === 'object') {
+                // Look for the new 'stream_link' and 'banner' keys
+                const url = obj.stream_url || obj.stream_link || obj.url || obj.link || obj.m3u8 || obj.file || obj.stream;
+                const title = obj.title || obj.event_name || obj.name || obj.match_name || parentKey;
+                const img = obj.image || obj.poster || obj.thumbnail || obj.banner || obj.logo || obj.src_image || null;
                 
-                // ONLY accept valid video streams (.m3u8)
                 if (url && typeof url === 'string' && url.includes('.m3u8')) {
                     allMatches.push({ title, stream_url: url, src_image: img, source: sourceName });
                 } else {
                     for (const [key, value] of Object.entries(obj)) {
-                        // Strict check to exclude image banners and flags
                         if (typeof value === 'string' && value.includes('.m3u8')) {
-                            if (!['generated_by', 'banner', 'team_1_flag', 'team_2_flag'].includes(key)) {
-                                allMatches.push({ title: key, stream_url: value, source: sourceName });
+                            // If the key is a generic technical word, use the parent's name for the title
+                            if (['stream_url', 'stream_link', 'url', 'link', 'm3u8', 'file', 'stream'].includes(key)) {
+                                allMatches.push({ title: parentKey, stream_url: value, src_image: img, source: sourceName });
+                            } 
+                            // Otherwise, use the key itself as the title (excluding junk keys)
+                            else if (!['generated_by', 'banner', 'team_1_flag', 'team_2_flag'].includes(key)) {
+                                allMatches.push({ title: key, stream_url: value, src_image: img, source: sourceName });
                             }
                         } else if (typeof value === 'object') {
-                            extract(value, sourceName);
+                            // Pass the current key name down to the next level (unless it's just a number like "0")
+                            extract(value, sourceName, isNaN(key) ? key : parentKey);
                         }
                     }
                 }
