@@ -85,7 +85,7 @@
             <p>Live matches aggregated from community sources</p>
         </header>
         <div class="alert-banner">
-            💡 <strong>Note:</strong> Tap <strong>Open App</strong> to play seamlessly in <a href="https://play.google.com/store/apps/details?id=com.pratyush.nsplayer" target="_blank">NS Player</a>.
+            💡 <strong>Note:</strong> Tap <strong>Open App</strong> to play seamlessly in <a href="https://play.google.com/store/apps/details?id=com.genuine.leone" target="_blank">NS Player</a>.
         </div>
         <div id="status">Connecting to server API...</div>
         <div class="grid" id="match-grid"></div>
@@ -234,9 +234,8 @@
                     
                     const cleanUrl = match.stream_url.replace(/^https?:\/\//, '');
                     
-                    // STRIPPED: 'type=application/x-mpegURL' is deleted so Android doesn't default to VLC.
-                    // It will now ONLY look for the NS Player package name.
-                    const intentUrl = `intent://${cleanUrl}#Intent;package=com.pratyush.nsplayer;action=android.intent.action.VIEW;scheme=https;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.pratyush.nsplayer;end;`;
+                    // FIXED: Corrected package name to com.genuine.leone (the official package name for Network Stream Video Player)
+                    const intentUrl = `intent://${cleanUrl}#Intent;package=com.genuine.leone;action=android.intent.action.VIEW;scheme=https;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.genuine.leone;end;`;
 
                     card.innerHTML = `
                         <div class="card-img-container">${imgTag}<div class="live-badge">LIVE</div></div>
