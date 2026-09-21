@@ -1,4 +1,114 @@
+import crypto from "node:crypto";
+
+function getClientIp(req) {
+  const forwarded = req.headers["x-forwarded-for"];
+
+  const ip =
+    (Array.isArray(forwarded)
+      ? forwarded[0]
+      : String(forwarded || "").split(",")[0]
+    ).trim() ||
+    String(req.headers["x-real-ip"] || "").trim() ||
+    String(req.socket?.remoteAddress || "").trim();
+
+  return ip.replace(/^::ffff:/, "");
+}
+
+function getCookie(req, name) {
+  const raw = String(req.headers.cookie || "");
+
+  for (const part of raw.split(";")) {
+    const index = part.indexOf("=");
+
+    if (index === -1) continue;
+
+    if (part.slice(0, index).trim() === name) {
+      return decodeURIComponent(
+        part.slice(index + 1).trim()
+      );
+    }
+  }
+
+  return "";
+}
+
+function validAccessToken(req) {
+  const secret =
+    String(process.env.ACCESS_SECRET || "");
+
+  if (!secret) return false;
+
+  const ip = getClientIp(req);
+  const token =
+    getCookie(req, "sc_access");
+
+  if (!ip || !token) return false;
+
+  const parts = token.split(".");
+
+  if (parts.length !== 3) {
+    return false;
+  }
+
+  const [
+    expires,
+    ipHash,
+    signature
+  ] = parts;
+
+  if (
+    !Number.isInteger(Number(expires)) ||
+    Number(expires) <=
+      Math.floor(Date.now() / 1000)
+  ) {
+    return false;
+  }
+
+  const expectedIpHash =
+    crypto
+      .createHash("sha256")
+      .update(ip)
+      .digest("hex");
+
+  if (ipHash !== expectedIpHash) {
+    return false;
+  }
+
+  const payload =
+    `${expires}.${ipHash}`;
+
+  const expectedSignature =
+    crypto
+      .createHmac(
+        "sha256",
+        secret
+      )
+      .update(payload)
+      .digest("hex");
+
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export default async function handler(req, res) {
+  if (!validAccessToken(req)) {
+    res.setHeader(
+      "Cache-Control",
+      "no-store"
+    );
+
+    return res.status(403).json({
+      status: "blocked",
+      message:
+        "Access verification required."
+    });
+  } 
   const sources = [
     {
       name: 'fancode',
