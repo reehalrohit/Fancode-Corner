@@ -867,19 +867,115 @@
         });
         refreshBtn.addEventListener('click', () => fetchStreams(true));
 
-        function verifyPasscode() {
-            const passcode = passInput.value.trim();
-            errorMsg.style.display = 'none';
+        async function verifyPasscode() {
+    const passcode = passInput.value.trim();
 
-            if (passcode === DAILY_PASSCODE) {
-                document.getElementById('mz-overlay').style.display = 'none';
-                document.getElementById('main-content').style.display = 'block';
-                fetchStreams();
-            } else {
-                errorMsg.style.display = 'block';
-                passInput.style.borderColor = '#ef4444';
-                passInput.focus();
+    errorMsg.style.display = 'none';
+    passInput.style.borderColor = '';
+
+    if (passcode !== DAILY_PASSCODE) {
+        errorMsg.textContent = '❌ Invalid daily passcode.';
+        errorMsg.style.display = 'block';
+        passInput.style.borderColor = '#ef4444';
+        passInput.focus();
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'VERIFYING...';
+
+    try {
+        // Basic ad-block detection
+        const bait = document.createElement('div');
+
+        bait.className =
+            'ad ads adsbox ad-banner advert advertisement sponsor text-ad';
+
+        bait.setAttribute('aria-hidden', 'true');
+
+        Object.assign(bait.style, {
+            position: 'absolute',
+            left: '-10000px',
+            top: '-10000px',
+            width: '10px',
+            height: '10px',
+            pointerEvents: 'none'
+        });
+
+        document.body.appendChild(bait);
+
+        const baitStyle =
+            window.getComputedStyle(bait);
+
+        const adBlocked =
+            bait.offsetWidth === 0 ||
+            bait.offsetHeight === 0 ||
+            baitStyle.display === 'none' ||
+            baitStyle.visibility === 'hidden';
+
+        bait.remove();
+
+        if (adBlocked) {
+            throw new Error(
+                'Ads are required. Please disable your ad blocker or DNS filtering and reload the page.'
+            );
+        }
+
+        // Server-side access verification
+        const response = await fetch(
+            '/api/access-check',
+            {
+                method: 'GET',
+                cache: 'no-store',
+                credentials: 'same-origin'
             }
+        );
+
+        let result = {};
+
+        try {
+            result = await response.json();
+        } catch {
+            result = {};
+        }
+
+        if (
+            !response.ok ||
+            result.allowed !== true
+        ) {
+            throw new Error(
+                result.reason ||
+                'Access verification failed.'
+            );
+        }
+
+        // Access approved
+        document.getElementById(
+            'mz-overlay'
+        ).style.display = 'none';
+
+        document.getElementById(
+            'main-content'
+        ).style.display = 'block';
+
+        fetchStreams();
+
+    } catch (error) {
+
+        errorMsg.textContent =
+            '🚫 ' +
+            (
+                error?.message ||
+                'Access verification failed.'
+            );
+
+        errorMsg.style.display = 'block';
+
+    } finally {
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'UNLOCK SITE';
+    }
         }
 
         async function fetchStreams(manual = false) {
