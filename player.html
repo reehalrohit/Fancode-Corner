@@ -258,6 +258,128 @@
 
         let player = null;
 
+        function isHlsUrl(value) {
+            return /\.m3u8(?:$|[?#])/i.test(value);
+        }
+
+        function isNativeHlsSupported() {
+            const probe = document.createElement("video");
+            return !!probe.canPlayType("application/vnd.apple.mpegurl") ||
+                   !!probe.canPlayType("application/x-mpegURL");
+        }
+
+        async function tryNativePlayback() {
+            if (!isHlsUrl(streamUrl) || !isNativeHlsSupported()) {
+                return false;
+            }
+
+            try {
+                video.controls = true;
+                video.src = streamUrl;
+                video.muted = true;
+
+                await new Promise((resolve, reject) => {
+                    const onPlaying = () => {
+                        cleanup();
+                        resolve();
+                    };
+                    const onError = () => {
+                        cleanup();
+                        reject(video.error || new Error("Native playback failed"));
+                    };
+                    const cleanup = () => {
+                        video.removeEventListener("playing", onPlaying);
+                        video.removeEventListener("error", onError);
+                    };
+
+                    video.addEventListener("playing", onPlaying, { once: true });
+                    video.addEventListener("error", onError, { once: true });
+                    video.load();
+                    video.play().catch(() => {});
+
+                    setTimeout(() => {
+                        cleanup();
+                        reject(new Error("Native HLS playback timed out"));
+                    }, 9000);
+                });
+
+                hideLoading();
+                return true;
+            } catch (error) {
+                console.warn("Native HLS playback failed:", error);
+                video.pause();
+                video.removeAttribute("src");
+                video.load();
+                return false;
+            }
+        }
+
+        async function tryShakaPlayback() {
+            shaka.polyfill.installAll();
+
+            if (!shaka.Player.isBrowserSupported()) {
+                throw new Error("Shaka Player is not supported in this browser.");
+            }
+
+            player = new shaka.Player(video);
+            const container = document.querySelector(".shaka-video-container");
+            const ui = new shaka.ui.Overlay(player, container, video);
+
+            ui.configure({
+                controlPanelElements: [
+                    "play_pause",
+                    "mute",
+                    "time_and_duration",
+                    "spacer",
+                    "quality",
+                    "language",
+                    "picture_in_picture",
+                    "fullscreen",
+                    "overflow_menu"
+                ],
+                addSeekBar: true
+            });
+
+            player.configure({
+                streaming: {
+                    bufferingGoal: 10,
+                    rebufferingGoal: 2,
+                    bufferBehind: 30,
+                    lowLatencyMode: false,
+                    retryParameters: {
+                        maxAttempts: 4,
+                        baseDelay: 1000,
+                        backoffFactor: 1.5,
+                        fuzzFactor: 0.5
+                    }
+                },
+                manifest: {
+                    retryParameters: {
+                        maxAttempts: 4,
+                        baseDelay: 1000,
+                        backoffFactor: 1.5,
+                        fuzzFactor: 0.5
+                    }
+                }
+            });
+
+            player.addEventListener("error", (event) => {
+                const detail = event.detail || {};
+                console.error("Shaka error:", detail);
+            });
+
+            video.addEventListener("playing", hideLoading, { once: true });
+
+            await player.load(streamUrl);
+
+            video.muted = true;
+            await video.play().catch(() => {});
+
+            setTimeout(() => {
+                if (!video.paused) hideLoading();
+            }, 1200);
+        }
+
         async function initPlayer() {
             showLoading();
 
@@ -266,87 +388,45 @@
                 return;
             }
 
+            // Android browsers can often play HLS natively even when MSE/CORS
+            // makes a JavaScript HLS player fail. Try that path first.
+            const nativeWorked = await tryNativePlayback();
+            if (nativeWorked) return;
+
+            // Then use Shaka for browsers that need MSE/HLS parsing.
             try {
-                shaka.polyfill.installAll();
-
-                if (!shaka.Player.isBrowserSupported()) {
-                    throw new Error("This browser is not supported by Shaka Player.");
+                if (player) {
+                    try { await player.destroy(); } catch {}
+                    player = null;
                 }
 
-                player = new shaka.Player(video);
-                const container = document.querySelector(".shaka-video-container");
-                const ui = new shaka.ui.Overlay(player, container, video);
-
-                ui.configure({
-                    controlPanelElements: [
-                        "play_pause",
-                        "mute",
-                        "time_and_duration",
-                        "spacer",
-                        "quality",
-                        "language",
-                        "picture_in_picture",
-                        "fullscreen",
-                        "overflow_menu"
-                    ],
-                    addSeekBar: true
-                });
-
-                player.configure({
-                    streaming: {
-                        bufferingGoal: 10,
-                        rebufferingGoal: 2,
-                        bufferBehind: 30,
-                        lowLatencyMode: true
-                    }
-                });
-
-                player.addEventListener("error", (event) => {
-                    const detail = event.detail;
-                    console.error("Shaka error:", detail);
-                    showError("The player reported a playback error. Try Retry or choose another live event.");
-                });
-
-                video.addEventListener("playing", hideLoading, { once: true });
-
-                await player.load(streamUrl);
-
-                video.muted = true;
-                await video.play().catch(() => {});
-
-                // Some browsers need the UI to settle after autoplay starts.
-                setTimeout(() => {
-                    if (!video.paused) hideLoading();
-                }, 1200);
-
+                await tryShakaPlayback();
+                return;
             } catch (error) {
-                console.error("Player initialization error:", error);
+                console.error("Shaka initialization/playback error:", error);
 
-                // Native fallback for browsers that support the stream format directly.
-                try {
-                    if (!video.src) video.src = streamUrl;
-                    video.controls = true;
-                    await video.play().catch(() => {});
-                    video.addEventListener("playing", hideLoading, { once: true });
-                    setTimeout(() => {
-                        if (video.readyState > 0) hideLoading();
-                    }, 1200);
-                } catch (fallbackError) {
-                    console.error("Native fallback error:", fallbackError);
-                    showError("Playback failed in both the Shaka and native video players.");
+                let detail = "The stream could not be played.";
+                const code = error && (error.code || (error.detail && error.detail.code));
+
+                if (code) {
+                    detail += ` Player error code: ${code}.`;
                 }
+
+                detail += " This usually indicates an unavailable stream, expired stream URL, unsupported format, or server-side access/CORS restriction.";
+                showError(detail);
             }
         }
 
-        document.getElementById("retryBtn").addEventListener("click", () => {
+        document.getElementById("retryBtn").addEventListener("click", async () => {
             if (player) {
-                try { player.destroy(); } catch {}
+                try { await player.destroy(); } catch {}
                 player = null;
             }
             video.pause();
             video.removeAttribute("src");
+            video.removeAttribute("controls");
             video.load();
-            initPlayer();
+            await initPlayer();
         });
 
         if ("mediaSession" in navigator) {
