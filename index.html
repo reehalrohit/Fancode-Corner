@@ -803,7 +803,7 @@
 
     <div class="alert-banner">
         <span>💡</span>
-        <span><strong>Watch tip:</strong> Tap <strong>Watch Now</strong> to launch NS Player. <a href="https://play.google.com/store/apps/details?id=com.genuine.leone" target="_blank" rel="noopener noreferrer">View app</a></span>
+        <span><strong>Watch tip:</strong> Tap <strong>Open in App</strong> to launch the stream in NS Player. <a href="https://play.google.com/store/apps/details?id=com.genuine.leone" target="_blank" rel="noopener noreferrer">View app</a></span>
     </div>
 
     <div class="filter-wrap">
@@ -1000,7 +1000,7 @@
                         <div class="match-meta">Live now</div>
                         <div class="match-title">${title}</div>
                         <div class="button-group">
-                            <button class="btn btn-primary" type="button">▶ Watch Now</button>
+                            <button class="btn btn-primary" type="button">▶ Open in App</button>
                             <button class="btn btn-secondary" type="button" title="Copy stream link" aria-label="Copy stream link">⧉</button>
                         </div>
                     </div>
@@ -1012,11 +1012,18 @@
                         showToast('❌ No stream link available.');
                         return;
                     }
-                    const playerUrl =
-                        `player.html?stream=${encodeURIComponent(streamUrl)}` +
-                        `&title=${encodeURIComponent(match.title || 'Live Sports Event')}` +
-                        `&source=${encodeURIComponent(source)}`;
-                    window.location.href = playerUrl;
+
+                    // Open the stream directly in NS Player on Android.
+                    // Package used by the existing app flow.
+                    const cleanUrl = streamUrl.replace(/^https?:\\/\\//, '');
+                    const intentUrl =
+                        `intent://${cleanUrl}` +
+                        `#Intent;package=com.genuine.leone;` +
+                        `action=android.intent.action.VIEW;` +
+                        `scheme=https;` +
+                        `S.browser_fallback_url=${encodeURIComponent(streamUrl)};end;`;
+
+                    window.location.href = intentUrl;
                 });
                 buttons[1].addEventListener('click', () => copyToClipboard(streamUrl));
 
