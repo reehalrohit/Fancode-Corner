@@ -1,99 +1,293 @@
 export default async function handler(req, res) {
   const sources = [
     {
-      url: 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json',
       name: 'fancode',
+      url: 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json',
     },
     {
-      url: 'https://github.com/drmlive/sliv-live-events/raw/refs/heads/main/sonyliv.json',
       name: 'sonyliv',
+      url: 'https://github.com/drmlive/sliv-live-events/raw/refs/heads/main/sonyliv.json',
     },
   ];
 
+  // --------------------------------------------------
+  // Recover complete objects from a truncated JSON array
+  // without modifying/fabricating the upstream records.
+  // --------------------------------------------------
+  function recoverMatchesArray(text) {
+    const matchesKey = text.indexOf('"matches"');
+
+    if (matchesKey === -1) {
+      return [];
+    }
+
+    const arrayStart = text.indexOf('[', matchesKey);
+
+    if (arrayStart === -1) {
+      return [];
+    }
+
+    const objects = [];
+
+    let objectStart = -1;
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+
+    for (let i = arrayStart + 1; i < text.length; i++) {
+      const char = text[i];
+
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+        } else if (char === '\\') {
+          escaped = true;
+        } else if (char === '"') {
+          inString = false;
+        }
+
+        continue;
+      }
+
+      if (char === '"') {
+        inString = true;
+        continue;
+      }
+
+      if (char === '{') {
+        if (depth === 0) {
+          objectStart = i;
+        }
+
+        depth++;
+        continue;
+      }
+
+      if (char === '}') {
+        depth--;
+
+        if (depth === 0 && objectStart !== -1) {
+          const rawObject = text.slice(
+            objectStart,
+            i + 1
+          );
+
+          try {
+            objects.push(JSON.parse(rawObject));
+          } catch {
+            // Ignore only this malformed object.
+          }
+
+          objectStart = -1;
+        }
+      }
+
+      if (depth === 0 && char === ']') {
+        break;
+      }
+    }
+
+    return objects;
+  }
+
+  // --------------------------------------------------
+  // Fetch source
+  // --------------------------------------------------
+  async function fetchSource(source) {
+    try {
+      const response = await fetch(
+        `${source.url}?t=${Date.now()}`,
+        {
+          headers: {
+            Accept: 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        return {
+          name: source.name,
+          available: false,
+          error: `HTTP ${response.status}`,
+          data: null,
+        };
+      }
+
+      const text = await response.text();
+
+      // Normal JSON
+      try {
+        const data = JSON.parse(text);
+
+        return {
+          name: source.name,
+          available: true,
+          error: null,
+          data,
+        };
+      } catch (error) {
+        // SonyLIV currently has a truncated JSON file.
+        // Recover only complete objects already present.
+        if (source.name === 'sonyliv') {
+          const recoveredMatches =
+            recoverMatchesArray(text);
+
+          if (recoveredMatches.length > 0) {
+            return {
+              name: source.name,
+              available: true,
+              error: 'Upstream JSON truncated; recovered complete records',
+              data: {
+                matches: recoveredMatches,
+              },
+            };
+          }
+        }
+
+        return {
+          name: source.name,
+          available: false,
+          error: 'Invalid JSON from upstream source',
+          data: null,
+        };
+      }
+    } catch (error) {
+      console.error(
+        `${source.name} fetch error:`,
+        error
+      );
+
+      return {
+        name: source.name,
+        available: false,
+        error: 'Network error',
+        data: null,
+      };
+    }
+  }
+
   try {
     const results = await Promise.all(
-      sources.map(async (source) => {
-        try {
-          const response = await fetch(`${source.url}?t=${Date.now()}`);
-
-          if (!response.ok) return null;
-
-          return {
-            name: source.name,
-            data: await response.json(),
-          };
-        } catch {
-          return null;
-        }
-      })
+      sources.map(fetchSource)
     );
 
     const matches = [];
 
+    // --------------------------------------------------
+    // PROCESS SOURCES
+    // --------------------------------------------------
     for (const result of results) {
-      if (!result) continue;
+      if (!result?.data) continue;
 
-      const items = Array.isArray(result.data?.matches)
+      const items = Array.isArray(
+        result.data.matches
+      )
         ? result.data.matches
         : [];
 
+      // ==================================================
+      // FANCODE
+      // ==================================================
       if (result.name === 'fancode') {
         for (const item of items) {
+          const isLive =
+            String(item.status || '')
+              .toUpperCase() === 'LIVE';
+
+          if (!isLive) continue;
+
           const streamUrl =
+            item.stream_url ||
+            item.video_url ||
             item.dai_url ||
             item.adfree_url ||
-            item.stream_url ||
-            item.video_url;
-
-          if (!streamUrl || typeof streamUrl !== 'string') continue;
-          if (!streamUrl.includes('.m3u8')) continue;
-
-          const title =
-            item.match_name ||
-            item.title ||
-            item.event_name ||
-            'Live Event';
+            item.streams?.primary ||
+            item.auto_streams?.ENGLISH?.streams?.['1080p'] ||
+            item.auto_streams?.ENGLISH?.streams?.['720p'] ||
+            item.auto_streams?.ENGLISH?.streams?.['540p'] ||
+            item.auto_streams?.ENGLISH?.streams?.['480p'] ||
+            item.auto_streams?.ENGLISH?.streams?.['360p'] ||
+            item.auto_streams?.ENGLISH?.streams?.['240p'] ||
+            '';
 
           matches.push({
-            title: String(title).trim(),
-            stream_url: streamUrl,
+            title: String(
+              item.title ||
+              item.match_name ||
+              item.event_name ||
+              'FanCode Live Event'
+            ).trim(),
+
+            stream_url:
+              typeof streamUrl === 'string' &&
+              streamUrl.includes('.m3u8')
+                ? streamUrl
+                : null,
+
             src_image:
-              typeof item.src === 'string' ? item.src : null,
+              typeof item.src === 'string'
+                ? item.src
+                : null,
+
             source: 'fancode',
-            category: item.event_category || null,
-            status: item.status || null,
-            event_name: item.event_name || null,
-            match_name: item.match_name || null,
-            match_id: item.match_id || null,
+
+            category:
+              item.event_category ||
+              null,
+
+            status:
+              item.status ||
+              null,
+
+            event_name:
+              item.event_name ||
+              null,
+
+            match_name:
+              item.match_name ||
+              null,
+
+            match_id:
+              item.match_id ||
+              null,
+
+            start_time:
+              item.startTime ||
+              null,
           });
         }
       }
 
+      // ==================================================
+      // SONYLIV
+      // ==================================================
       if (result.name === 'sonyliv') {
         const grouped = new Map();
 
         for (const item of items) {
+          if (item.isLive !== true) continue;
+
           const streamUrl =
             item.dai_url ||
             item.pub_url ||
-            item.video_url;
+            item.video_url ||
+            '';
 
-          if (!streamUrl || typeof streamUrl !== 'string') continue;
-          if (!streamUrl.includes('.m3u8')) continue;
+          if (
+            typeof streamUrl !== 'string' ||
+            !streamUrl.includes('.m3u8')
+          ) {
+            continue;
+          }
 
-          /*
-           * SonyLIV uses contentId values such as:
-           * 1090543296_ENG
-           * 1090543296_HIN
-           *
-           * Remove the language suffix so the same match
-           * becomes one card.
-           */
-          const rawId = String(item.contentId || '');
+          const rawId = String(
+            item.contentId || ''
+          );
 
-          const baseId = rawId.includes('_')
-            ? rawId.split('_')[0]
-            : rawId;
+          const baseId =
+            rawId.includes('_')
+              ? rawId.split('_')[0]
+              : rawId;
 
           const groupKey =
             baseId ||
@@ -101,56 +295,110 @@ export default async function handler(req, res) {
             item.event_name ||
             streamUrl;
 
-          const existing = grouped.get(groupKey);
-
-          const title =
-            item.match_name ||
-            item.title ||
-            item.event_name ||
-            'Live Event';
-
           const candidate = {
-            title: String(title).trim(),
+            title: String(
+              item.match_name ||
+              item.event_name ||
+              'SonyLIV Live Event'
+            ).trim(),
+
             stream_url: streamUrl,
+
             src_image:
-              typeof item.src === 'string' ? item.src : null,
+              typeof item.src === 'string'
+                ? item.src
+                : null,
+
             source: 'sonyliv',
-            category: item.event_category || null,
-            status: item.isLive ? 'LIVE' : null,
-            event_name: item.event_name || null,
-            match_name: item.match_name || null,
-            content_id: rawId || null,
-            language: item.audioLanguageName || null,
-            broadcast_channel: item.broadcast_channel || null,
+
+            category:
+              item.event_category ||
+              'Sports',
+
+            status: 'LIVE',
+
+            event_name:
+              item.event_name ||
+              null,
+
+            match_name:
+              item.match_name ||
+              null,
+
+            content_id:
+              rawId ||
+              null,
+
+            broadcast_channel:
+              item.broadcast_channel ||
+              null,
+
+            language:
+              item.audioLanguageName ||
+              null,
           };
 
-          /*
-           * Keep the first stream for an event.
-           * Prefer ENG when available.
-           */
+          const existing =
+            grouped.get(groupKey);
+
           if (!existing) {
-            grouped.set(groupKey, candidate);
-          } else if (
-            candidate.content_id?.endsWith('_ENG') &&
-            !existing.content_id?.endsWith('_ENG')
+            grouped.set(
+              groupKey,
+              candidate
+            );
+
+            continue;
+          }
+
+          const candidateIsEnglish =
+            /_ENG$/i.test(rawId) ||
+            String(
+              item.audioLanguageName || ''
+            )
+              .toUpperCase()
+              .startsWith('ENG');
+
+          const existingIsEnglish =
+            /_ENG$/i.test(
+              String(
+                existing.content_id || ''
+              )
+            );
+
+          if (
+            candidateIsEnglish &&
+            !existingIsEnglish
           ) {
-            grouped.set(groupKey, candidate);
+            grouped.set(
+              groupKey,
+              candidate
+            );
           }
         }
 
-        matches.push(...grouped.values());
+        matches.push(
+          ...grouped.values()
+        );
       }
     }
 
-    /*
-     * Final safety deduplication.
-     */
+    // --------------------------------------------------
+    // Remove duplicates
+    // --------------------------------------------------
     const seen = new Set();
     const uniqueMatches = [];
 
     for (const match of matches) {
       const key =
-        `${match.source}|${match.stream_url}`;
+        match.source === 'sonyliv'
+          ? `sonyliv|${
+              match.content_id ||
+              match.title
+            }`
+          : `fancode|${
+              match.match_id ||
+              match.title
+            }`;
 
       if (seen.has(key)) continue;
 
@@ -158,21 +406,78 @@ export default async function handler(req, res) {
       uniqueMatches.push(match);
     }
 
+    // --------------------------------------------------
+    // Live events first
+    // --------------------------------------------------
+    uniqueMatches.sort((a, b) => {
+      if (a.source !== b.source) {
+        return a.source === 'fancode'
+          ? -1
+          : 1;
+      }
+
+      return a.title.localeCompare(
+        b.title
+      );
+    });
+
+    // --------------------------------------------------
+    // Cache
+    // --------------------------------------------------
     res.setHeader(
       'Cache-Control',
-      's-maxage=60, stale-while-revalidate=120'
+      's-maxage=30, stale-while-revalidate=60'
     );
 
+    // --------------------------------------------------
+    // Response
+    // --------------------------------------------------
     res.status(200).json({
       status: 'success',
-      matches: uniqueMatches,
+
+      sources: {
+        fancode: {
+          available:
+            results.find(
+              r => r?.name === 'fancode'
+            )?.available || false,
+
+          error:
+            results.find(
+              r => r?.name === 'fancode'
+            )?.error || null,
+        },
+
+        sonyliv: {
+          available:
+            results.find(
+              r => r?.name === 'sonyliv'
+            )?.available || false,
+
+          error:
+            results.find(
+              r => r?.name === 'sonyliv'
+            )?.error || null,
+        },
+      },
+
+      count:
+        uniqueMatches.length,
+
+      matches:
+        uniqueMatches,
     });
+
   } catch (error) {
-    console.error('streams API error:', error);
+    console.error(
+      'Streams API error:',
+      error
+    );
 
     res.status(500).json({
       status: 'error',
-      message: 'Unable to load stream data',
+      message:
+        'Unable to load stream data',
     });
   }
-}
+            }
