@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="no-referrer">
     <title>Sports Corner | Live Streaming</title>
-    <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
+    
+    <!-- Vercel Web Analytics -->
+    <script>
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+
     <style>
         :root { --bg: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #22c55e; --blue: #3b82f6; --purple: #8b5cf6; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -91,13 +97,11 @@
         
         <div id="status">Connecting to server API...</div>
         
-        <!-- FanCode Section -->
         <div id="fancode-section">
             <div class="section-title">🏏 FanCode Live Events</div>
             <div class="grid" id="fancode-grid"></div>
         </div>
 
-        <!-- SonyLIV Section -->
         <div id="sonyliv-section" style="margin-top: 40px;">
             <div class="section-title">📺 SonyLIV Live Events</div>
             <div class="grid" id="sonyliv-grid"></div>

@@ -1,60 +1,178 @@
 export default async function handler(req, res) {
-    const sources = [
-        { url: 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json', name: 'fancode' },
-        { url: 'https://raw.githubusercontent.com/drmlive/sliv-live-events/main/sonyliv.json', name: 'sonyliv' }
-    ];
-    let allMatches = [];
+  const sources = [
+    {
+      url: 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json',
+      name: 'fancode',
+    },
+    {
+      url: 'https://raw.githubusercontent.com/drmlive/sliv-live-events/main/sonyliv.json',
+      name: 'sonyliv',
+    },
+  ];
 
-    try {
-        const responses = await Promise.all(
-            sources.map(s => fetch(s.url + "?t=" + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null))
-        );
+  try {
+    const results = await Promise.all(
+      sources.map(async (source) => {
+        try {
+          const response = await fetch(`${source.url}?t=${Date.now()}`);
 
-        const extract = (obj, sourceName, parentKey = 'Live Event') => {
-            if (!obj) return;
-            if (Array.isArray(obj)) {
-                obj.forEach((item, index) => extract(item, sourceName, `Match ${index + 1}`));
-                return;
-            }
-            if (typeof obj === 'object') {
-                const url = obj.adfree_url || obj.stream_url || obj.stream_link || obj.url || obj.link || obj.m3u8 || obj.file || obj.stream || obj.daiUrl;
-                const title = obj.title || obj.event_name || obj.name || obj.match_name || parentKey;
-                const img = obj.image || obj.poster || obj.thumbnail || obj.banner || obj.logo || obj.src_image || null;
-                
-                if (url && typeof url === 'string' && (url.includes('.m3u8') || url.startsWith('http'))) {
-                    allMatches.push({ title, stream_url: url, src_image: img, source: sourceName });
-                } else {
-                    for (const [key, value] of Object.entries(obj)) {
-                        if (typeof value === 'string' && (value.includes('.m3u8') || value.startsWith('http'))) {
-                            if (['adfree_url', 'stream_url', 'stream_link', 'url', 'link', 'm3u8', 'file', 'stream', 'daiUrl'].includes(key)) {
-                                allMatches.push({ title: parentKey, stream_url: value, src_image: img, source: sourceName });
-                            } 
-                            else if (!['generated_by', 'banner', 'team_1_flag', 'team_2_flag', 'dai_url', 'ad_url'].includes(key)) {
-                                allMatches.push({ title: key, stream_url: value, src_image: img, source: sourceName });
-                            }
-                        } else if (typeof value === 'object') {
-                            extract(value, sourceName, isNaN(key) ? key : parentKey);
-                        }
-                    }
-                }
-            }
-        };
+          if (!response.ok) return null;
 
-        if (responses[0]) extract(responses[0], 'fancode');
-        if (responses[1]) extract(responses[1], 'sonyliv');
+          return {
+            name: source.name,
+            data: await response.json(),
+          };
+        } catch {
+          return null;
+        }
+      })
+    );
 
-        const uniqueMatches = [];
-        const seenUrls = new Set();
-        for (const match of allMatches) {
-            if (!seenUrls.has(match.stream_url)) {
-                seenUrls.add(match.stream_url);
-                uniqueMatches.push(match);
-            }
+    const matches = [];
+
+    for (const result of results) {
+      if (!result) continue;
+
+      const items = Array.isArray(result.data?.matches)
+        ? result.data.matches
+        : [];
+
+      if (result.name === 'fancode') {
+        for (const item of items) {
+          const streamUrl =
+            item.dai_url ||
+            item.adfree_url ||
+            item.stream_url ||
+            item.video_url;
+
+          if (!streamUrl || typeof streamUrl !== 'string') continue;
+          if (!streamUrl.includes('.m3u8')) continue;
+
+          const title =
+            item.match_name ||
+            item.title ||
+            item.event_name ||
+            'Live Event';
+
+          matches.push({
+            title: String(title).trim(),
+            stream_url: streamUrl,
+            src_image:
+              typeof item.src === 'string' ? item.src : null,
+            source: 'fancode',
+            category: item.event_category || null,
+            status: item.status || null,
+            event_name: item.event_name || null,
+            match_name: item.match_name || null,
+            match_id: item.match_id || null,
+          });
+        }
+      }
+
+      if (result.name === 'sonyliv') {
+        const grouped = new Map();
+
+        for (const item of items) {
+          const streamUrl =
+            item.dai_url ||
+            item.pub_url ||
+            item.video_url;
+
+          if (!streamUrl || typeof streamUrl !== 'string') continue;
+          if (!streamUrl.includes('.m3u8')) continue;
+
+          /*
+           * SonyLIV uses contentId values such as:
+           * 1090543296_ENG
+           * 1090543296_HIN
+           *
+           * Remove the language suffix so the same match
+           * becomes one card.
+           */
+          const rawId = String(item.contentId || '');
+
+          const baseId = rawId.includes('_')
+            ? rawId.split('_')[0]
+            : rawId;
+
+          const groupKey =
+            baseId ||
+            item.match_name ||
+            item.event_name ||
+            streamUrl;
+
+          const existing = grouped.get(groupKey);
+
+          const title =
+            item.match_name ||
+            item.title ||
+            item.event_name ||
+            'Live Event';
+
+          const candidate = {
+            title: String(title).trim(),
+            stream_url: streamUrl,
+            src_image:
+              typeof item.src === 'string' ? item.src : null,
+            source: 'sonyliv',
+            category: item.event_category || null,
+            status: item.isLive ? 'LIVE' : null,
+            event_name: item.event_name || null,
+            match_name: item.match_name || null,
+            content_id: rawId || null,
+            language: item.audioLanguageName || null,
+            broadcast_channel: item.broadcast_channel || null,
+          };
+
+          /*
+           * Keep the first stream for an event.
+           * Prefer ENG when available.
+           */
+          if (!existing) {
+            grouped.set(groupKey, candidate);
+          } else if (
+            candidate.content_id?.endsWith('_ENG') &&
+            !existing.content_id?.endsWith('_ENG')
+          ) {
+            grouped.set(groupKey, candidate);
+          }
         }
 
-        res.setHeader('Cache-Control', 's-maxage=180, stale-while-revalidate');
-        res.status(200).json({ status: 'success', matches: uniqueMatches });
-    } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        matches.push(...grouped.values());
+      }
     }
+
+    /*
+     * Final safety deduplication.
+     */
+    const seen = new Set();
+    const uniqueMatches = [];
+
+    for (const match of matches) {
+      const key =
+        `${match.source}|${match.stream_url}`;
+
+      if (seen.has(key)) continue;
+
+      seen.add(key);
+      uniqueMatches.push(match);
+    }
+
+    res.setHeader(
+      'Cache-Control',
+      's-maxage=60, stale-while-revalidate=120'
+    );
+
+    res.status(200).json({
+      status: 'success',
+      matches: uniqueMatches,
+    });
+  } catch (error) {
+    console.error('streams API error:', error);
+
+    res.status(500).json({
+      status: 'error',
+      message: 'Unable to load stream data',
+    });
+  }
 }
