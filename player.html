@@ -207,7 +207,13 @@
                 <div id="errorText" class="error-text">
                     The stream may be offline, expired, or unsupported by the browser.
                 </div>
-                <button id="retryBtn" class="retry-btn" type="button">Retry</button>
+                <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;">
+                    <button id="retryBtn" class="retry-btn" type="button">Retry</button>
+                    <button id="externalBtn" class="retry-btn" type="button"
+                        style="background:#111827;border:1px solid rgba(255,255,255,.16);">
+                        Open Externally
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -254,6 +260,22 @@
             } catch {
                 return false;
             }
+        }
+
+        function openExternally() {
+            if (!streamUrl) return;
+
+            // Android intent fallback. If the dedicated player app is not
+            // installed, fall back to opening the URL in the browser.
+            const cleanUrl = streamUrl.replace(/^https?:\\/\\//, "");
+            const intentUrl =
+                `intent://${cleanUrl}` +
+                `#Intent;package=com.genuine.leone;` +
+                `action=android.intent.action.VIEW;` +
+                `scheme=https;` +
+                `S.browser_fallback_url=${encodeURIComponent(streamUrl)};end;`;
+
+            window.location.href = intentUrl;
         }
 
         let player = null;
@@ -405,17 +427,30 @@
             } catch (error) {
                 console.error("Shaka initialization/playback error:", error);
 
-                let detail = "The stream could not be played.";
                 const code = error && (error.code || (error.detail && error.detail.code));
 
-                if (code) {
-                    detail += ` Player error code: ${code}.`;
+                let detail;
+                if (Number(code) === 1002) {
+                    detail =
+                        "The browser could not complete the stream request (Shaka HTTP_ERROR 1002). " +
+                        "For cross-origin HLS this can happen when the stream origin blocks browser requests " +
+                        "with CORS, the signed URL is no longer valid, or the network connection is rejected. " +
+                        "Try Retry or Open Externally.";
+                } else if (Number(code)) {
+                    detail =
+                        `The player reported error ${code}. ` +
+                        "The stream may be unavailable, expired, unsupported, or blocked by the stream server.";
+                } else {
+                    detail =
+                        "The stream could not be loaded. It may be unavailable, expired, unsupported, " +
+                        "or blocked by the stream server.";
                 }
 
-                detail += " This usually indicates an unavailable stream, expired stream URL, unsupported format, or server-side access/CORS restriction.";
                 showError(detail);
             }
         }
+
+        document.getElementById("externalBtn").addEventListener("click", openExternally);
 
         document.getElementById("retryBtn").addEventListener("click", async () => {
             if (player) {
