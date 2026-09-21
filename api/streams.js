@@ -5,7 +5,7 @@ export default async function handler(req, res) {
       name: 'fancode',
     },
     {
-      url: 'https://raw.githubusercontent.com/drmlive/sliv-live-events/main/sonyliv.json',
+      url: 'https://github.com/drmlive/sliv-live-events/raw/refs/heads/main/sonyliv.json',
       name: 'sonyliv',
     },
   ];
