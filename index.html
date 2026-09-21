@@ -987,8 +987,6 @@
                 const streamUrl = String(match.stream_url || '');
                 const source = match.source === 'fancode' ? 'FanCode' : 'SonyLIV';
 
-                const cleanUrl = streamUrl.replace(/^https?:\/\//, '');
-                const intentUrl = `intent://${cleanUrl}#Intent;package=com.genuine.leone;action=android.intent.action.VIEW;scheme=https;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.genuine.leone;end;`;
 
                 card.innerHTML = `
                     <div class="card-img-container">
@@ -1009,7 +1007,17 @@
                 `;
 
                 const buttons = card.querySelectorAll('button');
-                buttons[0].addEventListener('click', () => { window.location.href = intentUrl; });
+                buttons[0].addEventListener('click', () => {
+                    if (!streamUrl) {
+                        showToast('❌ No stream link available.');
+                        return;
+                    }
+                    const playerUrl =
+                        `player.html?stream=${encodeURIComponent(streamUrl)}` +
+                        `&title=${encodeURIComponent(match.title || 'Live Sports Event')}` +
+                        `&source=${encodeURIComponent(source)}`;
+                    window.location.href = playerUrl;
+                });
                 buttons[1].addEventListener('click', () => copyToClipboard(streamUrl));
 
                 grid.appendChild(card);
@@ -1040,4 +1048,3 @@
 
 </body>
 </html>
-        

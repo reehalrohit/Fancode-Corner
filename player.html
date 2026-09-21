@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="referrer" content="no-referrer">
+    <meta name="theme-color" content="#000000">
+    <title>Live Player</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Shaka Player 4.6.0 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.6.0/shaka-player.ui.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.6.0/controls.min.css">
+
+    <style>
+        :root {
+            --accent: #4d8dff;
+            --panel: rgba(5, 10, 20, .78);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            font-family: Poppins, system-ui, sans-serif;
+        }
+
+        .video-container,
+        .shaka-video-container {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+
+        video {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
+        }
+
+        .topbar {
+            position: fixed;
+            z-index: 3000;
+            top: max(12px, env(safe-area-inset-top));
+            left: 12px;
+            right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            pointer-events: none;
+        }
+
+        .topbar > * { pointer-events: auto; }
+
+        .back-btn,
+        .live-chip {
+            border: 1px solid rgba(255,255,255,.12);
+            background: var(--panel);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            color: #fff;
+            border-radius: 999px;
+        }
+
+        .back-btn {
+            border: 0;
+            padding: 10px 14px;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 600;
+        }
+
+        .back-btn:active { transform: scale(.97); }
+
+        .live-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            max-width: 65%;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff3b4f;
+            box-shadow: 0 0 0 5px rgba(255,59,79,.14);
+            flex: 0 0 auto;
+        }
+
+        .live-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .loading-overlay,
+        .error-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 24px;
+            background:
+                radial-gradient(circle at center, rgba(35,65,120,.16), transparent 32%),
+                #000;
+            transition: opacity .25s ease;
+        }
+
+        .loading-overlay.hidden,
+        .error-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 42px;
+            height: 42px;
+            border: 4px solid rgba(255,255,255,.16);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .9s linear infinite;
+            margin-bottom: 14px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .error-text {
+            color: #9ca3af;
+            font-size: 13px;
+            max-width: 420px;
+            line-height: 1.55;
+            margin-bottom: 16px;
+        }
+
+        .retry-btn {
+            border: 0;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 999px;
+            padding: 10px 18px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        @media (max-width: 600px) {
+            .topbar {
+                top: max(8px, env(safe-area-inset-top));
+                left: 8px;
+                right: 8px;
+            }
+            .back-btn { padding: 9px 12px; }
+            .live-chip { max-width: 58%; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="video-container">
+        <div class="topbar">
+            <button id="backBtn" class="back-btn" type="button">← Back</button>
+            <div class="live-chip" title="Live stream">
+                <span class="live-dot"></span>
+                <span id="liveTitle" class="live-title">Live Player</span>
+            </div>
+        </div>
+
+        <div class="shaka-video-container" data-shaka-player>
+            <video id="video" autoplay playsinline muted></video>
+
+            <div id="loading" class="loading-overlay">
+                <div class="spinner"></div>
+                <div>Loading live stream…</div>
+            </div>
+
+            <div id="error" class="error-overlay hidden">
+                <div class="error-title">Unable to play this stream</div>
+                <div id="errorText" class="error-text">
+                    The stream may be offline, expired, or unsupported by the browser.
+                </div>
+                <button id="retryBtn" class="retry-btn" type="button">Retry</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const streamUrl = params.get("stream") || "";
+        const title = params.get("title") || "Live Player";
+        const source = params.get("source") || "";
+
+        const video = document.getElementById("video");
+        const loading = document.getElementById("loading");
+        const errorOverlay = document.getElementById("error");
+        const errorText = document.getElementById("errorText");
+        const liveTitle = document.getElementById("liveTitle");
+
+        document.title = `${title} | Live Player`;
+        liveTitle.textContent = source ? `${source} • ${title}` : title;
+
+        document.getElementById("backBtn").addEventListener("click", () => {
+            if (history.length > 1) history.back();
+            else window.location.href = "index.html";
+        });
+
+        function showLoading() {
+            errorOverlay.classList.add("hidden");
+            loading.classList.remove("hidden");
+        }
+
+        function hideLoading() {
+            loading.classList.add("hidden");
+        }
+
+        function showError(message) {
+            hideLoading();
+            errorText.textContent = message || "The stream could not be loaded.";
+            errorOverlay.classList.remove("hidden");
+        }
+
+        function isValidStreamUrl(value) {
+            try {
+                const url = new URL(value);
+                return url.protocol === "https:" || url.protocol === "http:";
+            } catch {
+                return false;
+            }
+        }
+
+        let player = null;
+
+        async function initPlayer() {
+            showLoading();
+
+            if (!streamUrl || !isValidStreamUrl(streamUrl)) {
+                showError("A valid HTTP(S) stream URL is required.");
+                return;
+            }
+
+            try {
+                shaka.polyfill.installAll();
+
+                if (!shaka.Player.isBrowserSupported()) {
+                    throw new Error("This browser is not supported by Shaka Player.");
+                }
+
+                player = new shaka.Player(video);
+                const container = document.querySelector(".shaka-video-container");
+                const ui = new shaka.ui.Overlay(player, container, video);
+
+                ui.configure({
+                    controlPanelElements: [
+                        "play_pause",
+                        "mute",
+                        "time_and_duration",
+                        "spacer",
+                        "quality",
+                        "language",
+                        "picture_in_picture",
+                        "fullscreen",
+                        "overflow_menu"
+                    ],
+                    addSeekBar: true
+                });
+
+                player.configure({
+                    streaming: {
+                        bufferingGoal: 10,
+                        rebufferingGoal: 2,
+                        bufferBehind: 30,
+                        lowLatencyMode: true
+                    }
+                });
+
+                player.addEventListener("error", (event) => {
+                    const detail = event.detail;
+                    console.error("Shaka error:", detail);
+                    showError("The player reported a playback error. Try Retry or choose another live event.");
+                });
+
+                video.addEventListener("playing", hideLoading, { once: true });
+
+                await player.load(streamUrl);
+
+                video.muted = true;
+                await video.play().catch(() => {});
+
+                // Some browsers need the UI to settle after autoplay starts.
+                setTimeout(() => {
+                    if (!video.paused) hideLoading();
+                }, 1200);
+
+            } catch (error) {
+                console.error("Player initialization error:", error);
+
+                // Native fallback for browsers that support the stream format directly.
+                try {
+                    if (!video.src) video.src = streamUrl;
+                    video.controls = true;
+                    await video.play().catch(() => {});
+                    video.addEventListener("playing", hideLoading, { once: true });
+                    setTimeout(() => {
+                        if (video.readyState > 0) hideLoading();
+                    }, 1200);
+                } catch (fallbackError) {
+                    console.error("Native fallback error:", fallbackError);
+                    showError("Playback failed in both the Shaka and native video players.");
+                }
+            }
+        }
+
+        document.getElementById("retryBtn").addEventListener("click", () => {
+            if (player) {
+                try { player.destroy(); } catch {}
+                player = null;
+            }
+            video.pause();
+            video.removeAttribute("src");
+            video.load();
+            initPlayer();
+        });
+
+        if ("mediaSession" in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title,
+                artist: source || "Live Sports",
+                album: "Sports Corner"
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", initPlayer);
+    </script>
+</body>
+</html>
