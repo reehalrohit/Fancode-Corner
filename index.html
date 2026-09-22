@@ -794,7 +794,7 @@
     <section class="hero">
         <div class="hero-kicker">Live Now</div>
         <h1>Sports, right when they’re live.</h1>
-        <p class="hero-copy">Live events from FanCode and SonyLIV in a cleaner, faster mobile experience.</p>
+        <p class="hero-copy">Live events from FanCode, SonyLIV, Willow and Prime Video in a cleaner, faster mobile experience.</p>
         <div class="hero-stats">
             <span class="stat">● Live events only</span>
             <span class="stat">⚡ Quick access</span>
@@ -804,7 +804,7 @@
 
     <div class="alert-banner">
         <span>💡</span>
-        <span><strong>Watch tip:</strong> Tap <strong>Open in App</strong> to launch the stream in NS Player. <a href="https://play.google.com/store/apps/details?id=com.genuine.leone" target="_blank" rel="noopener noreferrer">View app</a></span>
+        <span><strong>Watch tip:</strong> Tap <strong>Open in App</strong> for supported streams, or <strong>Open Official</strong> for Willow and Prime Video events. <a href="https://play.google.com/store/apps/details?id=com.genuine.leone" target="_blank" rel="noopener noreferrer">View app</a></span>
     </div>
 
     <div class="filter-wrap">
@@ -835,6 +835,24 @@
             <div class="section-count" id="sonyliv-count">0 events</div>
         </div>
         <div class="grid" id="sonyliv-grid"></div>
+    </section>
+
+    <section id="willow-section" class="section">
+        <div class="section-head">
+            <div class="section-title">🏏 Willow Live</div>
+            <div class="section-line"></div>
+            <div class="section-count" id="willow-count">0 events</div>
+        </div>
+        <div class="grid" id="willow-grid"></div>
+    </section>
+
+    <section id="prime-section" class="section">
+        <div class="section-head">
+            <div class="section-title">🎬 Prime Video Live</div>
+            <div class="section-line"></div>
+            <div class="section-count" id="prime-count">0 events</div>
+        </div>
+        <div class="grid" id="prime-grid"></div>
     </section>
 
     <!-- MODZONE-BOTTOM -->
@@ -1044,9 +1062,13 @@
         function renderSections(matches) {
             const fancodeMatches = matches.filter(m => m.source === 'fancode');
             const sonylivMatches = matches.filter(m => m.source === 'sonyliv');
+            const willowMatches = matches.filter(m => m.source === 'willow');
+            const primeMatches = matches.filter(m => m.source === 'prime');
 
             renderGrid('fancode-grid', 'fancode-section', 'fancode-count', fancodeMatches);
             renderGrid('sonyliv-grid', 'sonyliv-section', 'sonyliv-count', sonylivMatches);
+            renderGrid('willow-grid', 'willow-section', 'willow-count', willowMatches);
+            renderGrid('prime-grid', 'prime-section', 'prime-count', primeMatches);
         }
 
         function escapeHtml(value) {
@@ -1082,8 +1104,39 @@
                 const title = escapeHtml(match.title || 'Live Sports Event');
                 const imgUrl = escapeHtml(match.src_image || fallbackImg);
                 const streamUrl = String(match.stream_url || '');
-                const source = match.source === 'fancode' ? 'FanCode' : 'SonyLIV';
+                const officialUrl = String(match.official_url || '');
 
+                const sourceLabels = {
+                    fancode: 'FanCode',
+                    sonyliv: 'SonyLIV',
+                    willow: 'Willow',
+                    prime: 'Prime Video'
+                };
+
+                const source = sourceLabels[match.source] || escapeHtml(match.source || 'Live');
+
+                const hasPlayableStream =
+                    Boolean(streamUrl);
+
+                const hasOfficialLink =
+                    Boolean(officialUrl);
+
+                const primaryLabel =
+                    hasPlayableStream
+                        ? '▶ Open in App'
+                        : hasOfficialLink
+                            ? '↗ Open Official'
+                            : 'Unavailable';
+
+                const secondaryLabel =
+                    hasPlayableStream
+                        ? '⧉'
+                        : '↗';
+
+                const secondaryTitle =
+                    hasPlayableStream
+                        ? 'Copy stream link'
+                        : 'Open official event';
 
                 card.innerHTML = `
                     <div class="card-img-container">
@@ -1097,32 +1150,58 @@
                         <div class="match-meta">Live now</div>
                         <div class="match-title">${title}</div>
                         <div class="button-group">
-                            <button class="btn btn-primary" type="button">▶ Open in App</button>
-                            <button class="btn btn-secondary" type="button" title="Copy stream link" aria-label="Copy stream link">⧉</button>
+                            <button class="btn btn-primary" type="button">${primaryLabel}</button>
+                            <button class="btn btn-secondary" type="button" title="${secondaryTitle}" aria-label="${secondaryTitle}">${secondaryLabel}</button>
                         </div>
                     </div>
                 `;
 
                 const buttons = card.querySelectorAll('button');
+
                 buttons[0].addEventListener('click', () => {
-                    if (!streamUrl) {
-                        showToast('❌ No stream link available.');
+                    if (hasPlayableStream) {
+                        // Open playable streams directly in NS Player on Android.
+                        const cleanUrl = streamUrl.replace(/^https?:\/\//, '');
+                        const intentUrl =
+                            `intent://${cleanUrl}` +
+                            `#Intent;package=com.genuine.leone;` +
+                            `action=android.intent.action.VIEW;` +
+                            `scheme=https;` +
+                            `S.browser_fallback_url=${encodeURIComponent(streamUrl)};end;`;
+
+                        window.location.href = intentUrl;
                         return;
                     }
 
-                    // Open the stream directly in NS Player on Android.
-                    // Package used by the existing app flow.
-                    const cleanUrl = streamUrl.replace(/^https?:\/\//, '');
-                    const intentUrl =
-                        `intent://${cleanUrl}` +
-                        `#Intent;package=com.genuine.leone;` +
-                        `action=android.intent.action.VIEW;` +
-                        `scheme=https;` +
-                        `S.browser_fallback_url=${encodeURIComponent(streamUrl)};end;`;
+                    if (hasOfficialLink) {
+                        window.open(
+                            officialUrl,
+                            '_blank',
+                            'noopener,noreferrer'
+                        );
+                        return;
+                    }
 
-                    window.location.href = intentUrl;
+                    showToast('❌ No event link available.');
                 });
-                buttons[1].addEventListener('click', () => copyToClipboard(streamUrl));
+
+                buttons[1].addEventListener('click', () => {
+                    if (hasPlayableStream) {
+                        copyToClipboard(streamUrl);
+                        return;
+                    }
+
+                    if (hasOfficialLink) {
+                        window.open(
+                            officialUrl,
+                            '_blank',
+                            'noopener,noreferrer'
+                        );
+                        return;
+                    }
+
+                    showToast('❌ No event link available.');
+                });
 
                 grid.appendChild(card);
             });
