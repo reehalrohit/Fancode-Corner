@@ -118,6 +118,16 @@ export default async function handler(req, res) {
       name: 'sonyliv',
       url: 'https://github.com/drmlive/sliv-live-events/raw/refs/heads/main/sonyliv.json',
     },
+    {
+      name: 'willow',
+      url: 'https://raw.githubusercontent.com/sportlive18/Willow-Cricbuzz-Prime-Video-Sport-Live-Event-Auto-Updated-Playlist/main/willow.json',
+      matchesKey: 'Matches',
+    },
+    {
+      name: 'prime',
+      url: 'https://raw.githubusercontent.com/sportlive18/Willow-Cricbuzz-Prime-Video-Sport-Live-Event-Auto-Updated-Playlist/main/primesport.json',
+      matchesKey: 'Matches',
+    },
   ];
 
   // --------------------------------------------------
@@ -289,11 +299,14 @@ export default async function handler(req, res) {
     for (const result of results) {
       if (!result?.data) continue;
 
-      const items = Array.isArray(
-        result.data.matches
-      )
-        ? result.data.matches
-        : [];
+      const rawItems =
+        Array.isArray(result.data?.matches)
+          ? result.data.matches
+          : Array.isArray(result.data?.Matches)
+            ? result.data.Matches
+            : [];
+
+      const items = rawItems;
 
       // ==================================================
       // FANCODE
@@ -490,6 +503,76 @@ export default async function handler(req, res) {
           ...grouped.values()
         );
       }
+
+      // ==================================================
+      // WILLOW / PRIME VIDEO
+      // Only live metadata + official event URL is exposed.
+      // Protected DASH URLs and DRM keys are intentionally
+      // not returned by this API.
+      // ==================================================
+      if (
+        result.name === 'willow' ||
+        result.name === 'prime'
+      ) {
+        for (const item of items) {
+          const isLive =
+            String(item?.status || '')
+              .toUpperCase() === 'LIVE';
+
+          if (!isLive) continue;
+
+          const officialUrl =
+            typeof item?.match_url === 'string'
+              ? item.match_url.trim()
+              : '';
+
+          if (!officialUrl) continue;
+
+          const source =
+            result.name === 'willow'
+              ? 'willow'
+              : 'prime';
+
+          const title = String(
+            item?.title ||
+            item?.synopsis ||
+            (source === 'willow'
+              ? 'Willow Live Event'
+              : 'Prime Video Live Event')
+          ).trim();
+
+          matches.push({
+            title,
+            stream_url: null,
+            official_url: officialUrl,
+            src_image:
+              typeof item?.cover_image === 'string'
+                ? item.cover_image
+                : null,
+            source,
+            category:
+              source === 'willow'
+                ? 'Cricket'
+                : 'Sports',
+            status: 'LIVE',
+            event_name:
+              item?.title ||
+              item?.synopsis ||
+              null,
+            match_name:
+              item?.title ||
+              item?.synopsis ||
+              null,
+            match_id:
+              item?.match_id ||
+              null,
+            start_time:
+              item?.time ||
+              null,
+            playable: false,
+          });
+        }
+      }
     }
 
     // --------------------------------------------------
@@ -505,7 +588,7 @@ export default async function handler(req, res) {
               match.content_id ||
               match.title
             }`
-          : `fancode|${
+          : `${match.source}|${
               match.match_id ||
               match.title
             }`;
@@ -519,11 +602,21 @@ export default async function handler(req, res) {
     // --------------------------------------------------
     // Live events first
     // --------------------------------------------------
+    const sourceOrder = {
+      fancode: 0,
+      sonyliv: 1,
+      willow: 2,
+      prime: 3,
+    };
+
     uniqueMatches.sort((a, b) => {
-      if (a.source !== b.source) {
-        return a.source === 'fancode'
-          ? -1
-          : 1;
+      const aOrder =
+        sourceOrder[a.source] ?? 99;
+      const bOrder =
+        sourceOrder[b.source] ?? 99;
+
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder;
       }
 
       return a.title.localeCompare(
@@ -569,6 +662,30 @@ export default async function handler(req, res) {
               r => r?.name === 'sonyliv'
             )?.error || null,
         },
+
+        willow: {
+          available:
+            results.find(
+              r => r?.name === 'willow'
+            )?.available || false,
+
+          error:
+            results.find(
+              r => r?.name === 'willow'
+            )?.error || null,
+        },
+
+        prime: {
+          available:
+            results.find(
+              r => r?.name === 'prime'
+            )?.available || false,
+
+          error:
+            results.find(
+              r => r?.name === 'prime'
+            )?.error || null,
+        },
       },
 
       count:
@@ -590,4 +707,3 @@ export default async function handler(req, res) {
         'Unable to load stream data',
     });
   }
-            }
