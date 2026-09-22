@@ -483,6 +483,12 @@
             border-color: rgba(77,141,255,.25);
         }
 
+        .btn-official {
+            color: #fff7ed;
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            box-shadow: 0 8px 20px rgba(249,115,22,.12);
+        }
+
         .empty-state {
             padding: 22px 16px;
             text-align: center;
@@ -804,7 +810,7 @@
 
     <div class="alert-banner">
         <span>💡</span>
-        <span><strong>Watch tip:</strong> Tap <strong>Open in App</strong> for supported streams, or <strong>Open Official</strong> for Willow and Prime Video events. <a href="https://play.google.com/store/apps/details?id=com.genuine.leone" target="_blank" rel="noopener noreferrer">View app</a></span>
+        <span><strong>Watch tip:</strong> FanCode and SonyLIV entries open in NS Player when a playable stream URL is available. Willow and Prime Video entries open their official event page.</span>
     </div>
 
     <div class="filter-wrap">
@@ -837,6 +843,7 @@
         <div class="grid" id="sonyliv-grid"></div>
     </section>
 
+    <!-- Official-event-only sources. Protected stream data is not exposed. -->
     <section id="willow-section" class="section">
         <div class="section-head">
             <div class="section-title">🏏 Willow Live</div>
@@ -846,13 +853,13 @@
         <div class="grid" id="willow-grid"></div>
     </section>
 
-    <section id="prime-section" class="section">
+    <section id="primesport-section" class="section">
         <div class="section-head">
-            <div class="section-title">🎬 Prime Video Live</div>
+            <div class="section-title">▶️ Prime Video Live</div>
             <div class="section-line"></div>
-            <div class="section-count" id="prime-count">0 events</div>
+            <div class="section-count" id="primesport-count">0 events</div>
         </div>
-        <div class="grid" id="prime-grid"></div>
+        <div class="grid" id="primesport-grid"></div>
     </section>
 
     <!-- MODZONE-BOTTOM -->
@@ -1005,10 +1012,47 @@
             refreshBtn.style.opacity = '0.6';
 
             try {
-                const res = await fetch('/api/streams', { cache: 'no-store' });
-                const json = await res.json();
+                let res = await fetch('/api/streams', {
+                    cache: 'no-store',
+                    credentials: 'same-origin'
+                });
+                let json = {};
 
-                if (json.status !== 'success') throw new Error('Backend error');
+                try {
+                    json = await res.json();
+                } catch {
+                    json = {};
+                }
+
+                // If the short-lived access cookie expired, refresh the
+                // server-side access check once and retry the streams API.
+                if (res.status === 403) {
+                    const gate = await fetch('/api/access-check', {
+                        method: 'GET',
+                        cache: 'no-store',
+                        credentials: 'same-origin'
+                    });
+
+                    let gateJson = {};
+                    try { gateJson = await gate.json(); } catch {}
+
+                    if (gate.ok && gateJson.allowed === true) {
+                        res = await fetch('/api/streams', {
+                            cache: 'no-store',
+                            credentials: 'same-origin'
+                        });
+                        try {
+                            json = await res.json();
+                        } catch {
+                            json = {};
+                        }
+                    }
+                }
+
+                if (!res.ok || json.status !== 'success') {
+                    const reason = json.message || json.reason || `HTTP ${res.status}`;
+                    throw new Error(`Live API: ${reason}`);
+                }
 
                 globalMatches = Array.isArray(json.matches) ? json.matches : [];
                 renderAll();
@@ -1022,7 +1066,9 @@
             } catch (err) {
                 console.error(err);
                 status.style.display = 'block';
-                status.textContent = 'Failed to load live sports. Tap refresh to try again.';
+                status.textContent = err?.message
+                    ? `${err.message} — tap refresh to try again.`
+                    : 'Failed to load live sports. Tap refresh to try again.';
             } finally {
                 refreshBtn.disabled = false;
                 refreshBtn.style.opacity = '';
@@ -1063,12 +1109,12 @@
             const fancodeMatches = matches.filter(m => m.source === 'fancode');
             const sonylivMatches = matches.filter(m => m.source === 'sonyliv');
             const willowMatches = matches.filter(m => m.source === 'willow');
-            const primeMatches = matches.filter(m => m.source === 'prime');
+            const primeSportMatches = matches.filter(m => m.source === 'primesport');
 
             renderGrid('fancode-grid', 'fancode-section', 'fancode-count', fancodeMatches);
             renderGrid('sonyliv-grid', 'sonyliv-section', 'sonyliv-count', sonylivMatches);
             renderGrid('willow-grid', 'willow-section', 'willow-count', willowMatches);
-            renderGrid('prime-grid', 'prime-section', 'prime-count', primeMatches);
+            renderGrid('primesport-grid', 'primesport-section', 'primesport-count', primeSportMatches);
         }
 
         function escapeHtml(value) {
@@ -1104,39 +1150,17 @@
                 const title = escapeHtml(match.title || 'Live Sports Event');
                 const imgUrl = escapeHtml(match.src_image || fallbackImg);
                 const streamUrl = String(match.stream_url || '');
-                const officialUrl = String(match.official_url || '');
-
                 const sourceLabels = {
                     fancode: 'FanCode',
                     sonyliv: 'SonyLIV',
                     willow: 'Willow',
-                    prime: 'Prime Video'
+                    primesport: 'Prime Video'
                 };
+                const source = sourceLabels[match.source] || 'Live Sports';
+                const officialUrl = String(match.official_url || '');
+                const isOfficialOnly = match.playable === false && !!officialUrl;
+                const actionUrl = officialUrl || streamUrl;
 
-                const source = sourceLabels[match.source] || escapeHtml(match.source || 'Live');
-
-                const hasPlayableStream =
-                    Boolean(streamUrl);
-
-                const hasOfficialLink =
-                    Boolean(officialUrl);
-
-                const primaryLabel =
-                    hasPlayableStream
-                        ? '▶ Open in App'
-                        : hasOfficialLink
-                            ? '↗ Open Official'
-                            : 'Unavailable';
-
-                const secondaryLabel =
-                    hasPlayableStream
-                        ? '⧉'
-                        : '↗';
-
-                const secondaryTitle =
-                    hasPlayableStream
-                        ? 'Copy stream link'
-                        : 'Open official event';
 
                 card.innerHTML = `
                     <div class="card-img-container">
@@ -1150,57 +1174,39 @@
                         <div class="match-meta">Live now</div>
                         <div class="match-title">${title}</div>
                         <div class="button-group">
-                            <button class="btn btn-primary" type="button">${primaryLabel}</button>
-                            <button class="btn btn-secondary" type="button" title="${secondaryTitle}" aria-label="${secondaryTitle}">${secondaryLabel}</button>
+                            <button class="btn ${isOfficialOnly ? 'btn-official' : 'btn-primary'}" type="button">${isOfficialOnly ? '↗ Open Official' : '▶ Open in App'}</button>
+                            <button class="btn btn-secondary" type="button" title="${isOfficialOnly ? 'Copy official event link' : 'Copy stream link'}" aria-label="${isOfficialOnly ? 'Copy official event link' : 'Copy stream link'}">⧉</button>
                         </div>
                     </div>
                 `;
 
                 const buttons = card.querySelectorAll('button');
-
                 buttons[0].addEventListener('click', () => {
-                    if (hasPlayableStream) {
-                        // Open playable streams directly in NS Player on Android.
-                        const cleanUrl = streamUrl.replace(/^https?:\/\//, '');
-                        const intentUrl =
-                            `intent://${cleanUrl}` +
-                            `#Intent;package=com.genuine.leone;` +
-                            `action=android.intent.action.VIEW;` +
-                            `scheme=https;` +
-                            `S.browser_fallback_url=${encodeURIComponent(streamUrl)};end;`;
-
-                        window.location.href = intentUrl;
+                    if (!actionUrl) {
+                        showToast('❌ No event link available.');
                         return;
                     }
 
-                    if (hasOfficialLink) {
-                        window.open(
-                            officialUrl,
-                            '_blank',
-                            'noopener,noreferrer'
-                        );
+                    if (isOfficialOnly) {
+                        window.open(actionUrl, '_blank', 'noopener,noreferrer');
                         return;
                     }
 
-                    showToast('❌ No event link available.');
+                    // Open the stream directly in NS Player on Android.
+                    // Package used by the existing app flow.
+                    const cleanUrl = actionUrl.replace(/^https?:\/\//, '');
+                    const intentUrl =
+                        `intent://${cleanUrl}` +
+                        `#Intent;package=com.genuine.leone;` +
+                        `action=android.intent.action.VIEW;` +
+                        `scheme=https;` +
+                        `S.browser_fallback_url=${encodeURIComponent(actionUrl)};end;`;
+
+                    window.location.href = intentUrl;
                 });
 
                 buttons[1].addEventListener('click', () => {
-                    if (hasPlayableStream) {
-                        copyToClipboard(streamUrl);
-                        return;
-                    }
-
-                    if (hasOfficialLink) {
-                        window.open(
-                            officialUrl,
-                            '_blank',
-                            'noopener,noreferrer'
-                        );
-                        return;
-                    }
-
-                    showToast('❌ No event link available.');
+                    copyToClipboard(actionUrl);
                 });
 
                 grid.appendChild(card);
@@ -1217,7 +1223,7 @@
 
         function copyToClipboard(text) {
             if (!text) {
-                showToast('❌ No stream link available.');
+                showToast('❌ No link available.');
                 return;
             }
 
