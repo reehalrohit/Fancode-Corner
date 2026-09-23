@@ -23,9 +23,11 @@ function getCookie(req, name) {
     if (index === -1) continue;
 
     if (part.slice(0, index).trim() === name) {
-      return decodeURIComponent(
-        part.slice(index + 1).trim()
-      );
+      try {
+        return decodeURIComponent(part.slice(index + 1).trim());
+      } catch {
+        return "";
+      }
     }
   }
 
@@ -105,8 +107,9 @@ export default async function handler(req, res) {
 
     return res.status(403).json({
       status: "blocked",
-      message:
-        "Access verification required."
+      code: "ACCESS_TOKEN_INVALID",
+      reason: "Server access token is missing, expired, or invalid.",
+      message: "Access verification required."
     });
   } 
   const sources = [

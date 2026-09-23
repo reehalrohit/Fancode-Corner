@@ -1,11 +1,11 @@
 import crypto from "node:crypto";
 
-const TOKEN_TTL = 30 * 60; // 30 minutes
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const TOKEN_COOKIE = "sc_access";
+const TOKEN_TTL_SECONDS = 30 * 60;
+const IP_CACHE_TTL_MS = 5 * 60 * 1000;
 
-const cache =
-  globalThis.__sportsCornerAccessCache ||
-  (globalThis.__sportsCornerAccessCache = new Map());
+const ipVerdictCache = globalThis.__sportsCornerIpCache || new Map();
+globalThis.__sportsCornerIpCache = ipVerdictCache;
 
 function getClientIp(req) {
   const forwarded = req.headers["x-forwarded-for"];
@@ -26,262 +26,274 @@ function getCookie(req, name) {
 
   for (const part of raw.split(";")) {
     const index = part.indexOf("=");
-
     if (index === -1) continue;
 
-    const key = part.slice(0, index).trim();
+    if (part.slice(0, index).trim() !== name) continue;
 
-    if (key === name) {
-      return decodeURIComponent(
-        part.slice(index + 1).trim()
-      );
+    try {
+      return decodeURIComponent(part.slice(index + 1).trim());
+    } catch {
+      return "";
     }
   }
 
   return "";
 }
 
-function hashIp(ip) {
-  return crypto
-    .createHash("sha256")
-    .update(ip)
-    .digest("hex");
-}
+function isValidAccessToken(req) {
+  const secret = String(process.env.ACCESS_SECRET || "");
+  if (!secret) return false;
 
-function sign(payload) {
-  return crypto
-    .createHmac(
-      "sha256",
-      String(process.env.ACCESS_SECRET || "")
-    )
-    .update(payload)
-    .digest("hex");
-}
-
-function createToken(ip) {
-  const expires =
-    Math.floor(Date.now() / 1000) + TOKEN_TTL;
-
-  const payload =
-    `${expires}.${hashIp(ip)}`;
-
-  return `${payload}.${sign(payload)}`;
-}
-
-function validateToken(token, ip) {
-  if (!token) return false;
+  const ip = getClientIp(req);
+  const token = getCookie(req, TOKEN_COOKIE);
+  if (!ip || !token) return false;
 
   const parts = token.split(".");
-
   if (parts.length !== 3) return false;
 
   const [expires, ipHash, signature] = parts;
+  const expiresNumber = Number(expires);
 
-  if (
-    !Number.isInteger(Number(expires)) ||
-    Number(expires) <= Math.floor(Date.now() / 1000)
-  ) {
-    return false;
-  }
+  if (!Number.isInteger(expiresNumber)) return false;
+  if (expiresNumber <= Math.floor(Date.now() / 1000)) return false;
 
-  if (ipHash !== hashIp(ip)) {
-    return false;
-  }
+  const expectedIpHash = crypto
+    .createHash("sha256")
+    .update(ip)
+    .digest("hex");
 
-  const payload =
-    `${expires}.${ipHash}`;
+  if (ipHash !== expectedIpHash) return false;
 
-  const expected =
-    sign(payload);
+  const expectedSignature = crypto
+    .createHmac("sha256", secret)
+    .update(`${expires}.${ipHash}`)
+    .digest("hex");
+
+  if (signature.length !== expectedSignature.length) return false;
 
   try {
     return crypto.timingSafeEqual(
       Buffer.from(signature),
-      Buffer.from(expected)
+      Buffer.from(expectedSignature)
     );
   } catch {
     return false;
   }
 }
 
-async function checkIp(ip) {
-  const cached = cache.get(ip);
+function signAccessToken(ip) {
+  const secret = String(process.env.ACCESS_SECRET || "");
+  const expires = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
+  const ipHash = crypto.createHash("sha256").update(ip).digest("hex");
+  const signature = crypto
+    .createHmac("sha256", secret)
+    .update(`${expires}.${ipHash}`)
+    .digest("hex");
 
-  if (
-    cached &&
-    Date.now() - cached.time < CACHE_TTL
-  ) {
-    return cached;
+  return `${expires}.${ipHash}.${signature}`;
+}
+
+function setAccessCookie(res, token) {
+  res.setHeader(
+    "Set-Cookie",
+    `${TOKEN_COOKIE}=${encodeURIComponent(token)}; Max-Age=${TOKEN_TTL_SECONDS}; Path=/; HttpOnly; Secure; SameSite=Lax`
+  );
+}
+
+function normalizeBoolean(value) {
+  return value === true || value === 1 || value === "1";
+}
+
+function classifyIpData(data) {
+  const isVpn = normalizeBoolean(data?.is_vpn);
+  const isProxy = normalizeBoolean(data?.is_proxy);
+  const isTor = normalizeBoolean(data?.is_tor);
+  const isDatacenter = normalizeBoolean(data?.is_datacenter);
+  const isEgressService = normalizeBoolean(data?.egress_service);
+
+  if (isTor) {
+    return { blocked: true, code: "TOR_DETECTED", reason: "Tor connection detected." };
+  }
+  if (isVpn) {
+    return { blocked: true, code: "VPN_DETECTED", reason: "VPN connection detected." };
+  }
+  if (isProxy) {
+    return { blocked: true, code: "PROXY_DETECTED", reason: "Proxy connection detected." };
+  }
+  if (isDatacenter) {
+    return { blocked: true, code: "DATACENTER_DETECTED", reason: "Datacenter connection detected." };
+  }
+  if (isEgressService) {
+    return { blocked: true, code: "PRIVACY_RELAY_DETECTED", reason: "Privacy relay or egress service detected." };
   }
 
-  const apiKey =
-    String(process.env.IPAPI_KEY || "");
+  return {
+    blocked: false,
+    code: "NETWORK_CLEAN",
+    reason: "No restricted network type was reported."
+  };
+}
 
-  if (!apiKey) {
+async function verifyIp(ip) {
+  const now = Date.now();
+  const cached = ipVerdictCache.get(ip);
+
+  if (cached && cached.expiresAt > now) {
+    return cached.value;
+  }
+
+  const key = String(process.env.IPAPI_KEY || "");
+  if (!key) {
     return {
+      available: false,
       blocked: false,
-      reason: null,
-      source: "not-configured",
-      time: Date.now()
+      code: "IP_PROVIDER_NOT_CONFIGURED",
+      reason: "IP network verification is not configured."
     };
   }
 
-  try {
-    const url =
-      `https://api.ipapi.is/?q=${encodeURIComponent(ip)}` +
-      `&key=${encodeURIComponent(apiKey)}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 7000);
 
+  try {
+    const url = `https://api.ipapi.is/?q=${encodeURIComponent(ip)}&key=${encodeURIComponent(key)}`;
     const response = await fetch(url, {
-      headers: {
-        Accept: "application/json"
-      },
-      signal: AbortSignal.timeout(3500)
+      method: "GET",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      signal: controller.signal
     });
 
     if (!response.ok) {
-      throw new Error(
-        `IP API HTTP ${response.status}`
-      );
+      throw new Error(`IP verification HTTP ${response.status}`);
     }
 
     const data = await response.json();
-
-    let reason = null;
-
-    if (data?.is_vpn) {
-      reason = "VPN connection detected.";
-    } else if (data?.is_proxy) {
-      reason = "Proxy connection detected.";
-    } else if (data?.is_tor) {
-      reason = "Tor connection detected.";
-    } else if (data?.is_datacenter) {
-      reason = "Datacenter connection detected.";
-    } else if (data?.egress_service) {
-      reason = "Privacy relay detected.";
-    }
-
     const result = {
-      blocked: Boolean(reason),
-      reason,
-      source: "ipapi.is",
-      time: Date.now()
+      available: true,
+      ...classifyIpData(data)
     };
 
-    cache.set(ip, result);
+    ipVerdictCache.set(ip, {
+      expiresAt: now + IP_CACHE_TTL_MS,
+      value: result
+    });
 
     return result;
-
   } catch (error) {
-    console.error(
-      "IP verification error:",
-      error
-    );
-
-    const strict =
-      String(
-        process.env.ACCESS_STRICT || ""
-      ).toLowerCase() === "true";
-
     return {
-      blocked: strict,
-      reason: strict
-        ? "Network verification unavailable."
-        : null,
-      source: "provider-error",
-      time: Date.now()
+      available: false,
+      blocked: false,
+      code: "IP_PROVIDER_UNAVAILABLE",
+      reason: "Network verification service could not be reached.",
+      detail: error?.name === "AbortError" ? "IP verification timed out." : String(error?.message || "Unknown verification error")
     };
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
+function sendJson(res, status, payload) {
+  res.status(status).json(payload);
+}
+
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store, max-age=0");
+  res.setHeader("Vary", "Cookie");
 
-  if (req.method !== "GET") {
-    return res.status(405).json({
-      allowed: false,
-      reason: "Method not allowed."
-    });
-  }
-
-  const secret =
-    String(process.env.ACCESS_SECRET || "");
-
+  const secret = String(process.env.ACCESS_SECRET || "");
   if (!secret) {
-    return res.status(503).json({
+    return sendJson(res, 500, {
       allowed: false,
-      reason:
-        "Access system is not configured."
+      code: "ACCESS_NOT_CONFIGURED",
+      reason: "Access system is not configured.",
+      message: "ACCESS_SECRET is missing on the server."
     });
   }
 
   const ip = getClientIp(req);
-
   if (!ip) {
-    return res.status(403).json({
+    return sendJson(res, 403, {
       allowed: false,
-      reason:
-        "Unable to identify connection."
+      code: "IP_UNAVAILABLE",
+      reason: "Client network address could not be determined.",
+      message: "Access was blocked because the client IP could not be determined."
     });
   }
 
-  const existingToken =
-    getCookie(req, "sc_access");
-
-  if (
-    validateToken(
-      existingToken,
-      ip
-    )
-  ) {
-    res.setHeader(
-      "Cache-Control",
-      "no-store"
-    );
-
-    return res.status(200).json({
+  // A valid short-lived token is enough to pass without re-running the
+  // external IP classifier on every page/API request.
+  if (isValidAccessToken(req)) {
+    return sendJson(res, 200, {
       allowed: true,
-      reused: true
+      code: "ACCESS_GRANTED",
+      reason: "Access verified.",
+      token_ttl_seconds: TOKEN_TTL_SECONDS,
+      checks: {
+        network: "passed",
+        access_token: "passed"
+      }
     });
   }
 
-  const verdict =
-    await checkIp(ip);
+  const ipResult = await verifyIp(ip);
+  const strict = String(process.env.ACCESS_STRICT || "false").toLowerCase() === "true";
 
-  if (verdict.blocked) {
-    res.setHeader(
-      "Cache-Control",
-      "no-store"
-    );
+  if (!ipResult.available) {
+    if (strict) {
+      return sendJson(res, 503, {
+        allowed: false,
+        code: ipResult.code,
+        reason: "Network verification could not be completed.",
+        message: `${ipResult.reason} Access is blocked in strict mode.`,
+        detail: ipResult.detail || null,
+        checks: {
+          network: "unknown",
+          access_token: "blocked"
+        }
+      });
+    }
 
-    return res.status(403).json({
+    // Preserve the existing fail-open behavior when ACCESS_STRICT=false.
+    const token = signAccessToken(ip);
+    setAccessCookie(res, token);
+
+    return sendJson(res, 200, {
+      allowed: true,
+      code: "ACCESS_GRANTED_UNVERIFIED",
+      reason: "Access verified without external IP classification.",
+      token_ttl_seconds: TOKEN_TTL_SECONDS,
+      checks: {
+        network: "unverified",
+        access_token: "passed"
+      }
+    });
+  }
+
+  if (ipResult.blocked) {
+    return sendJson(res, 403, {
       allowed: false,
-      reason:
-        verdict.reason ||
-        "This connection is not allowed."
+      code: ipResult.code,
+      reason: ipResult.reason,
+      message: `Access blocked: ${ipResult.reason}`,
+      checks: {
+        network: "blocked",
+        access_token: "blocked"
+      }
     });
   }
 
-  const token =
-    createToken(ip);
+  const token = signAccessToken(ip);
+  setAccessCookie(res, token);
 
-  res.setHeader(
-    "Set-Cookie",
-    [
-      `sc_access=${encodeURIComponent(token)}`,
-      `Max-Age=${TOKEN_TTL}`,
-      "Path=/",
-      "HttpOnly",
-      "Secure",
-      "SameSite=Lax"
-    ].join("; ")
-  );
-
-  res.setHeader(
-    "Cache-Control",
-    "no-store"
-  );
-
-  return res.status(200).json({
+  return sendJson(res, 200, {
     allowed: true,
-    reused: false
+    code: "ACCESS_GRANTED",
+    reason: "Access verified.",
+    token_ttl_seconds: TOKEN_TTL_SECONDS,
+    checks: {
+      network: "passed",
+      access_token: "passed"
+    }
   });
 }
