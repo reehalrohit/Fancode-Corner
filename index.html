@@ -663,6 +663,111 @@
             margin-top: 7px;
             color: #fb7185;
             font-size: .8rem;
+            line-height: 1.45;
+        }
+
+        .mz-protection {
+            display: none;
+            margin-top: 15px;
+            padding: 13px;
+            border-radius: 14px;
+            background: rgba(2, 8, 23, .58);
+            border: 1px solid rgba(148,163,184,.16);
+            text-align: left;
+        }
+
+        .mz-protection-title {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 9px;
+            color: #e2e8f0;
+            font-size: .82rem;
+            font-weight: 900;
+        }
+
+        .mz-check-list {
+            display: grid;
+            gap: 6px;
+        }
+
+        .mz-check-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 7px 8px;
+            border-radius: 9px;
+            background: rgba(255,255,255,.025);
+            font-size: .72rem;
+        }
+
+        .mz-check-label {
+            color: #cbd5e1;
+            font-weight: 700;
+        }
+
+        .mz-check-value {
+            text-align: right;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .mz-check-value.pass { color: #4ade80; }
+        .mz-check-value.fail { color: #fb7185; }
+        .mz-check-value.warn { color: #fbbf24; }
+        .mz-check-value.pending { color: #94a3b8; }
+
+        .mz-block-reason {
+            margin-top: 10px;
+            color: #fda4af;
+            font-size: .76rem;
+            line-height: 1.5;
+        }
+
+        .mz-block-detail {
+            margin-top: 6px;
+            color: #94a3b8;
+            font-size: .68rem;
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+        }
+
+        .mz-retry-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px 12px;
+            border: 1px solid rgba(77,141,255,.28);
+            border-radius: 10px;
+            background: rgba(77,141,255,.09);
+            color: #dbeafe;
+            font-size: .75rem;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        .mz-retry-btn:disabled {
+            opacity: .55;
+            cursor: wait;
+        }
+
+        .mz-tech {
+            margin-top: 8px;
+            color: #94a3b8;
+            font-size: .67rem;
+        }
+
+        .mz-tech summary {
+            cursor: pointer;
+            color: #9fc0ff;
+            font-weight: 800;
+        }
+
+        .mz-tech pre {
+            margin-top: 7px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font: inherit;
         }
 
         @media (max-width: 680px) {
@@ -774,6 +879,19 @@
         <input type="text" id="mz-pass-input" class="mz-input" placeholder="Enter Passcode..." autocomplete="off">
         <button id="mz-submit-btn" class="mz-btn">UNLOCK SITE</button>
         <div id="mz-error" class="error-msg">❌ Incorrect passcode. Check the Telegram channel.</div>
+
+        <div id="mz-protection" class="mz-protection" aria-live="polite">
+            <div class="mz-protection-title">🛡️ Access protection</div>
+            <div id="mz-check-list" class="mz-check-list"></div>
+            <div id="mz-block-reason" class="mz-block-reason"></div>
+            <div id="mz-block-detail" class="mz-block-detail"></div>
+            <button id="mz-retry-check" class="mz-retry-btn" type="button">↻ RETRY CHECKS</button>
+            <details class="mz-tech">
+                <summary>Technical details</summary>
+                <pre id="mz-tech-output">No diagnostic data.</pre>
+            </details>
+        </div>
+
         <a href="https://t.me/modzone01" target="_blank" rel="noopener noreferrer" class="mz-link">📢 Get Passcode on Telegram</a>
     </div>
 </div>
@@ -879,7 +997,7 @@
     <script>
         let globalMatches = [];
         let activeCategory = 'All';
-        const DAILY_PASSCODE = "jiotv_go login";
+        const DAILY_PASSCODE = "@modzone01 Telegram Channel";
 
         const submitBtn = document.getElementById('mz-submit-btn');
         const passInput = document.getElementById('mz-pass-input');
@@ -892,116 +1010,316 @@
         });
         refreshBtn.addEventListener('click', () => fetchStreams(true));
 
+        const protectionBox = document.getElementById('mz-protection');
+        const checkList = document.getElementById('mz-check-list');
+        const blockReason = document.getElementById('mz-block-reason');
+        const blockDetail = document.getElementById('mz-block-detail');
+        const retryCheckBtn = document.getElementById('mz-retry-check');
+        const techOutput = document.getElementById('mz-tech-output');
+
+        const CHECK_LABELS = {
+            ad_block: 'Ad / content filter',
+            network: 'Network / DNS reachability',
+            access: 'Server access token'
+        };
+
+        const protectionState = {
+            ad_block: { state: 'pending', text: 'NOT CHECKED' },
+            network: { state: 'pending', text: 'NOT CHECKED' },
+            access: { state: 'pending', text: 'NOT CHECKED' }
+        };
+
+        function statusClass(state) {
+            if (state === 'pass') return 'pass';
+            if (state === 'fail') return 'fail';
+            if (state === 'warn') return 'warn';
+            return 'pending';
+        }
+
+        function renderProtectionChecks() {
+            checkList.innerHTML = Object.entries(protectionState).map(([key, value]) => `
+                <div class="mz-check-row">
+                    <span class="mz-check-label">${CHECK_LABELS[key]}</span>
+                    <span class="mz-check-value ${statusClass(value.state)}">${escapeHtml(value.text)}</span>
+                </div>
+            `).join('');
+        }
+
+        function resetProtectionChecks() {
+            protectionState.ad_block = { state: 'pending', text: 'NOT CHECKED' };
+            protectionState.network = { state: 'pending', text: 'NOT CHECKED' };
+            protectionState.access = { state: 'pending', text: 'NOT CHECKED' };
+            blockReason.textContent = '';
+            blockDetail.textContent = '';
+            techOutput.textContent = 'No diagnostic data.';
+            protectionBox.style.display = 'block';
+            renderProtectionChecks();
+        }
+
+        function showProtectionFailure({ code, reason, detail = '', httpStatus = '', endpoint = '/api/access-check' }) {
+            protectionBox.style.display = 'block';
+            blockReason.textContent = `🚫 ${reason || 'Access blocked.'}`;
+            blockDetail.textContent = detail || '';
+            techOutput.textContent = JSON.stringify({
+                code: code || 'UNKNOWN',
+                http_status: httpStatus || null,
+                endpoint,
+                online: navigator.onLine,
+                user_agent: navigator.userAgent
+            }, null, 2);
+            renderProtectionChecks();
+        }
+
+        function setProtectionCheck(key, state, text) {
+            protectionState[key] = { state, text };
+            renderProtectionChecks();
+        }
+
+        function detectAdBlocking() {
+            const classSets = [
+                'ad ads adsbox ad-banner advert advertisement sponsor text-ad',
+                'ad-container adsbygoogle banner-ad pub-banner',
+                'ad-slot adunit ad-placeholder'
+            ];
+
+            const nodes = [];
+            let blocked = false;
+
+            try {
+                for (const className of classSets) {
+                    const bait = document.createElement('div');
+                    bait.className = className;
+                    bait.setAttribute('aria-hidden', 'true');
+                    Object.assign(bait.style, {
+                        position: 'absolute',
+                        left: '-10000px',
+                        top: '-10000px',
+                        width: '20px',
+                        height: '20px',
+                        minWidth: '20px',
+                        minHeight: '20px',
+                        display: 'block',
+                        visibility: 'visible',
+                        opacity: '1',
+                        pointerEvents: 'none'
+                    });
+                    document.body.appendChild(bait);
+                    nodes.push(bait);
+                }
+
+                blocked = nodes.some((bait) => {
+                    const style = window.getComputedStyle(bait);
+                    const rect = bait.getBoundingClientRect();
+                    return (
+                        bait.offsetWidth === 0 ||
+                        bait.offsetHeight === 0 ||
+                        rect.width === 0 ||
+                        rect.height === 0 ||
+                        style.display === 'none' ||
+                        style.visibility === 'hidden'
+                    );
+                });
+            } finally {
+                nodes.forEach((node) => node.remove());
+            }
+
+            return blocked;
+        }
+
+        async function fetchJsonWithTimeout(url, options = {}, timeoutMs = 8000) {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal,
+                    cache: 'no-store',
+                    credentials: 'same-origin'
+                });
+
+                let json = {};
+                try { json = await response.json(); } catch { json = {}; }
+
+                return { response, json };
+            } finally {
+                clearTimeout(timeout);
+            }
+        }
+
         async function verifyPasscode() {
-    const passcode = passInput.value.trim();
+            const passcode = passInput.value.trim();
 
-    errorMsg.style.display = 'none';
-    passInput.style.borderColor = '';
+            errorMsg.style.display = 'none';
+            passInput.style.borderColor = '';
 
-    if (passcode !== DAILY_PASSCODE) {
-        errorMsg.textContent = '❌ Invalid daily passcode.';
-        errorMsg.style.display = 'block';
-        passInput.style.borderColor = '#ef4444';
-        passInput.focus();
-        return;
-    }
+            if (passcode !== DAILY_PASSCODE) {
+                errorMsg.textContent = '❌ Invalid daily passcode.';
+                errorMsg.style.display = 'block';
+                passInput.style.borderColor = '#ef4444';
+                passInput.focus();
+                return;
+            }
 
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'VERIFYING...';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'VERIFYING...';
+            retryCheckBtn.disabled = true;
+            resetProtectionChecks();
 
-    try {
-        // Basic ad-block detection
-        const bait = document.createElement('div');
+            try {
+                // 1) Client-side ad/content-filter detection.
+                if (detectAdBlocking()) {
+                    setProtectionCheck('ad_block', 'fail', 'BLOCKED');
+                    showProtectionFailure({
+                        code: 'AD_BLOCKED',
+                        reason: 'Ad blocker / content filtering detected.',
+                        detail: 'A required site detection resource was hidden by browser filtering. Disable the blocking rule for Sports Corner and retry.'
+                    });
+                    return;
+                }
 
-        bait.className =
-            'ad ads adsbox ad-banner advert advertisement sponsor text-ad';
+                setProtectionCheck('ad_block', 'pass', 'PASSED');
 
-        bait.setAttribute('aria-hidden', 'true');
+                // 2) Reach the first-party verification endpoint.
+                let result;
+                try {
+                    result = await fetchJsonWithTimeout('/api/access-check', { method: 'GET' });
+                    setProtectionCheck('network', 'pass', `REACHABLE${result.response.status ? ` (${result.response.status})` : ''}`);
+                } catch (networkError) {
+                    let sameOriginReachable = false;
+                    try {
+                        const probe = await fetchJsonWithTimeout(`/?sc_net_probe=${Date.now()}`, { method: 'GET' }, 5000);
+                        sameOriginReachable = probe.response.ok;
+                    } catch {}
 
-        Object.assign(bait.style, {
-            position: 'absolute',
-            left: '-10000px',
-            top: '-10000px',
-            width: '10px',
-            height: '10px',
-            pointerEvents: 'none'
+                    if (!navigator.onLine) {
+                        setProtectionCheck('network', 'fail', 'OFFLINE');
+                        showProtectionFailure({
+                            code: 'NETWORK_OFFLINE',
+                            reason: 'Network connection unavailable.',
+                            detail: 'The device reports no active network connection.'
+                        });
+                    } else if (sameOriginReachable) {
+                        setProtectionCheck('network', 'fail', 'API BLOCKED');
+                        showProtectionFailure({
+                            code: 'API_ENDPOINT_BLOCKED',
+                            reason: 'Required API endpoint is being blocked.',
+                            detail: 'The website is reachable, but /api/access-check could not be reached. A content filter, firewall, DNS security product, or network policy may be blocking the endpoint.'
+                        });
+                    } else {
+                        setProtectionCheck('network', 'fail', 'UNREACHABLE');
+                        showProtectionFailure({
+                            code: 'DNS_OR_NETWORK_BLOCKED',
+                            reason: 'DNS / network filtering detected.',
+                            detail: 'The required Sports Corner endpoint and same-origin probe could not be reached. Check DNS filtering, firewall, VPN/proxy filtering, or network connectivity.'
+                        });
+                    }
+                    return;
+                }
+
+                // 3) Server-side access decision and token issuance.
+                const status = result.response.status;
+                if (!result.response.ok || result.json.allowed !== true) {
+                    setProtectionCheck('access', 'fail', 'DENIED');
+
+                    showProtectionFailure({
+                        code: result.json.code || 'ACCESS_DENIED',
+                        reason: result.json.reason || result.json.message || 'Server access verification failed.',
+                        detail: result.json.detail || 'The server rejected this connection.',
+                        httpStatus: status
+                    });
+                    return;
+                }
+
+                setProtectionCheck('access', 'pass', result.json.code === 'ACCESS_GRANTED_UNVERIFIED' ? 'PASSED*' : 'PASSED');
+                blockReason.textContent = result.json.code === 'ACCESS_GRANTED_UNVERIFIED'
+                    ? '⚠️ Access granted, but external network classification was unavailable.'
+                    : '';
+                blockDetail.textContent = result.json.code === 'ACCESS_GRANTED_UNVERIFIED'
+                    ? 'ACCESS_STRICT=false allows the site to continue when the IP verification provider is unavailable.'
+                    : '';
+                techOutput.textContent = JSON.stringify({
+                    code: result.json.code || 'ACCESS_GRANTED',
+                    checks: result.json.checks || {},
+                    token_ttl_seconds: result.json.token_ttl_seconds || null
+                }, null, 2);
+
+                // Access approved.
+                document.getElementById('mz-overlay').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                fetchStreams();
+            } catch (error) {
+                console.error('Sports Corner protection error:', error);
+
+                if (!blockReason.textContent) {
+                    setProtectionCheck('access', 'fail', 'ERROR');
+                    showProtectionFailure({
+                        code: 'PROTECTION_ERROR',
+                        reason: 'Protection check failed.',
+                        detail: error?.message || 'An unexpected verification error occurred.'
+                    });
+                }
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'UNLOCK SITE';
+                retryCheckBtn.disabled = false;
+            }
+        }
+
+        retryCheckBtn.addEventListener('click', () => {
+            errorMsg.style.display = 'none';
+            verifyPasscode();
         });
 
-        document.body.appendChild(bait);
+        async function revalidateAccess() {
+            // Strict session re-check: ad/content filter + signed server access.
+            if (document.getElementById('mz-overlay').style.display !== 'none') return;
 
-        const baitStyle =
-            window.getComputedStyle(bait);
+            try {
+                if (detectAdBlocking()) {
+                    document.getElementById('mz-overlay').style.display = 'flex';
+                    document.getElementById('main-content').style.display = 'none';
+                    resetProtectionChecks();
+                    setProtectionCheck('ad_block', 'fail', 'BLOCKED');
+                    showProtectionFailure({
+                        code: 'AD_BLOCKED',
+                        reason: 'Ad blocker / content filtering detected.',
+                        detail: 'The protection check failed during session revalidation.'
+                    });
+                    return;
+                }
 
-        const adBlocked =
-            bait.offsetWidth === 0 ||
-            bait.offsetHeight === 0 ||
-            baitStyle.display === 'none' ||
-            baitStyle.visibility === 'hidden';
-
-        bait.remove();
-
-        if (adBlocked) {
-            throw new Error(
-                'Ads are required. Please disable your ad blocker or DNS filtering and reload the page.'
-            );
-        }
-
-        // Server-side access verification
-        const response = await fetch(
-            '/api/access-check',
-            {
-                method: 'GET',
-                cache: 'no-store',
-                credentials: 'same-origin'
+                const result = await fetchJsonWithTimeout('/api/access-check', { method: 'GET' });
+                if (!result.response.ok || result.json.allowed !== true) {
+                    document.getElementById('mz-overlay').style.display = 'flex';
+                    document.getElementById('main-content').style.display = 'none';
+                    resetProtectionChecks();
+                    setProtectionCheck('ad_block', 'pass', 'PASSED');
+                    setProtectionCheck('network', 'pass', `REACHABLE (${result.response.status})`);
+                    setProtectionCheck('access', 'fail', 'DENIED');
+                    showProtectionFailure({
+                        code: result.json.code || 'ACCESS_DENIED',
+                        reason: result.json.reason || result.json.message || 'Session access has been revoked.',
+                        detail: result.json.detail || 'Re-enter the daily passcode after resolving the network/access issue.',
+                        httpStatus: result.response.status
+                    });
+                }
+            } catch (error) {
+                document.getElementById('mz-overlay').style.display = 'flex';
+                document.getElementById('main-content').style.display = 'none';
+                resetProtectionChecks();
+                setProtectionCheck('ad_block', 'pass', 'PASSED');
+                setProtectionCheck('network', 'fail', 'UNREACHABLE');
+                setProtectionCheck('access', 'fail', 'BLOCKED');
+                showProtectionFailure({
+                    code: 'SESSION_NETWORK_BLOCKED',
+                    reason: 'Session network verification failed.',
+                    detail: error?.message || 'Required verification endpoint could not be reached.'
+                });
             }
-        );
-
-        let result = {};
-
-        try {
-            result = await response.json();
-        } catch {
-            result = {};
         }
 
-        if (
-            !response.ok ||
-            result.allowed !== true
-        ) {
-            throw new Error(
-                result.reason ||
-                'Access verification failed.'
-            );
-        }
-
-        // Access approved
-        document.getElementById(
-            'mz-overlay'
-        ).style.display = 'none';
-
-        document.getElementById(
-            'main-content'
-        ).style.display = 'block';
-
-        fetchStreams();
-
-    } catch (error) {
-
-        errorMsg.textContent =
-            '🚫 ' +
-            (
-                error?.message ||
-                'Access verification failed.'
-            );
-
-        errorMsg.style.display = 'block';
-
-    } finally {
-
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'UNLOCK SITE';
-    }
-        }
+        window.setInterval(revalidateAccess, 10 * 60 * 1000);
 
         async function fetchStreams(manual = false) {
             const status = document.getElementById('status');
@@ -1027,16 +1345,30 @@
                 // If the short-lived access cookie expired, refresh the
                 // server-side access check once and retry the streams API.
                 if (res.status === 403) {
-                    const gate = await fetch('/api/access-check', {
-                        method: 'GET',
-                        cache: 'no-store',
-                        credentials: 'same-origin'
-                    });
+                    let gate = {};
+                    let gateError = null;
+                    try {
+                        gate = await fetchJsonWithTimeout('/api/access-check', { method: 'GET' });
+                    } catch (error) {
+                        gateError = error;
+                    }
 
-                    let gateJson = {};
-                    try { gateJson = await gate.json(); } catch {}
+                    if (gateError) {
+                        document.getElementById('mz-overlay').style.display = 'flex';
+                        document.getElementById('main-content').style.display = 'none';
+                        resetProtectionChecks();
+                        setProtectionCheck('ad_block', 'pass', 'PASSED');
+                        setProtectionCheck('network', 'fail', 'UNREACHABLE');
+                        setProtectionCheck('access', 'fail', 'BLOCKED');
+                        showProtectionFailure({
+                            code: 'STREAMS_ACCESS_RECHECK_FAILED',
+                            reason: 'Access re-check could not reach the server.',
+                            detail: gateError?.message || 'DNS / network filtering may be blocking the verification endpoint.'
+                        });
+                        return;
+                    }
 
-                    if (gate.ok && gateJson.allowed === true) {
+                    if (gate.response.ok && gate.json.allowed === true) {
                         res = await fetch('/api/streams', {
                             cache: 'no-store',
                             credentials: 'same-origin'
@@ -1046,6 +1378,20 @@
                         } catch {
                             json = {};
                         }
+                    } else {
+                        document.getElementById('mz-overlay').style.display = 'flex';
+                        document.getElementById('main-content').style.display = 'none';
+                        resetProtectionChecks();
+                        setProtectionCheck('ad_block', 'pass', 'PASSED');
+                        setProtectionCheck('network', 'pass', `REACHABLE (${gate.response.status})`);
+                        setProtectionCheck('access', 'fail', 'DENIED');
+                        showProtectionFailure({
+                            code: gate.json.code || 'ACCESS_DENIED',
+                            reason: gate.json.reason || gate.json.message || 'Server access was denied.',
+                            detail: gate.json.detail || 'Resolve the reported issue and re-enter the daily passcode.',
+                            httpStatus: gate.response.status
+                        });
+                        return;
                     }
                 }
 
