@@ -10,3 +10,11 @@ Sports Corner — App-only integration
    APP_UA_TOKEN=K/4D8P7X2N9LQ
 
 Security note: a custom User-Agent is spoofable and is not cryptographic app authentication. It should be combined with server-side controls.
+
+Exact blocking diagnostics update
+- Added api/access-check.js with explicit reason/code responses.
+- Added exact client-side verification codes in the unlock error area.
+- DNS diagnostics now show the failed probe domains.
+- Streams API errors now preserve HTTP/code/reason details.
+- Streams source failures are shown as per-source diagnostics.
+- Added missing api/access-check.js to this deployment package.

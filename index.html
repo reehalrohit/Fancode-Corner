@@ -1109,7 +1109,13 @@
                 }
 
                 if (!response.ok || result.allowed !== true) {
-                    showAppGate(result.message || 'This client is not authorized for Sports Corner.');
+                    const code = String(result.code || `APP_CLIENT_HTTP_${response.status}`);
+                    const message = String(
+                        result.message ||
+                        result.reason ||
+                        'This client is not authorized for Sports Corner.'
+                    );
+                    showAppGate(`${code}: ${message}`);
                     return false;
                 }
 
@@ -1120,7 +1126,12 @@
                 return true;
             } catch (error) {
                 console.error('App client verification failed:', error);
-                showAppGate('The app verification service could not be reached. Reopen Sports Corner when the network is available.');
+                showAppGate(
+                    `APP_CLIENT_NETWORK_ERROR: ${
+                        error?.message ||
+                        'The app verification service could not be reached.'
+                    }`
+                );
                 return false;
             }
         }
@@ -1140,6 +1151,33 @@
             if (e.key === 'Enter') verifyPasscode();
         });
         refreshBtn.addEventListener('click', () => fetchStreams(true));
+
+        function makeAccessError(code, message, status = null) {
+            const error = new Error(message);
+            error.code = code;
+            error.status = status;
+            return error;
+        }
+
+        function formatAccessFailure(result, response) {
+            const code = String(
+                result?.code ||
+                (response?.status === 403 ? 'ACCESS_DENIED' : '') ||
+                (response?.status >= 500 ? 'SERVER_ERROR' : '') ||
+                'ACCESS_VERIFICATION_FAILED'
+            );
+
+            const reason = String(
+                result?.reason ||
+                result?.message ||
+                `Access verification failed (HTTP ${response?.status || 'unknown'}).`
+            );
+
+            return {
+                code,
+                message: reason
+            };
+        }
 
         submitBtn.disabled = true;
         submitBtn.textContent = 'CHECKING APP...';
@@ -1211,13 +1249,28 @@
 
         if (!dnsCheck.ok) {
             if (dnsCheck.code === 'NETWORK_TIMEOUT') {
-                throw new Error('Network connection unavailable — the site could not reach its verification server.');
+                throw makeAccessError(
+                    'NETWORK_TIMEOUT',
+                    'Site network probe timed out before server verification could begin.'
+                );
             }
+
             if (dnsCheck.code === 'NETWORK_UNAVAILABLE') {
-                throw new Error('Network connection unavailable — the site verification endpoint could not be reached.');
+                throw makeAccessError(
+                    'NETWORK_UNAVAILABLE',
+                    'Site network probe could not be reached. Check your internet connection or network filtering.'
+                );
             }
-            throw new Error(
-                `DNS filtering detected — ${dnsCheck.blockedCount || 0} required network checks were blocked or unreachable.`
+
+            const failedDomains = Array.isArray(dnsCheck.blockedDomains)
+                ? dnsCheck.blockedDomains.join(', ')
+                : '';
+
+            throw makeAccessError(
+                'DNS_BLOCKED',
+                failedDomains
+                    ? `Network filtering blocked ${dnsCheck.blockedCount} required probe(s): ${failedDomains}`
+                    : `Network filtering blocked ${dnsCheck.blockedCount} required network probe(s).`
             );
         }
 
@@ -1243,9 +1296,11 @@
             !response.ok ||
             result.allowed !== true
         ) {
-            throw new Error(
-                result.reason ||
-                'Access verification failed.'
+            const failure = formatAccessFailure(result, response);
+            throw makeAccessError(
+                failure.code,
+                failure.message,
+                response.status
             );
         }
 
@@ -1262,12 +1317,17 @@
 
     } catch (error) {
 
-        errorMsg.textContent =
-            '🚫 ' +
-            (
-                error?.message ||
-                'Access verification failed.'
-            );
+        const code = String(error?.code || 'ACCESS_VERIFICATION_FAILED');
+        const message = String(
+            error?.message ||
+            'Access verification failed.'
+        );
+
+        errorMsg.innerHTML =
+            '🚫 <strong>' +
+            escapeHtml(code) +
+            '</strong><br>' +
+            escapeHtml(message);
 
         errorMsg.style.display = 'block';
 
@@ -1282,26 +1342,31 @@
         async function checkDnsFiltering() {
             const timeoutMs = 3000;
             const probes = [
-                'https://doubleclick.net/favicon.ico',
-                'https://googleads.g.doubleclick.net/favicon.ico',
-                'https://pagead2.googlesyndication.com/favicon.ico',
-                'https://adservice.google.com/favicon.ico',
-                'https://ads.yahoo.com/favicon.ico',
-                'https://ib.adnxs.com/favicon.ico',
-                'https://pixel.rubiconproject.com/favicon.ico',
-                'https://trc.taboola.com/favicon.ico'
+                { label: 'doubleclick.net', url: 'https://doubleclick.net/favicon.ico' },
+                { label: 'googleads.g.doubleclick.net', url: 'https://googleads.g.doubleclick.net/favicon.ico' },
+                { label: 'pagead2.googlesyndication.com', url: 'https://pagead2.googlesyndication.com/favicon.ico' },
+                { label: 'adservice.google.com', url: 'https://adservice.google.com/favicon.ico' },
+                { label: 'ads.yahoo.com', url: 'https://ads.yahoo.com/favicon.ico' },
+                { label: 'ib.adnxs.com', url: 'https://ib.adnxs.com/favicon.ico' },
+                { label: 'pixel.rubiconproject.com', url: 'https://pixel.rubiconproject.com/favicon.ico' },
+                { label: 'trc.taboola.com', url: 'https://trc.taboola.com/favicon.ico' }
             ];
 
             const withTimeout = async (url, options = {}) => {
                 const controller = new AbortController();
                 const timer = setTimeout(() => controller.abort(), timeoutMs);
+
                 try {
                     await fetch(url, {
                         ...options,
                         cache: 'no-store',
                         signal: controller.signal
                     });
-                    return { ok: true };
+
+                    return {
+                        ok: true,
+                        timeout: false
+                    };
                 } catch (error) {
                     return {
                         ok: false,
@@ -1312,29 +1377,53 @@
                 }
             };
 
-            const networkProbe = await withTimeout(`/?mz_network_probe=${Date.now()}`, {
-                method: 'HEAD',
-                credentials: 'same-origin'
-            });
+            const networkProbe = await withTimeout(
+                `/?mz_network_probe=${Date.now()}`,
+                {
+                    method: 'HEAD',
+                    credentials: 'same-origin'
+                }
+            );
 
             if (!networkProbe.ok) {
                 return {
                     ok: false,
-                    code: networkProbe.timeout ? 'NETWORK_TIMEOUT' : 'NETWORK_UNAVAILABLE',
-                    blockedCount: 0
+                    code: networkProbe.timeout
+                        ? 'NETWORK_TIMEOUT'
+                        : 'NETWORK_UNAVAILABLE',
+                    blockedCount: 0,
+                    blockedDomains: []
                 };
             }
 
             const results = await Promise.all(
-                probes.map((url) => withTimeout(url, { mode: 'no-cors' }))
+                probes.map((probe) =>
+                    withTimeout(
+                        probe.url,
+                        { mode: 'no-cors' }
+                    )
+                )
             );
 
-            const blockedCount = results.filter(result => !result.ok).length;
+            const failedProbes = results
+                .map((result, index) => ({
+                    result,
+                    probe: probes[index]
+                }))
+                .filter(item => !item.result.ok);
+
+            const blockedDomains = failedProbes
+                .map(item => item.probe.label);
+
+            const blockedCount = failedProbes.length;
 
             return {
                 ok: blockedCount < 2,
-                code: blockedCount >= 2 ? 'DNS_BLOCKED' : 'DNS_OK',
-                blockedCount
+                code: blockedCount >= 2
+                    ? 'DNS_BLOCKED'
+                    : 'DNS_OK',
+                blockedCount,
+                blockedDomains
             };
         }
 
@@ -1474,34 +1563,98 @@
         async function fetchStreams(manual = false) {
             const status = document.getElementById('status');
             status.style.display = 'block';
-            status.textContent = manual ? 'Refreshing live events…' : 'Fetching live events…';
+            status.textContent = manual
+                ? 'Refreshing live events…'
+                : 'Fetching live events…';
 
             refreshBtn.disabled = true;
             refreshBtn.style.opacity = '0.6';
 
             try {
-                const res = await fetch('/api/streams', { cache: 'no-store', credentials: 'same-origin' });
-                const json = await res.json();
+                const res = await fetch('/api/streams', {
+                    cache: 'no-store',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
 
-                if (!res.ok) {
-                    throw new Error(json.message || (res.status === 403 ? 'Sports Corner app access required.' : 'Backend error'));
+                let json = {};
+                try {
+                    json = await res.json();
+                } catch {
+                    json = {};
                 }
 
-                if (json.status !== 'success') throw new Error(json.message || 'Backend error');
+                if (!res.ok || json.status !== 'success') {
+                    const code = String(
+                        json.code ||
+                        (res.status === 403 ? 'STREAM_ACCESS_DENIED' : '') ||
+                        (res.status >= 500 ? 'STREAM_SERVER_ERROR' : '') ||
+                        `STREAM_HTTP_${res.status}`
+                    );
 
-                globalMatches = Array.isArray(json.matches) ? json.matches : [];
+                    const reason = String(
+                        json.reason ||
+                        json.message ||
+                        'The streams API returned an unexpected response.'
+                    );
+
+                    const sourceDetails = Object.entries(json.sources || {})
+                        .filter(([, info]) => info && info.available === false && info.error)
+                        .map(([name, info]) => `${name}: ${info.error}`)
+                        .join(' • ');
+
+                    throw makeAccessError(
+                        code,
+                        sourceDetails
+                            ? `${reason} Source status — ${sourceDetails}`
+                            : reason,
+                        res.status
+                    );
+                }
+
+                globalMatches = Array.isArray(json.matches)
+                    ? json.matches
+                    : [];
+
                 renderAll();
+
+                const unavailableSources = Object.entries(json.sources || {})
+                    .filter(([, info]) => info && info.available === false && info.error)
+                    .map(([name, info]) => `${name}: ${info.error}`);
 
                 if (globalMatches.length === 0) {
                     status.style.display = 'block';
-                    status.textContent = 'No live matches found right now.';
+                    status.innerHTML = unavailableSources.length
+                        ? '<strong>NO LIVE EVENTS</strong><br>' +
+                          'Source status: ' +
+                          escapeHtml(unavailableSources.join(' • '))
+                        : 'No live matches found right now.';
+                } else if (unavailableSources.length) {
+                    status.style.display = 'block';
+                    status.innerHTML =
+                        '<strong>LIVE EVENTS LOADED</strong><br>' +
+                        'Some sources are unavailable: ' +
+                        escapeHtml(unavailableSources.join(' • '));
                 } else {
                     status.style.display = 'none';
                 }
             } catch (err) {
-                console.error(err);
+                console.error('Streams API failure:', err);
+
+                const code = String(
+                    err?.code || 'STREAM_LOAD_FAILED'
+                );
+                const message = String(
+                    err?.message ||
+                    'The streams API could not be reached.'
+                );
+
                 status.style.display = 'block';
-                status.textContent = 'Failed to load live sports. Tap refresh to try again.';
+                status.innerHTML =
+                    '<strong>' + escapeHtml(code) + '</strong><br>' +
+                    escapeHtml(message);
             } finally {
                 refreshBtn.disabled = false;
                 refreshBtn.style.opacity = '';
