@@ -116,6 +116,7 @@ export default async function handler(req, res) {
     return res.status(403).json({
       status: 'blocked',
       code: 'APP_REQUIRED',
+      reason: 'Sports Corner is available only through the Android app.',
       message: 'Sports Corner is available only through the Android app.'
     });
   }
@@ -128,6 +129,8 @@ export default async function handler(req, res) {
 
     return res.status(403).json({
       status: "blocked",
+      code: "ACCESS_REQUIRED",
+      reason: "A valid Sports Corner access cookie is missing, expired, invalid, or bound to a different IP.",
       message:
         "Access verification required."
     });
@@ -726,7 +729,11 @@ export default async function handler(req, res) {
 
     res.status(500).json({
       status: 'error',
+      code: 'STREAM_SERVER_ERROR',
+      reason:
+        error?.message ||
+        'Unable to load stream data.',
       message:
-        'Unable to load stream data',
+        'Unable to load stream data.',
     });
   }
