@@ -18,3 +18,11 @@ Exact blocking diagnostics update
 - Streams API errors now preserve HTTP/code/reason details.
 - Streams source failures are shown as per-source diagnostics.
 - Added missing api/access-check.js to this deployment package.
+
+
+v5 diagnostics update
+- Improved /api/streams diagnostics.
+- Reads non-JSON responses as text instead of replacing them with a generic error.
+- Displays HTTP status, content type, and compact server response preview when available.
+- Uses specific codes such as STREAM_HTTP_404, STREAM_HTTP_500, STREAM_NON_JSON_502.
+- Keeps server-provided JSON code/reason/source details when available.

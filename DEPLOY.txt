@@ -17,3 +17,7 @@ Notes:
 - ACCESS_STRICT=true blocks access when the IP provider cannot be reached.
 - Without IPAPI_KEY, IP classification is explicitly reported as skipped.
 - Do not commit real secrets or API keys to GitHub.
+
+
+DIAGNOSTICS UPDATE
+The frontend now shows the actual /api/streams HTTP status and a compact server response preview when the endpoint returns non-JSON. This is useful for detecting Vercel 404/500/502 responses or runtime failures instead of displaying a generic STREAM_SERVER_ERROR message.

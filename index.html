@@ -1579,25 +1579,36 @@
                     }
                 });
 
+                // Read the body once as text so we can diagnose both JSON
+                // errors and non-JSON responses from Vercel/proxies.
+                const rawBody = await res.text();
+
                 let json = {};
+                let parsedJson = true;
+
                 try {
-                    json = await res.json();
+                    json = rawBody ? JSON.parse(rawBody) : {};
                 } catch {
+                    parsedJson = false;
                     json = {};
                 }
 
                 if (!res.ok || json.status !== 'success') {
-                    const code = String(
+                    const contentType =
+                        res.headers.get('content-type') || 'unknown';
+
+                    let code = String(
                         json.code ||
                         (res.status === 403 ? 'STREAM_ACCESS_DENIED' : '') ||
-                        (res.status >= 500 ? 'STREAM_SERVER_ERROR' : '') ||
-                        `STREAM_HTTP_${res.status}`
+                        (res.status >= 500 ? `STREAM_HTTP_${res.status}` : '') ||
+                        (res.status >= 400 ? `STREAM_HTTP_${res.status}` : '') ||
+                        'STREAM_API_ERROR'
                     );
 
-                    const reason = String(
+                    let reason = String(
                         json.reason ||
                         json.message ||
-                        'The streams API returned an unexpected response.'
+                        ''
                     );
 
                     const sourceDetails = Object.entries(json.sources || {})
@@ -1605,11 +1616,48 @@
                         .map(([name, info]) => `${name}: ${info.error}`)
                         .join(' • ');
 
+                    if (sourceDetails) {
+                        reason = reason
+                            ? `${reason} Source status — ${sourceDetails}`
+                            : `Source status — ${sourceDetails}`;
+                    }
+
+                    // When the endpoint returns HTML/plain text instead of JSON,
+                    // surface the HTTP status and a compact response preview.
+                    if (!parsedJson) {
+                        const compactBody = rawBody
+                            .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+                            .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+                            .replace(/<[^>]+>/g, ' ')
+                            .replace(/\s+/g, ' ')
+                            .trim()
+                            .slice(0, 320);
+
+                        code =
+                            res.status >= 500
+                                ? `STREAM_HTTP_${res.status}`
+                                : `STREAM_NON_JSON_${res.status}`;
+
+                        reason =
+                            `The streams API returned HTTP ${res.status}` +
+                            (res.statusText ? ` ${res.statusText}` : '') +
+                            `. Content-Type: ${contentType}.`;
+
+                        if (compactBody) {
+                            reason += ` Server response: ${compactBody}`;
+                        }
+                    }
+
+                    if (!reason) {
+                        reason =
+                            rawBody
+                                ? rawBody.trim().slice(0, 320)
+                                : `The streams API returned an empty response (HTTP ${res.status}).`;
+                    }
+
                     throw makeAccessError(
                         code,
-                        sourceDetails
-                            ? `${reason} Source status — ${sourceDetails}`
-                            : reason,
+                        reason,
                         res.status
                     );
                 }
@@ -1654,7 +1702,10 @@
                 status.style.display = 'block';
                 status.innerHTML =
                     '<strong>' + escapeHtml(code) + '</strong><br>' +
-                    escapeHtml(message);
+                    escapeHtml(message) +
+                    '<div style="margin-top:10px;font-size:12px;opacity:.72;">' +
+                    'Endpoint: /api/streams' +
+                    '</div>';
             } finally {
                 refreshBtn.disabled = false;
                 refreshBtn.style.opacity = '';
