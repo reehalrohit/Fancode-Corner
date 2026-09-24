@@ -1,0 +1,12 @@
+Sports Corner — App-only integration
+
+1. Custom WebToApk User-Agent:
+   XW/7.4.19 (A;WV;C/9F3K7M2Q;K/4D8P7X2N9LQ)
+2. Added /api/client-check serverless gate.
+3. Added server-side app-token check to /api/streams.
+4. Added frontend app-only gate for normal browsers.
+5. Preserved Fluid Player, NS Player, daily passcode, ad detection, DNS check, and signed access-cookie flow.
+6. Optional Vercel environment variable:
+   APP_UA_TOKEN=K/4D8P7X2N9LQ
+
+Security note: a custom User-Agent is spoofable and is not cryptographic app authentication. It should be combined with server-side controls.

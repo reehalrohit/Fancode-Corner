@@ -1,0 +1,43 @@
+Fancode Corner - Fluid Player integration
+
+What changed
+- Added Fluid Player v3 CDN assets.
+- Added a built-in player modal for browser-playable HLS (.m3u8) and MPEG-DASH (.mpd).
+- Changed playable event cards to: Watch Here / Open App / Copy.
+- Watch Here uses Fluid Player.
+- Open App keeps the existing NS Player Android intent.
+- Willow/Prime events without a browser-playable stream continue to use Open Official.
+- Existing passcode, access verification, DNS checks, API flow, HilltopAds and analytics remain in place.
+
+Advertising
+The player is wired for Fluid Player VAST advertising but NO ad tag is enabled by default.
+
+In index.html, set:
+    const FLUID_AD_VAST_TAG = 'YOUR_VAST_TAG_URL';
+
+Optional mid-roll:
+    const FLUID_AD_MIDROLL_SECONDS = 600;
+
+The same VAST tag is used for pre-roll and the optional mid-roll. Use an ad tag supplied by your advertising provider and make sure its terms permit your use.
+
+Important playback limits
+- Browser playback requires the stream server to allow browser playback/CORS where applicable.
+- Fluid Player does not bypass DRM, stream authorization, geo restrictions, or expired signed URLs.
+- MPEG-DASH DRM streams require the appropriate licensed DRM integration; this build does not attempt to bypass DRM.
+- If a stream cannot play in the browser, use Open App or Open Official as applicable.
+
+Deployment
+Replace the repository's current index.html with this file and deploy normally to Vercel.
+
+APP-ONLY CLIENT CONFIGURATION
+=============================
+Set WebToApk User-Agent to exactly:
+XW/7.4.19 (A;WV;C/9F3K7M2Q;K/4D8P7X2N9LQ)
+
+The frontend checks for K/4D8P7X2N9LQ and verifies /api/client-check.
+The /api/streams endpoint independently checks the same token.
+
+Optional Vercel environment variable:
+APP_UA_TOKEN=K/4D8P7X2N9LQ
+
+User-Agent gating is an access signal, not cryptographic authentication.

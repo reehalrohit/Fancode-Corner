@@ -483,12 +483,6 @@
             border-color: rgba(77,141,255,.25);
         }
 
-        .btn-official {
-            color: #fff7ed;
-            background: linear-gradient(135deg, #f97316, #ea580c);
-            box-shadow: 0 8px 20px rgba(249,115,22,.12);
-        }
-
         .empty-state {
             padding: 22px 16px;
             text-align: center;
@@ -567,6 +561,68 @@
         }
 
         #toast.show { transform: translate(-50%, 0); }
+
+
+        #app-gate {
+            position: fixed;
+            inset: 0;
+            z-index: 20000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: rgba(3,7,15,.94);
+            backdrop-filter: blur(12px);
+        }
+
+        #app-gate.show { display: flex; }
+
+        .app-gate-card {
+            width: min(410px, 100%);
+            padding: 30px 24px 26px;
+            border-radius: 24px;
+            text-align: center;
+            background: linear-gradient(145deg, #152037, #0b1220);
+            border: 1px solid rgba(77,141,255,.24);
+            box-shadow: 0 28px 70px rgba(0,0,0,.65);
+        }
+
+        .app-gate-icon {
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 14px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #45a3ff, #7c3aed);
+            color: #fff;
+            font-size: 27px;
+        }
+
+        .app-gate-card h2 {
+            margin: 0 0 8px;
+            color: #fff;
+            font-size: 1.2rem;
+        }
+
+        .app-gate-card p {
+            margin: 0;
+            color: #aebbd0;
+            line-height: 1.5;
+            font-size: .88rem;
+        }
+
+        .app-gate-code {
+            margin-top: 16px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,255,255,.08);
+            color: #dbeafe;
+            font-size: .74rem;
+            word-break: break-word;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
 
         #mz-overlay {
             position: fixed;
@@ -663,111 +719,6 @@
             margin-top: 7px;
             color: #fb7185;
             font-size: .8rem;
-            line-height: 1.45;
-        }
-
-        .mz-protection {
-            display: none;
-            margin-top: 15px;
-            padding: 13px;
-            border-radius: 14px;
-            background: rgba(2, 8, 23, .58);
-            border: 1px solid rgba(148,163,184,.16);
-            text-align: left;
-        }
-
-        .mz-protection-title {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            margin-bottom: 9px;
-            color: #e2e8f0;
-            font-size: .82rem;
-            font-weight: 900;
-        }
-
-        .mz-check-list {
-            display: grid;
-            gap: 6px;
-        }
-
-        .mz-check-row {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 7px 8px;
-            border-radius: 9px;
-            background: rgba(255,255,255,.025);
-            font-size: .72rem;
-        }
-
-        .mz-check-label {
-            color: #cbd5e1;
-            font-weight: 700;
-        }
-
-        .mz-check-value {
-            text-align: right;
-            font-weight: 900;
-            white-space: nowrap;
-        }
-
-        .mz-check-value.pass { color: #4ade80; }
-        .mz-check-value.fail { color: #fb7185; }
-        .mz-check-value.warn { color: #fbbf24; }
-        .mz-check-value.pending { color: #94a3b8; }
-
-        .mz-block-reason {
-            margin-top: 10px;
-            color: #fda4af;
-            font-size: .76rem;
-            line-height: 1.5;
-        }
-
-        .mz-block-detail {
-            margin-top: 6px;
-            color: #94a3b8;
-            font-size: .68rem;
-            line-height: 1.45;
-            overflow-wrap: anywhere;
-        }
-
-        .mz-retry-btn {
-            width: 100%;
-            margin-top: 10px;
-            padding: 10px 12px;
-            border: 1px solid rgba(77,141,255,.28);
-            border-radius: 10px;
-            background: rgba(77,141,255,.09);
-            color: #dbeafe;
-            font-size: .75rem;
-            font-weight: 900;
-            cursor: pointer;
-        }
-
-        .mz-retry-btn:disabled {
-            opacity: .55;
-            cursor: wait;
-        }
-
-        .mz-tech {
-            margin-top: 8px;
-            color: #94a3b8;
-            font-size: .67rem;
-        }
-
-        .mz-tech summary {
-            cursor: pointer;
-            color: #9fc0ff;
-            font-weight: 800;
-        }
-
-        .mz-tech pre {
-            margin-top: 7px;
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-            font: inherit;
         }
 
         @media (max-width: 680px) {
@@ -790,7 +741,103 @@
         @media (min-width: 900px) {
             .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
-    </style>
+    
+
+/* Fluid Player modal */
+.fluid-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: rgba(0,0,0,.88);
+  backdrop-filter: blur(8px);
+}
+.fluid-modal.open { display: flex; }
+.fluid-player-shell {
+  width: min(1100px, 100%);
+  max-height: 94vh;
+  background: #050505;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,.55);
+}
+.fluid-player-head {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  color: #fff;
+  background: #090909;
+}
+.fluid-player-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fluid-live-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #dc2626;
+}
+.fluid-close {
+  border: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}
+.fluid-video-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+#fluid-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.fluid-player-status {
+  padding: 9px 12px 11px;
+  color: rgba(255,255,255,.68);
+  background: #090909;
+  font-size: 12px;
+}
+.fluid-player-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 12px 12px;
+  background: #090909;
+}
+.fluid-player-actions button {
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 9px;
+  padding: 8px 12px;
+  color: #fff;
+  background: rgba(255,255,255,.06);
+  cursor: pointer;
+}
+@media (max-width: 640px) {
+  .fluid-modal { padding: 0; }
+  .fluid-player-shell { border-radius: 0; width: 100%; max-height: 100vh; }
+  .fluid-player-head { min-height: 46px; }
+}
+</style>
 
 <style id="modzone-footer-styles">
 .mz-support {
@@ -853,6 +900,10 @@
 </style>
 
     <meta name="referrer" content="no-referrer-when-downgrade">
+
+    <!-- Fluid Player -->
+    <link rel="stylesheet" href="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.css">
+    <script src="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.js"></script>
 </head>
 <body>
 
@@ -869,6 +920,33 @@
 
 <div id="toast">✅ Stream link copied!</div>
 
+<div id="app-gate" role="dialog" aria-modal="true" aria-labelledby="app-gate-title">
+    <div class="app-gate-card">
+        <div class="app-gate-icon">📱</div>
+        <h2 id="app-gate-title">Sports Corner App Required</h2>
+        <p>This service is available through the Sports Corner Android app. Open this page inside the app to continue.</p>
+        <div class="app-gate-code">Client: Sports Corner Android WebView</div>
+    </div>
+</div>
+
+
+<div id="fluid-modal" class="fluid-modal" role="dialog" aria-modal="true" aria-label="Live stream player">
+  <div class="fluid-player-shell">
+    <div class="fluid-player-head">
+      <span class="fluid-live-badge">LIVE</span>
+      <div id="fluid-player-title" class="fluid-player-title">Live Sports</div>
+      <button id="fluid-close" class="fluid-close" type="button" aria-label="Close player">×</button>
+    </div>
+    <div class="fluid-video-wrap">
+      <video id="fluid-video" playsinline controls></video>
+    </div>
+    <div id="fluid-player-status" class="fluid-player-status">Preparing stream…</div>
+    <div class="fluid-player-actions">
+      <button id="fluid-external" type="button">Open in NS Player</button>
+    </div>
+  </div>
+</div>
+
 <div id="mz-overlay">
     <div class="mz-modal">
         <div class="mz-icon">
@@ -879,19 +957,6 @@
         <input type="text" id="mz-pass-input" class="mz-input" placeholder="Enter Passcode..." autocomplete="off">
         <button id="mz-submit-btn" class="mz-btn">UNLOCK SITE</button>
         <div id="mz-error" class="error-msg">❌ Incorrect passcode. Check the Telegram channel.</div>
-
-        <div id="mz-protection" class="mz-protection" aria-live="polite">
-            <div class="mz-protection-title">🛡️ Access protection</div>
-            <div id="mz-check-list" class="mz-check-list"></div>
-            <div id="mz-block-reason" class="mz-block-reason"></div>
-            <div id="mz-block-detail" class="mz-block-detail"></div>
-            <button id="mz-retry-check" class="mz-retry-btn" type="button">↻ RETRY CHECKS</button>
-            <details class="mz-tech">
-                <summary>Technical details</summary>
-                <pre id="mz-tech-output">No diagnostic data.</pre>
-            </details>
-        </div>
-
         <a href="https://t.me/modzone01" target="_blank" rel="noopener noreferrer" class="mz-link">📢 Get Passcode on Telegram</a>
     </div>
 </div>
@@ -928,7 +993,7 @@
 
     <div class="alert-banner">
         <span>💡</span>
-        <span><strong>Watch tip:</strong> FanCode and SonyLIV entries open in NS Player when a playable stream URL is available. Willow and Prime Video entries open their official event page.</span>
+        <span><strong>Watch tip:</strong> Tap <strong>Watch Here</strong> to use the built-in Fluid Player, or <strong>Open App</strong> for NS Player. Use <strong>Open Official</strong> for events without a browser-playable stream. <a href="https://play.google.com/store/apps/details?id=com.genuine.leone" target="_blank" rel="noopener noreferrer">View app</a></span>
     </div>
 
     <div class="filter-wrap">
@@ -961,7 +1026,6 @@
         <div class="grid" id="sonyliv-grid"></div>
     </section>
 
-    <!-- Official-event-only sources. Protected stream data is not exposed. -->
     <section id="willow-section" class="section">
         <div class="section-head">
             <div class="section-title">🏏 Willow Live</div>
@@ -971,13 +1035,13 @@
         <div class="grid" id="willow-grid"></div>
     </section>
 
-    <section id="primesport-section" class="section">
+    <section id="prime-section" class="section">
         <div class="section-head">
-            <div class="section-title">▶️ Prime Video Live</div>
+            <div class="section-title">🎬 Prime Video Live</div>
             <div class="section-line"></div>
-            <div class="section-count" id="primesport-count">0 events</div>
+            <div class="section-count" id="prime-count">0 events</div>
         </div>
-        <div class="grid" id="primesport-grid"></div>
+        <div class="grid" id="prime-grid"></div>
     </section>
 
     <!-- MODZONE-BOTTOM -->
@@ -999,6 +1063,73 @@
         let activeCategory = 'All';
         const DAILY_PASSCODE = "@modzone01 Telegram Channel";
 
+
+        // App-only client signature configured in WebToApk.
+        // The server also checks this token before returning live events.
+        const APP_UA_TOKEN = 'K/4D8P7X2N9LQ';
+        let appClientApproved = false;
+
+        function hasExpectedAppUA() {
+            return String(navigator.userAgent || '').includes(APP_UA_TOKEN);
+        }
+
+        function showAppGate(message = 'This service is available through the Sports Corner Android app. Open this page inside the app to continue.') {
+            const gate = document.getElementById('app-gate');
+            const paragraph = gate?.querySelector('p');
+            if (paragraph) paragraph.textContent = message;
+
+            document.getElementById('mz-overlay').style.display = 'none';
+            document.getElementById('main-content').style.display = 'none';
+            gate?.classList.add('show');
+        }
+
+        function hideAppGate() {
+            document.getElementById('app-gate')?.classList.remove('show');
+        }
+
+        async function verifyAppClient() {
+            if (!hasExpectedAppUA()) {
+                showAppGate();
+                return false;
+            }
+
+            try {
+                const response = await fetch('/api/client-check', {
+                    method: 'GET',
+                    cache: 'no-store',
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                let result = {};
+                try {
+                    result = await response.json();
+                } catch {
+                    result = {};
+                }
+
+                if (!response.ok || result.allowed !== true) {
+                    showAppGate(result.message || 'This client is not authorized for Sports Corner.');
+                    return false;
+                }
+
+                appClientApproved = true;
+                hideAppGate();
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'UNLOCK SITE';
+                return true;
+            } catch (error) {
+                console.error('App client verification failed:', error);
+                showAppGate('The app verification service could not be reached. Reopen Sports Corner when the network is available.');
+                return false;
+            }
+        }
+
+        // Fluid Player advertising configuration.
+        // Leave empty until you have a VAST/VPAID tag from your ad provider.
+        const FLUID_AD_VAST_TAG = '';
+        const FLUID_AD_MIDROLL_SECONDS = 0;
+
         const submitBtn = document.getElementById('mz-submit-btn');
         const passInput = document.getElementById('mz-pass-input');
         const errorMsg = document.getElementById('mz-error');
@@ -1010,316 +1141,335 @@
         });
         refreshBtn.addEventListener('click', () => fetchStreams(true));
 
-        const protectionBox = document.getElementById('mz-protection');
-        const checkList = document.getElementById('mz-check-list');
-        const blockReason = document.getElementById('mz-block-reason');
-        const blockDetail = document.getElementById('mz-block-detail');
-        const retryCheckBtn = document.getElementById('mz-retry-check');
-        const techOutput = document.getElementById('mz-tech-output');
-
-        const CHECK_LABELS = {
-            ad_block: 'Ad / content filter',
-            network: 'Network / DNS reachability',
-            access: 'Server access token'
-        };
-
-        const protectionState = {
-            ad_block: { state: 'pending', text: 'NOT CHECKED' },
-            network: { state: 'pending', text: 'NOT CHECKED' },
-            access: { state: 'pending', text: 'NOT CHECKED' }
-        };
-
-        function statusClass(state) {
-            if (state === 'pass') return 'pass';
-            if (state === 'fail') return 'fail';
-            if (state === 'warn') return 'warn';
-            return 'pending';
-        }
-
-        function renderProtectionChecks() {
-            checkList.innerHTML = Object.entries(protectionState).map(([key, value]) => `
-                <div class="mz-check-row">
-                    <span class="mz-check-label">${CHECK_LABELS[key]}</span>
-                    <span class="mz-check-value ${statusClass(value.state)}">${escapeHtml(value.text)}</span>
-                </div>
-            `).join('');
-        }
-
-        function resetProtectionChecks() {
-            protectionState.ad_block = { state: 'pending', text: 'NOT CHECKED' };
-            protectionState.network = { state: 'pending', text: 'NOT CHECKED' };
-            protectionState.access = { state: 'pending', text: 'NOT CHECKED' };
-            blockReason.textContent = '';
-            blockDetail.textContent = '';
-            techOutput.textContent = 'No diagnostic data.';
-            protectionBox.style.display = 'block';
-            renderProtectionChecks();
-        }
-
-        function showProtectionFailure({ code, reason, detail = '', httpStatus = '', endpoint = '/api/access-check' }) {
-            protectionBox.style.display = 'block';
-            blockReason.textContent = `🚫 ${reason || 'Access blocked.'}`;
-            blockDetail.textContent = detail || '';
-            techOutput.textContent = JSON.stringify({
-                code: code || 'UNKNOWN',
-                http_status: httpStatus || null,
-                endpoint,
-                online: navigator.onLine,
-                user_agent: navigator.userAgent
-            }, null, 2);
-            renderProtectionChecks();
-        }
-
-        function setProtectionCheck(key, state, text) {
-            protectionState[key] = { state, text };
-            renderProtectionChecks();
-        }
-
-        function detectAdBlocking() {
-            const classSets = [
-                'ad ads adsbox ad-banner advert advertisement sponsor text-ad',
-                'ad-container adsbygoogle banner-ad pub-banner',
-                'ad-slot adunit ad-placeholder'
-            ];
-
-            const nodes = [];
-            let blocked = false;
-
-            try {
-                for (const className of classSets) {
-                    const bait = document.createElement('div');
-                    bait.className = className;
-                    bait.setAttribute('aria-hidden', 'true');
-                    Object.assign(bait.style, {
-                        position: 'absolute',
-                        left: '-10000px',
-                        top: '-10000px',
-                        width: '20px',
-                        height: '20px',
-                        minWidth: '20px',
-                        minHeight: '20px',
-                        display: 'block',
-                        visibility: 'visible',
-                        opacity: '1',
-                        pointerEvents: 'none'
-                    });
-                    document.body.appendChild(bait);
-                    nodes.push(bait);
-                }
-
-                blocked = nodes.some((bait) => {
-                    const style = window.getComputedStyle(bait);
-                    const rect = bait.getBoundingClientRect();
-                    return (
-                        bait.offsetWidth === 0 ||
-                        bait.offsetHeight === 0 ||
-                        rect.width === 0 ||
-                        rect.height === 0 ||
-                        style.display === 'none' ||
-                        style.visibility === 'hidden'
-                    );
-                });
-            } finally {
-                nodes.forEach((node) => node.remove());
-            }
-
-            return blocked;
-        }
-
-        async function fetchJsonWithTimeout(url, options = {}, timeoutMs = 8000) {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-            try {
-                const response = await fetch(url, {
-                    ...options,
-                    signal: controller.signal,
-                    cache: 'no-store',
-                    credentials: 'same-origin'
-                });
-
-                let json = {};
-                try { json = await response.json(); } catch { json = {}; }
-
-                return { response, json };
-            } finally {
-                clearTimeout(timeout);
-            }
-        }
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'CHECKING APP...';
+        verifyAppClient();
 
         async function verifyPasscode() {
-            const passcode = passInput.value.trim();
+    if (!appClientApproved) {
+        showAppGate();
+        return;
+    }
 
-            errorMsg.style.display = 'none';
-            passInput.style.borderColor = '';
+    const passcode = passInput.value.trim();
 
-            if (passcode !== DAILY_PASSCODE) {
-                errorMsg.textContent = '❌ Invalid daily passcode.';
-                errorMsg.style.display = 'block';
-                passInput.style.borderColor = '#ef4444';
-                passInput.focus();
+    errorMsg.style.display = 'none';
+    passInput.style.borderColor = '';
+
+    if (passcode !== DAILY_PASSCODE) {
+        errorMsg.textContent = '❌ Invalid daily passcode.';
+        errorMsg.style.display = 'block';
+        passInput.style.borderColor = '#ef4444';
+        passInput.focus();
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'VERIFYING...';
+
+    try {
+        // Basic ad-block detection
+        const bait = document.createElement('div');
+
+        bait.className =
+            'ad ads adsbox ad-banner advert advertisement sponsor text-ad';
+
+        bait.setAttribute('aria-hidden', 'true');
+
+        Object.assign(bait.style, {
+            position: 'absolute',
+            left: '-10000px',
+            top: '-10000px',
+            width: '10px',
+            height: '10px',
+            pointerEvents: 'none'
+        });
+
+        document.body.appendChild(bait);
+
+        const baitStyle =
+            window.getComputedStyle(bait);
+
+        const adBlocked =
+            bait.offsetWidth === 0 ||
+            bait.offsetHeight === 0 ||
+            baitStyle.display === 'none' ||
+            baitStyle.visibility === 'hidden';
+
+        bait.remove();
+
+        if (adBlocked) {
+            throw new Error(
+                'Ads are required. Please disable your ad blocker or DNS filtering and reload the page.'
+            );
+        }
+
+        // Practical DNS/content-filtering check. Browsers cannot directly read the
+        // Android DNS server, so this verifies reachability of multiple required
+        // network endpoints while confirming same-origin connectivity.
+        const dnsCheck = await checkDnsFiltering();
+
+        if (!dnsCheck.ok) {
+            if (dnsCheck.code === 'NETWORK_TIMEOUT') {
+                throw new Error('Network connection unavailable — the site could not reach its verification server.');
+            }
+            if (dnsCheck.code === 'NETWORK_UNAVAILABLE') {
+                throw new Error('Network connection unavailable — the site verification endpoint could not be reached.');
+            }
+            throw new Error(
+                `DNS filtering detected — ${dnsCheck.blockedCount || 0} required network checks were blocked or unreachable.`
+            );
+        }
+
+        // Server-side access verification
+        const response = await fetch(
+            '/api/access-check',
+            {
+                method: 'GET',
+                cache: 'no-store',
+                credentials: 'same-origin'
+            }
+        );
+
+        let result = {};
+
+        try {
+            result = await response.json();
+        } catch {
+            result = {};
+        }
+
+        if (
+            !response.ok ||
+            result.allowed !== true
+        ) {
+            throw new Error(
+                result.reason ||
+                'Access verification failed.'
+            );
+        }
+
+        // Access approved
+        document.getElementById(
+            'mz-overlay'
+        ).style.display = 'none';
+
+        document.getElementById(
+            'main-content'
+        ).style.display = 'block';
+
+        fetchStreams();
+
+    } catch (error) {
+
+        errorMsg.textContent =
+            '🚫 ' +
+            (
+                error?.message ||
+                'Access verification failed.'
+            );
+
+        errorMsg.style.display = 'block';
+
+    } finally {
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'UNLOCK SITE';
+    }
+        }
+
+
+        async function checkDnsFiltering() {
+            const timeoutMs = 3000;
+            const probes = [
+                'https://doubleclick.net/favicon.ico',
+                'https://googleads.g.doubleclick.net/favicon.ico',
+                'https://pagead2.googlesyndication.com/favicon.ico',
+                'https://adservice.google.com/favicon.ico',
+                'https://ads.yahoo.com/favicon.ico',
+                'https://ib.adnxs.com/favicon.ico',
+                'https://pixel.rubiconproject.com/favicon.ico',
+                'https://trc.taboola.com/favicon.ico'
+            ];
+
+            const withTimeout = async (url, options = {}) => {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), timeoutMs);
+                try {
+                    await fetch(url, {
+                        ...options,
+                        cache: 'no-store',
+                        signal: controller.signal
+                    });
+                    return { ok: true };
+                } catch (error) {
+                    return {
+                        ok: false,
+                        timeout: error?.name === 'AbortError'
+                    };
+                } finally {
+                    clearTimeout(timer);
+                }
+            };
+
+            const networkProbe = await withTimeout(`/?mz_network_probe=${Date.now()}`, {
+                method: 'HEAD',
+                credentials: 'same-origin'
+            });
+
+            if (!networkProbe.ok) {
+                return {
+                    ok: false,
+                    code: networkProbe.timeout ? 'NETWORK_TIMEOUT' : 'NETWORK_UNAVAILABLE',
+                    blockedCount: 0
+                };
+            }
+
+            const results = await Promise.all(
+                probes.map((url) => withTimeout(url, { mode: 'no-cors' }))
+            );
+
+            const blockedCount = results.filter(result => !result.ok).length;
+
+            return {
+                ok: blockedCount < 2,
+                code: blockedCount >= 2 ? 'DNS_BLOCKED' : 'DNS_OK',
+                blockedCount
+            };
+        }
+
+        let fluidPlayerInstance = null;
+        let activePlayerStream = '';
+
+        function isHlsStream(url) {
+            return /\.m3u8(?:$|[?#])/i.test(url);
+        }
+
+        function isDashStream(url) {
+            return /\.mpd(?:$|[?#])/i.test(url);
+        }
+
+        function buildFluidAdList() {
+            if (!FLUID_AD_VAST_TAG) return [];
+
+            const ads = [{
+                roll: 'preRoll',
+                vastTag: FLUID_AD_VAST_TAG
+            }];
+
+            if (Number(FLUID_AD_MIDROLL_SECONDS) > 0) {
+                ads.push({
+                    roll: 'midRoll',
+                    vastTag: FLUID_AD_VAST_TAG,
+                    timer: Number(FLUID_AD_MIDROLL_SECONDS)
+                });
+            }
+
+            return ads;
+        }
+
+        function closeFluidPlayer() {
+            const modal = document.getElementById('fluid-modal');
+            modal.classList.remove('open');
+
+            if (fluidPlayerInstance) {
+                try {
+                    fluidPlayerInstance.destroy();
+                } catch (e) {
+                    console.debug('Fluid Player destroy:', e);
+                }
+                fluidPlayerInstance = null;
+            }
+
+            const video = document.getElementById('fluid-video');
+            video.pause();
+            video.removeAttribute('src');
+            video.innerHTML = '';
+            activePlayerStream = '';
+        }
+
+        function openInNSPlayer(streamUrl) {
+            if (!streamUrl) return;
+            const cleanUrl = streamUrl.replace(/^https?:\/\//, '');
+            const intentUrl =
+                `intent://${cleanUrl}` +
+                `#Intent;package=com.genuine.leone;` +
+                `action=android.intent.action.VIEW;` +
+                `scheme=https;` +
+                `S.browser_fallback_url=${encodeURIComponent(streamUrl)};end;`;
+            window.location.href = intentUrl;
+        }
+
+        function openFluidPlayer(streamUrl, title) {
+            if (!streamUrl) {
+                showToast('❌ No playable stream available.');
                 return;
             }
 
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'VERIFYING...';
-            retryCheckBtn.disabled = true;
-            resetProtectionChecks();
+            if (!isHlsStream(streamUrl) && !isDashStream(streamUrl)) {
+                showToast('⚠️ This stream format is not supported by the web player.');
+                return;
+            }
+
+            closeFluidPlayer();
+
+            const modal = document.getElementById('fluid-modal');
+            const video = document.getElementById('fluid-video');
+            const titleEl = document.getElementById('fluid-player-title');
+            const status = document.getElementById('fluid-player-status');
+
+            activePlayerStream = streamUrl;
+            titleEl.textContent = title || 'Live Sports';
+            status.textContent = FLUID_AD_VAST_TAG
+                ? 'Live stream • in-stream advertising enabled'
+                : 'Live stream • advertising tag not configured';
+
+            const source = document.createElement('source');
+            source.src = streamUrl;
+            source.type = isDashStream(streamUrl)
+                ? 'application/dash+xml'
+                : 'application/x-mpegURL';
+            video.appendChild(source);
+
+            modal.classList.add('open');
 
             try {
-                // 1) Client-side ad/content-filter detection.
-                if (detectAdBlocking()) {
-                    setProtectionCheck('ad_block', 'fail', 'BLOCKED');
-                    showProtectionFailure({
-                        code: 'AD_BLOCKED',
-                        reason: 'Ad blocker / content filtering detected.',
-                        detail: 'A required site detection resource was hidden by browser filtering. Disable the blocking rule for Sports Corner and retry.'
-                    });
-                    return;
-                }
-
-                setProtectionCheck('ad_block', 'pass', 'PASSED');
-
-                // 2) Reach the first-party verification endpoint.
-                let result;
-                try {
-                    result = await fetchJsonWithTimeout('/api/access-check', { method: 'GET' });
-                    setProtectionCheck('network', 'pass', `REACHABLE${result.response.status ? ` (${result.response.status})` : ''}`);
-                } catch (networkError) {
-                    let sameOriginReachable = false;
-                    try {
-                        const probe = await fetchJsonWithTimeout(`/?sc_net_probe=${Date.now()}`, { method: 'GET' }, 5000);
-                        sameOriginReachable = probe.response.ok;
-                    } catch {}
-
-                    if (!navigator.onLine) {
-                        setProtectionCheck('network', 'fail', 'OFFLINE');
-                        showProtectionFailure({
-                            code: 'NETWORK_OFFLINE',
-                            reason: 'Network connection unavailable.',
-                            detail: 'The device reports no active network connection.'
-                        });
-                    } else if (sameOriginReachable) {
-                        setProtectionCheck('network', 'fail', 'API BLOCKED');
-                        showProtectionFailure({
-                            code: 'API_ENDPOINT_BLOCKED',
-                            reason: 'Required API endpoint is being blocked.',
-                            detail: 'The website is reachable, but /api/access-check could not be reached. A content filter, firewall, DNS security product, or network policy may be blocking the endpoint.'
-                        });
-                    } else {
-                        setProtectionCheck('network', 'fail', 'UNREACHABLE');
-                        showProtectionFailure({
-                            code: 'DNS_OR_NETWORK_BLOCKED',
-                            reason: 'DNS / network filtering detected.',
-                            detail: 'The required Sports Corner endpoint and same-origin probe could not be reached. Check DNS filtering, firewall, VPN/proxy filtering, or network connectivity.'
-                        });
+                fluidPlayerInstance = fluidPlayer('fluid-video', {
+                    layoutControls: {
+                        fillToContainer: true,
+                        autoPlay: false,
+                        mute: false,
+                        allowTheatre: true,
+                        playPauseAnimation: true,
+                        playbackRateEnabled: false,
+                        allowDownload: false,
+                        playButtonShowing: true
+                    },
+                    vastOptions: {
+                        adList: buildFluidAdList(),
+                        adCTAText: false
                     }
-                    return;
-                }
-
-                // 3) Server-side access decision and token issuance.
-                const status = result.response.status;
-                if (!result.response.ok || result.json.allowed !== true) {
-                    setProtectionCheck('access', 'fail', 'DENIED');
-
-                    showProtectionFailure({
-                        code: result.json.code || 'ACCESS_DENIED',
-                        reason: result.json.reason || result.json.message || 'Server access verification failed.',
-                        detail: result.json.detail || 'The server rejected this connection.',
-                        httpStatus: status
-                    });
-                    return;
-                }
-
-                setProtectionCheck('access', 'pass', result.json.code === 'ACCESS_GRANTED_UNVERIFIED' ? 'PASSED*' : 'PASSED');
-                blockReason.textContent = result.json.code === 'ACCESS_GRANTED_UNVERIFIED'
-                    ? '⚠️ Access granted, but external network classification was unavailable.'
-                    : '';
-                blockDetail.textContent = result.json.code === 'ACCESS_GRANTED_UNVERIFIED'
-                    ? 'ACCESS_STRICT=false allows the site to continue when the IP verification provider is unavailable.'
-                    : '';
-                techOutput.textContent = JSON.stringify({
-                    code: result.json.code || 'ACCESS_GRANTED',
-                    checks: result.json.checks || {},
-                    token_ttl_seconds: result.json.token_ttl_seconds || null
-                }, null, 2);
-
-                // Access approved.
-                document.getElementById('mz-overlay').style.display = 'none';
-                document.getElementById('main-content').style.display = 'block';
-                fetchStreams();
-            } catch (error) {
-                console.error('Sports Corner protection error:', error);
-
-                if (!blockReason.textContent) {
-                    setProtectionCheck('access', 'fail', 'ERROR');
-                    showProtectionFailure({
-                        code: 'PROTECTION_ERROR',
-                        reason: 'Protection check failed.',
-                        detail: error?.message || 'An unexpected verification error occurred.'
-                    });
-                }
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'UNLOCK SITE';
-                retryCheckBtn.disabled = false;
-            }
-        }
-
-        retryCheckBtn.addEventListener('click', () => {
-            errorMsg.style.display = 'none';
-            verifyPasscode();
-        });
-
-        async function revalidateAccess() {
-            // Strict session re-check: ad/content filter + signed server access.
-            if (document.getElementById('mz-overlay').style.display !== 'none') return;
-
-            try {
-                if (detectAdBlocking()) {
-                    document.getElementById('mz-overlay').style.display = 'flex';
-                    document.getElementById('main-content').style.display = 'none';
-                    resetProtectionChecks();
-                    setProtectionCheck('ad_block', 'fail', 'BLOCKED');
-                    showProtectionFailure({
-                        code: 'AD_BLOCKED',
-                        reason: 'Ad blocker / content filtering detected.',
-                        detail: 'The protection check failed during session revalidation.'
-                    });
-                    return;
-                }
-
-                const result = await fetchJsonWithTimeout('/api/access-check', { method: 'GET' });
-                if (!result.response.ok || result.json.allowed !== true) {
-                    document.getElementById('mz-overlay').style.display = 'flex';
-                    document.getElementById('main-content').style.display = 'none';
-                    resetProtectionChecks();
-                    setProtectionCheck('ad_block', 'pass', 'PASSED');
-                    setProtectionCheck('network', 'pass', `REACHABLE (${result.response.status})`);
-                    setProtectionCheck('access', 'fail', 'DENIED');
-                    showProtectionFailure({
-                        code: result.json.code || 'ACCESS_DENIED',
-                        reason: result.json.reason || result.json.message || 'Session access has been revoked.',
-                        detail: result.json.detail || 'Re-enter the daily passcode after resolving the network/access issue.',
-                        httpStatus: result.response.status
-                    });
-                }
-            } catch (error) {
-                document.getElementById('mz-overlay').style.display = 'flex';
-                document.getElementById('main-content').style.display = 'none';
-                resetProtectionChecks();
-                setProtectionCheck('ad_block', 'pass', 'PASSED');
-                setProtectionCheck('network', 'fail', 'UNREACHABLE');
-                setProtectionCheck('access', 'fail', 'BLOCKED');
-                showProtectionFailure({
-                    code: 'SESSION_NETWORK_BLOCKED',
-                    reason: 'Session network verification failed.',
-                    detail: error?.message || 'Required verification endpoint could not be reached.'
                 });
+
+                status.textContent = FLUID_AD_VAST_TAG
+                    ? 'Player ready • VAST advertising enabled'
+                    : 'Player ready';
+            } catch (error) {
+                console.error('Fluid Player initialization failed:', error);
+                status.textContent = 'Unable to initialize web player. Try NS Player.';
             }
         }
 
-        window.setInterval(revalidateAccess, 10 * 60 * 1000);
+        document.getElementById('fluid-close').addEventListener('click', closeFluidPlayer);
+        document.getElementById('fluid-external').addEventListener('click', () => {
+            if (activePlayerStream) openInNSPlayer(activePlayerStream);
+        });
+        document.getElementById('fluid-modal').addEventListener('click', (event) => {
+            if (event.target.id === 'fluid-modal') closeFluidPlayer();
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeFluidPlayer();
+        });
 
         async function fetchStreams(manual = false) {
             const status = document.getElementById('status');
@@ -1330,75 +1480,14 @@
             refreshBtn.style.opacity = '0.6';
 
             try {
-                let res = await fetch('/api/streams', {
-                    cache: 'no-store',
-                    credentials: 'same-origin'
-                });
-                let json = {};
+                const res = await fetch('/api/streams', { cache: 'no-store', credentials: 'same-origin' });
+                const json = await res.json();
 
-                try {
-                    json = await res.json();
-                } catch {
-                    json = {};
+                if (!res.ok) {
+                    throw new Error(json.message || (res.status === 403 ? 'Sports Corner app access required.' : 'Backend error'));
                 }
 
-                // If the short-lived access cookie expired, refresh the
-                // server-side access check once and retry the streams API.
-                if (res.status === 403) {
-                    let gate = {};
-                    let gateError = null;
-                    try {
-                        gate = await fetchJsonWithTimeout('/api/access-check', { method: 'GET' });
-                    } catch (error) {
-                        gateError = error;
-                    }
-
-                    if (gateError) {
-                        document.getElementById('mz-overlay').style.display = 'flex';
-                        document.getElementById('main-content').style.display = 'none';
-                        resetProtectionChecks();
-                        setProtectionCheck('ad_block', 'pass', 'PASSED');
-                        setProtectionCheck('network', 'fail', 'UNREACHABLE');
-                        setProtectionCheck('access', 'fail', 'BLOCKED');
-                        showProtectionFailure({
-                            code: 'STREAMS_ACCESS_RECHECK_FAILED',
-                            reason: 'Access re-check could not reach the server.',
-                            detail: gateError?.message || 'DNS / network filtering may be blocking the verification endpoint.'
-                        });
-                        return;
-                    }
-
-                    if (gate.response.ok && gate.json.allowed === true) {
-                        res = await fetch('/api/streams', {
-                            cache: 'no-store',
-                            credentials: 'same-origin'
-                        });
-                        try {
-                            json = await res.json();
-                        } catch {
-                            json = {};
-                        }
-                    } else {
-                        document.getElementById('mz-overlay').style.display = 'flex';
-                        document.getElementById('main-content').style.display = 'none';
-                        resetProtectionChecks();
-                        setProtectionCheck('ad_block', 'pass', 'PASSED');
-                        setProtectionCheck('network', 'pass', `REACHABLE (${gate.response.status})`);
-                        setProtectionCheck('access', 'fail', 'DENIED');
-                        showProtectionFailure({
-                            code: gate.json.code || 'ACCESS_DENIED',
-                            reason: gate.json.reason || gate.json.message || 'Server access was denied.',
-                            detail: gate.json.detail || 'Resolve the reported issue and re-enter the daily passcode.',
-                            httpStatus: gate.response.status
-                        });
-                        return;
-                    }
-                }
-
-                if (!res.ok || json.status !== 'success') {
-                    const reason = json.message || json.reason || `HTTP ${res.status}`;
-                    throw new Error(`Live API: ${reason}`);
-                }
+                if (json.status !== 'success') throw new Error(json.message || 'Backend error');
 
                 globalMatches = Array.isArray(json.matches) ? json.matches : [];
                 renderAll();
@@ -1412,9 +1501,7 @@
             } catch (err) {
                 console.error(err);
                 status.style.display = 'block';
-                status.textContent = err?.message
-                    ? `${err.message} — tap refresh to try again.`
-                    : 'Failed to load live sports. Tap refresh to try again.';
+                status.textContent = 'Failed to load live sports. Tap refresh to try again.';
             } finally {
                 refreshBtn.disabled = false;
                 refreshBtn.style.opacity = '';
@@ -1455,12 +1542,12 @@
             const fancodeMatches = matches.filter(m => m.source === 'fancode');
             const sonylivMatches = matches.filter(m => m.source === 'sonyliv');
             const willowMatches = matches.filter(m => m.source === 'willow');
-            const primeSportMatches = matches.filter(m => m.source === 'primesport');
+            const primeMatches = matches.filter(m => m.source === 'prime');
 
             renderGrid('fancode-grid', 'fancode-section', 'fancode-count', fancodeMatches);
             renderGrid('sonyliv-grid', 'sonyliv-section', 'sonyliv-count', sonylivMatches);
             renderGrid('willow-grid', 'willow-section', 'willow-count', willowMatches);
-            renderGrid('primesport-grid', 'primesport-section', 'primesport-count', primeSportMatches);
+            renderGrid('prime-grid', 'prime-section', 'prime-count', primeMatches);
         }
 
         function escapeHtml(value) {
@@ -1496,17 +1583,39 @@
                 const title = escapeHtml(match.title || 'Live Sports Event');
                 const imgUrl = escapeHtml(match.src_image || fallbackImg);
                 const streamUrl = String(match.stream_url || '');
+                const officialUrl = String(match.official_url || '');
+
                 const sourceLabels = {
                     fancode: 'FanCode',
                     sonyliv: 'SonyLIV',
                     willow: 'Willow',
-                    primesport: 'Prime Video'
+                    prime: 'Prime Video'
                 };
-                const source = sourceLabels[match.source] || 'Live Sports';
-                const officialUrl = String(match.official_url || '');
-                const isOfficialOnly = match.playable === false && !!officialUrl;
-                const actionUrl = officialUrl || streamUrl;
 
+                const source = sourceLabels[match.source] || escapeHtml(match.source || 'Live');
+
+                const hasPlayableStream =
+                    Boolean(streamUrl);
+
+                const hasOfficialLink =
+                    Boolean(officialUrl);
+
+                const primaryLabel =
+                    hasPlayableStream
+                        ? '▶ Watch Here'
+                        : hasOfficialLink
+                            ? '↗ Open Official'
+                            : 'Unavailable';
+
+                const secondaryLabel =
+                    hasPlayableStream
+                        ? 'Open App'
+                        : '↗';
+
+                const secondaryTitle =
+                    hasPlayableStream
+                        ? 'Open stream in NS Player'
+                        : 'Open official event';
 
                 card.innerHTML = `
                     <div class="card-img-container">
@@ -1520,40 +1629,46 @@
                         <div class="match-meta">Live now</div>
                         <div class="match-title">${title}</div>
                         <div class="button-group">
-                            <button class="btn ${isOfficialOnly ? 'btn-official' : 'btn-primary'}" type="button">${isOfficialOnly ? '↗ Open Official' : '▶ Open in App'}</button>
-                            <button class="btn btn-secondary" type="button" title="${isOfficialOnly ? 'Copy official event link' : 'Copy stream link'}" aria-label="${isOfficialOnly ? 'Copy official event link' : 'Copy stream link'}">⧉</button>
+                            <button class="btn btn-primary" type="button">${primaryLabel}</button>
+                            <button class="btn btn-secondary" type="button" title="${secondaryTitle}" aria-label="${secondaryTitle}">${secondaryLabel}</button>
+                            ${hasPlayableStream ? '<button class="btn btn-secondary" type="button" title="Copy stream link" aria-label="Copy stream link">⧉</button>' : ''}
                         </div>
                     </div>
                 `;
 
                 const buttons = card.querySelectorAll('button');
+
                 buttons[0].addEventListener('click', () => {
-                    if (!actionUrl) {
-                        showToast('❌ No event link available.');
+                    if (hasPlayableStream) {
+                        openFluidPlayer(streamUrl, match.title || 'Live Sports');
                         return;
                     }
 
-                    if (isOfficialOnly) {
-                        window.open(actionUrl, '_blank', 'noopener,noreferrer');
+                    if (hasOfficialLink) {
+                        window.open(officialUrl, '_blank', 'noopener,noreferrer');
                         return;
                     }
 
-                    // Open the stream directly in NS Player on Android.
-                    // Package used by the existing app flow.
-                    const cleanUrl = actionUrl.replace(/^https?:\/\//, '');
-                    const intentUrl =
-                        `intent://${cleanUrl}` +
-                        `#Intent;package=com.genuine.leone;` +
-                        `action=android.intent.action.VIEW;` +
-                        `scheme=https;` +
-                        `S.browser_fallback_url=${encodeURIComponent(actionUrl)};end;`;
-
-                    window.location.href = intentUrl;
+                    showToast('❌ No event link available.');
                 });
 
                 buttons[1].addEventListener('click', () => {
-                    copyToClipboard(actionUrl);
+                    if (hasPlayableStream) {
+                        openInNSPlayer(streamUrl);
+                        return;
+                    }
+
+                    if (hasOfficialLink) {
+                        window.open(officialUrl, '_blank', 'noopener,noreferrer');
+                        return;
+                    }
+
+                    showToast('❌ No event link available.');
                 });
+
+                if (hasPlayableStream && buttons[2]) {
+                    buttons[2].addEventListener('click', () => copyToClipboard(streamUrl));
+                }
 
                 grid.appendChild(card);
             });
@@ -1569,7 +1684,7 @@
 
         function copyToClipboard(text) {
             if (!text) {
-                showToast('❌ No link available.');
+                showToast('❌ No stream link available.');
                 return;
             }
 
