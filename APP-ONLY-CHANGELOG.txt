@@ -26,3 +26,9 @@ v5 diagnostics update
 - Displays HTTP status, content type, and compact server response preview when available.
 - Uses specific codes such as STREAM_HTTP_404, STREAM_HTTP_500, STREAM_NON_JSON_502.
 - Keeps server-provided JSON code/reason/source details when available.
+
+v7 App Gate Update
+- Browser/app-gate message now provides the original app download link.
+- Download label: FANCODE & SONYLIV LIVE EVENTS (12.7 MB)
+- URL: https://appteka.store/app/640r323808
+- Added a prominent mobile-friendly download button.

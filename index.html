@@ -612,6 +612,23 @@
             font-size: .88rem;
         }
 
+        .app-download-link {
+            display: block;
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #2d8cff, #635bff);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            line-height: 1.35;
+            box-shadow: 0 8px 24px rgba(45,140,255,.2);
+        }
+
+        .app-download-link:active {
+            transform: translateY(1px);
+        }
+
         .app-gate-code {
             margin-top: 16px;
             padding: 10px 12px;
@@ -924,8 +941,11 @@
     <div class="app-gate-card">
         <div class="app-gate-icon">📱</div>
         <h2 id="app-gate-title">Sports Corner App Required</h2>
-        <p>This service is available through the Sports Corner Android app. Open this page inside the app to continue.</p>
-        <div class="app-gate-code">Client: Sports Corner Android WebView</div>
+        <p>Download original app from the link below:</p>
+        <a class="app-download-link" href="https://appteka.store/app/640r323808" target="_blank" rel="noopener noreferrer">
+          📲 FANCODE &amp; SONYLIV LIVE EVENTS (12.7 MB)
+        </a>
+        <div class="app-gate-code">Open the downloaded app to continue.</div>
     </div>
 </div>
 
@@ -1073,7 +1093,7 @@
             return String(navigator.userAgent || '').includes(APP_UA_TOKEN);
         }
 
-        function showAppGate(message = 'This service is available through the Sports Corner Android app. Open this page inside the app to continue.') {
+        function showAppGate(message = 'Download original app from the link below:') {
             const gate = document.getElementById('app-gate');
             const paragraph = gate?.querySelector('p');
             if (paragraph) paragraph.textContent = message;
