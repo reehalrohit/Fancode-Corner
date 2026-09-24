@@ -7,36 +7,31 @@
     <meta name="theme-color" content="#000000">
     <title>Live Player</title>
 
-    <!-- Fluid Player -->
     <link rel="stylesheet"
-          href="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.css"
-          type="text/css">
+          href="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.css">
     <script src="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.js"></script>
 
     <style>
         :root {
             --accent: #4d8dff;
-            --panel: rgba(5, 10, 20, .78);
+            --panel: rgba(5, 10, 20, .82);
         }
 
         * { box-sizing: border-box; }
 
         html, body {
             margin: 0;
-            padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
             background: #000;
             color: #fff;
-            font-family: Poppins, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
-        .player-shell {
+        #player-shell {
             position: fixed;
             inset: 0;
-            width: 100%;
-            height: 100%;
             background: #000;
         }
 
@@ -45,51 +40,47 @@
             width: 100%;
             height: 100%;
             background: #000;
-            object-fit: contain;
         }
 
         .topbar {
             position: fixed;
-            z-index: 3000;
-            top: max(10px, env(safe-area-inset-top));
-            left: 10px;
-            right: 10px;
+            z-index: 5000;
+            top: max(8px, env(safe-area-inset-top));
+            left: 8px;
+            right: 8px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            gap: 10px;
+            align-items: center;
+            gap: 8px;
             pointer-events: none;
         }
 
         .topbar > * { pointer-events: auto; }
 
-        .back-btn,
-        .live-chip {
-            border: 1px solid rgba(255,255,255,.12);
+        .back-btn, .live-chip {
+            border: 1px solid rgba(255,255,255,.14);
             background: var(--panel);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
             color: #fff;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-radius: 999px;
         }
 
         .back-btn {
             border: 0;
             padding: 9px 13px;
-            cursor: pointer;
-            font: inherit;
-            font-size: 13px;
             font-weight: 700;
+            cursor: pointer;
         }
 
-        .back-btn:active { transform: scale(.97); }
-
         .live-chip {
+            max-width: 72%;
+            padding: 7px 11px;
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 7px 11px;
-            max-width: 70%;
+            font-size: 12px;
+            font-weight: 650;
         }
 
         .live-dot {
@@ -97,107 +88,85 @@
             height: 8px;
             border-radius: 50%;
             background: #ff3b4f;
-            box-shadow: 0 0 0 5px rgba(255,59,79,.14);
             flex: 0 0 auto;
         }
 
         .live-title {
-            white-space: nowrap;
             overflow: hidden;
+            white-space: nowrap;
             text-overflow: ellipsis;
-            font-size: 12px;
-            font-weight: 650;
         }
 
-        .loading-overlay,
-        .error-overlay {
+        .overlay {
             position: fixed;
+            z-index: 4000;
             inset: 0;
-            z-index: 2000;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-direction: column;
-            text-align: center;
             padding: 24px;
-            background:
-                radial-gradient(circle at center, rgba(35,65,120,.16), transparent 32%),
-                #000;
-            transition: opacity .25s ease;
+            background: rgba(0,0,0,.68);
+            text-align: center;
         }
 
-        .loading-overlay.hidden,
-        .error-overlay.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
+        .hidden { display: none !important; }
+
+        .panel {
+            width: min(520px, 100%);
+            padding: 24px 20px;
+            border-radius: 18px;
+            background: rgba(12,16,24,.94);
+            border: 1px solid rgba(255,255,255,.12);
+            box-shadow: 0 18px 70px rgba(0,0,0,.5);
         }
 
         .spinner {
             width: 42px;
             height: 42px;
-            border: 4px solid rgba(255,255,255,.16);
-            border-top-color: var(--accent);
+            margin: 0 auto 15px;
+            border: 3px solid rgba(255,255,255,.18);
+            border-top-color: #fff;
             border-radius: 50%;
-            animation: spin .9s linear infinite;
-            margin-bottom: 14px;
+            animation: spin .8s linear infinite;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .loading-text {
-            color: #dbeafe;
-            font-size: 14px;
-            font-weight: 650;
-        }
-
-        .loading-detail {
-            color: #7f8ea6;
-            font-size: 11px;
-            margin-top: 7px;
-            max-width: 360px;
-        }
-
-        .error-title {
+        .title {
             font-size: 18px;
             font-weight: 800;
-            margin-bottom: 7px;
+            margin-bottom: 8px;
         }
 
-        .error-text {
-            color: #9ca3af;
+        .detail {
+            color: #b9c0cc;
             font-size: 13px;
-            max-width: 440px;
-            line-height: 1.55;
-            margin-bottom: 16px;
+            line-height: 1.5;
         }
 
         .actions {
             display: flex;
-            flex-wrap: wrap;
             justify-content: center;
+            flex-wrap: wrap;
             gap: 10px;
+            margin-top: 18px;
         }
 
         .action-btn {
             border: 0;
+            border-radius: 999px;
+            padding: 10px 16px;
             background: var(--accent);
             color: #fff;
-            border-radius: 999px;
-            padding: 10px 17px;
-            font: inherit;
             font-weight: 750;
             cursor: pointer;
         }
 
         .action-btn.secondary {
-            background: #111827;
-            border: 1px solid rgba(255,255,255,.16);
+            background: #151b27;
+            border: 1px solid rgba(255,255,255,.15);
         }
 
-        /* Keep Fluid Player underneath the top status layer. */
         .fluid_video_wrapper {
             position: fixed !important;
             inset: 0 !important;
@@ -212,309 +181,277 @@
             object-fit: contain !important;
             background: #000 !important;
         }
-
-        @media (max-width: 600px) {
-            .topbar {
-                top: max(8px, env(safe-area-inset-top));
-                left: 8px;
-                right: 8px;
-            }
-
-            .live-chip { max-width: 60%; }
-        }
     </style>
 </head>
 
 <body>
-    <div class="player-shell">
-        <div class="topbar">
-            <button id="backBtn" class="back-btn" type="button">← Back</button>
-            <div class="live-chip" title="Live stream">
-                <span class="live-dot"></span>
-                <span id="liveTitle" class="live-title">Live Player</span>
-            </div>
+<div id="player-shell">
+
+    <div class="topbar">
+        <button id="backBtn" class="back-btn" type="button">← Back</button>
+        <div class="live-chip">
+            <span class="live-dot"></span>
+            <span id="liveTitle" class="live-title">Live Player</span>
         </div>
+    </div>
 
-        <video id="video" controls playsinline muted autoplay preload="auto">
-            <source id="videoSource" src="" type="application/x-mpegURL">
-        </video>
+    <video id="video"
+           controls
+           playsinline
+           muted
+           preload="metadata"></video>
 
-        <div id="loading" class="loading-overlay">
+    <div id="loading" class="overlay">
+        <div class="panel">
             <div class="spinner"></div>
-            <div class="loading-text">Starting live stream…</div>
-            <div id="loadingDetail" class="loading-detail">Connecting to the HLS source</div>
+            <div class="title">Loading live stream</div>
+            <div id="loadingDetail" class="detail">Preparing the HLS player…</div>
         </div>
+    </div>
 
-        <div id="error" class="error-overlay hidden">
-            <div class="error-title">Unable to play this stream</div>
-            <div id="errorText" class="error-text">
-                The stream could not be started in the browser.
-            </div>
+    <div id="error" class="overlay hidden">
+        <div class="panel">
+            <div class="title">Unable to play this stream</div>
+            <div id="errorText" class="detail"></div>
             <div class="actions">
                 <button id="retryBtn" class="action-btn" type="button">Retry</button>
                 <button id="externalBtn" class="action-btn secondary" type="button">Open in NS Player</button>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        (() => {
-            "use strict";
+<script>
+(() => {
+    "use strict";
 
-            const params = new URLSearchParams(window.location.search);
-            const streamUrl = params.get("stream") || "";
-            const title = params.get("title") || "Live Player";
-            const source = params.get("source") || "";
-            const poster = params.get("poster") || "";
+    const params = new URLSearchParams(location.search);
+    const streamUrl = params.get("stream") || "";
+    const title = params.get("title") || "Live Sports Event";
+    const source = params.get("source") || "";
+    const poster = params.get("poster") || "";
 
-            const video = document.getElementById("video");
-            const videoSource = document.getElementById("videoSource");
-            const loading = document.getElementById("loading");
-            const loadingDetail = document.getElementById("loadingDetail");
-            const errorOverlay = document.getElementById("error");
-            const errorText = document.getElementById("errorText");
-            const liveTitle = document.getElementById("liveTitle");
-            const retryBtn = document.getElementById("retryBtn");
+    const video = document.getElementById("video");
+    const loading = document.getElementById("loading");
+    const loadingDetail = document.getElementById("loadingDetail");
+    const errorOverlay = document.getElementById("error");
+    const errorText = document.getElementById("errorText");
+    const liveTitle = document.getElementById("liveTitle");
+    const retryBtn = document.getElementById("retryBtn");
+    const externalBtn = document.getElementById("externalBtn");
 
-            let fluidPlayerInstance = null;
-            let startupTimer = null;
-            let hasStarted = false;
-            let retryCount = 0;
+    let player = null;
+    let started = false;
+    let startupTimer = null;
 
-            document.title = `${title} | Live Player`;
-            liveTitle.textContent = source ? `${source} • ${title}` : title;
+    document.title = `${title} | Live Player`;
+    liveTitle.textContent = source ? `${source} • ${title}` : title;
 
-            if (poster) {
-                video.poster = poster;
-            }
+    if (poster) video.poster = poster;
 
-            document.getElementById("backBtn").addEventListener("click", () => {
-                if (history.length > 1) history.back();
-                else window.location.href = "index.html";
-            });
+    function showLoading(message) {
+        loadingDetail.textContent = message || "Preparing the HLS player…";
+        loading.classList.remove("hidden");
+        errorOverlay.classList.add("hidden");
+    }
 
-            function showLoading(message = "Connecting to the HLS source") {
-                errorOverlay.classList.add("hidden");
-                loading.classList.remove("hidden");
-                loadingDetail.textContent = message;
-            }
+    function hideLoading() {
+        loading.classList.add("hidden");
+    }
 
-            function hideLoading() {
-                loading.classList.add("hidden");
-            }
+    function showError(message) {
+        clearTimeout(startupTimer);
+        hideLoading();
+        errorText.textContent = message;
+        errorOverlay.classList.remove("hidden");
+    }
 
-            function showError(message) {
-                clearTimeout(startupTimer);
-                hideLoading();
-                errorText.textContent = message || "The stream could not be loaded.";
-                errorOverlay.classList.remove("hidden");
-            }
+    function isHlsUrl(url) {
+        try {
+            const u = new URL(url);
+            return (u.protocol === "https:" || u.protocol === "http:")
+                && /\.m3u8(?:$|[?#])/i.test(u.pathname + u.search);
+        } catch {
+            return false;
+        }
+    }
 
-            function isValidStreamUrl(value) {
-                try {
-                    const url = new URL(value);
-                    return (url.protocol === "https:" || url.protocol === "http:")
-                        && /\.m3u8(?:$|[?#])/i.test(url.pathname + url.search);
-                } catch {
-                    return false;
-                }
-            }
+    function describeError() {
+        const e = video.error;
+        if (!e) return "The browser could not start the HLS stream.";
 
-            function openExternally() {
-                if (!streamUrl) return;
+        if (e.code === MediaError.MEDIA_ERR_NETWORK) {
+            return "The browser could not fetch the HLS stream. The source may require request headers, cookies, or browser access permission.";
+        }
+        if (e.code === MediaError.MEDIA_ERR_DECODE) {
+            return "The stream was received but the browser could not decode it.";
+        }
+        if (e.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
+            return "This HLS source is not playable by the browser.";
+        }
+        if (e.code === MediaError.MEDIA_ERR_ABORTED) {
+            return "The browser aborted the stream request.";
+        }
 
-                const cleanUrl = streamUrl.replace(/^https?:\/\//i, "");
-                const intentUrl =
-                    `intent://${cleanUrl}` +
-                    `#Intent;package=com.genuine.leone;` +
-                    `action=android.intent.action.VIEW;` +
-                    `scheme=https;` +
-                    `S.browser_fallback_url=${encodeURIComponent(streamUrl)};` +
-                    `end;`;
+        return "The browser reported an HLS playback error.";
+    }
 
-                window.location.href = intentUrl;
-            }
+    function openNSPlayer() {
+        if (!streamUrl) return;
 
-            document.getElementById("externalBtn").addEventListener("click", openExternally);
+        const cleanUrl = streamUrl.replace(/^https?:\/\//i, "");
+        const intent =
+            `intent://${cleanUrl}` +
+            `#Intent;package=com.genuine.leone;` +
+            `action=android.intent.action.VIEW;` +
+            `scheme=https;` +
+            `S.browser_fallback_url=${encodeURIComponent(streamUrl)};end;`;
 
-            function destroyPlayer() {
-                if (fluidPlayerInstance) {
-                    try {
-                        if (typeof fluidPlayerInstance.destroy === "function") {
-                            fluidPlayerInstance.destroy();
-                        }
-                    } catch (error) {
-                        console.warn("Fluid Player destroy warning:", error);
+        location.href = intent;
+    }
+
+    function destroyPlayer() {
+        clearTimeout(startupTimer);
+
+        if (player && typeof player.destroy === "function") {
+            try { player.destroy(); } catch (_) {}
+        }
+
+        player = null;
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+    }
+
+    function init() {
+        clearTimeout(startupTimer);
+        started = false;
+
+        if (!streamUrl) {
+            showError("No stream URL was supplied.");
+            return;
+        }
+
+        if (!isHlsUrl(streamUrl)) {
+            showError("The supplied stream URL is not a valid HLS (.m3u8) URL.");
+            return;
+        }
+
+        if (typeof fluidPlayer !== "function") {
+            showError("Fluid Player could not be loaded. Check the network connection and retry.");
+            return;
+        }
+
+        destroyPlayer();
+        showLoading("Connecting to the live HLS source…");
+
+        /*
+         * Give Fluid Player the HLS source directly.
+         * Do not repeatedly destroy/recreate the player.
+         */
+        video.src = streamUrl;
+        video.muted = true;
+        video.playsInline = true;
+
+        try {
+            player = fluidPlayer("video", {
+                layoutControls: {
+                    autoPlay: true,
+                    mute: true,
+                    fillToContainer: true,
+                    posterImage: poster || "",
+                    playButtonShowing: true,
+                    allowTheatre: false,
+                    allowDownload: false,
+                    playbackRateEnabled: false,
+                    controlBar: {
+                        autoHide: true,
+                        autoHideTimeout: 3,
+                        animated: true
                     }
-                    fluidPlayerInstance = null;
+                },
+                vastOptions: {
+                    adList: []
                 }
+            });
+        } catch (err) {
+            console.error("Fluid Player initialization error:", err);
+            showError("Fluid Player failed to initialize. Try NS Player.");
+            return;
+        }
 
-                video.pause();
-                video.removeAttribute("src");
-                videoSource.removeAttribute("src");
-                video.load();
-            }
-
-            function playbackStarted() {
-                if (hasStarted) return;
-
-                hasStarted = true;
-                retryCount = 0;
-                clearTimeout(startupTimer);
-                hideLoading();
-
-                // Live HLS should start muted to satisfy Android autoplay policy.
-                video.muted = true;
-                video.play().catch(() => {
-                    // User can press play in Fluid Player if autoplay is blocked.
-                });
-            }
-
-            function playbackWaiting() {
-                if (!hasStarted) {
-                    loadingDetail.textContent = "Waiting for the live HLS stream…";
-                }
-            }
-
-            function playbackStalled() {
-                if (!hasStarted) {
-                    loadingDetail.textContent = "The stream server is taking longer than expected…";
-                }
-            }
-
-            function describeMediaError() {
-                const err = video.error;
-                if (!err) {
-                    return "The HLS stream did not produce playable media.";
-                }
-
-                switch (err.code) {
-                    case MediaError.MEDIA_ERR_ABORTED:
-                        return "The browser aborted the stream request.";
-                    case MediaError.MEDIA_ERR_NETWORK:
-                        return "The browser could not fetch the HLS stream. The stream server may be blocking browser playback or the network request.";
-                    case MediaError.MEDIA_ERR_DECODE:
-                        return "The browser received the stream but could not decode the media.";
-                    case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                        return "The HLS source is unavailable or not supported by this browser.";
-                    default:
-                        return "The browser reported an unknown media playback error.";
-                }
-            }
-
-            async function initFluidPlayer() {
-                if (!streamUrl || !isValidStreamUrl(streamUrl)) {
-                    showError("A valid HTTP(S) .m3u8 stream URL is required.");
-                    return;
-                }
-
-                if (typeof fluidPlayer !== "function") {
-                    showError("Fluid Player could not be loaded from its CDN.");
-                    return;
-                }
-
-                hasStarted = false;
-                showLoading(
-                    retryCount === 0
-                        ? "Connecting to the HLS source"
-                        : `Retrying HLS connection (${retryCount}/2)`
+        /*
+         * One timeout only. It reports the failure instead of creating
+         * an endless initialization loop.
+         */
+        startupTimer = setTimeout(() => {
+            if (!started) {
+                showError(
+                    "The HLS stream did not start in the browser. " +
+                    "The stream URL may have expired or the source may not permit browser playback."
                 );
-
-                destroyPlayer();
-
-                videoSource.src = streamUrl;
-                video.src = streamUrl;
-                videoSource.type = "application/x-mpegURL";
-                video.muted = true;
-                video.autoplay = true;
-                video.playsInline = true;
-                video.load();
-
-                try {
-                    fluidPlayerInstance = fluidPlayer("video", {
-                        layoutControls: {
-                            autoPlay: true,
-                            mute: true,
-                            fillToContainer: true,
-                            posterImage: poster || "",
-                            playButtonShowing: true,
-                            allowTheatre: false,
-                            allowDownload: false,
-                            playbackRateEnabled: false,
-                            controlBar: {
-                                autoHide: true,
-                                autoHideTimeout: 3,
-                                animated: true
-                            }
-                        },
-                        vastOptions: {
-                            adList: []
-                        }
-                    });
-                } catch (error) {
-                    console.error("Fluid Player initialization error:", error);
-                    showError("Fluid Player failed to initialize. Try NS Player.");
-                    return;
-                }
-
-                /*
-                 * Do not create an automatic retry loop.
-                 * One controlled retry is allowed; after that we show
-                 * the actual browser/media failure instead of spinning forever.
-                 */
-                clearTimeout(startupTimer);
-                startupTimer = setTimeout(() => {
-                    if (hasStarted) return;
-
-                    if (retryCount < 2) {
-                        retryCount += 1;
-                        initFluidPlayer();
-                    } else {
-                        showError(
-                            "The HLS stream did not start in the browser. " +
-                            "This usually means the stream source rejected the browser request, " +
-                            "the URL expired, or the source does not allow browser playback. " +
-                            "Use NS Player to open the same live stream."
-                        );
-                    }
-                }, 12000);
             }
+        }, 15000);
 
-            video.addEventListener("playing", playbackStarted);
-            video.addEventListener("canplay", () => {
-                if (!hasStarted) {
-                    loadingDetail.textContent = "Stream is ready — starting playback…";
-                }
-            });
-            video.addEventListener("waiting", playbackWaiting);
-            video.addEventListener("stalled", playbackStalled);
+        /*
+         * Ask the browser to begin playback. Muted autoplay is used so
+         * Android WebView/browser autoplay restrictions are less likely
+         * to block startup.
+         */
+        video.play().catch(() => {
+            loadingDetail.textContent =
+                "Stream is ready. Press the play button to start playback.";
+        });
+    }
 
-            video.addEventListener("error", () => {
-                if (hasStarted) {
-                    // A later error is a playback interruption rather than
-                    // startup failure. Keep the player visible.
-                    console.warn("Fluid Player media error:", describeMediaError());
-                    return;
-                }
+    video.addEventListener("playing", () => {
+        started = true;
+        clearTimeout(startupTimer);
+        hideLoading();
+    });
 
-                if (retryCount >= 2) {
-                    showError(describeMediaError());
-                }
-            });
+    video.addEventListener("canplay", () => {
+        if (!started) {
+            loadingDetail.textContent = "Stream is ready — starting playback…";
+        }
+    });
 
-            retryBtn.addEventListener("click", () => {
-                retryCount = 0;
-                initFluidPlayer();
-            });
+    video.addEventListener("waiting", () => {
+        if (!started) {
+            loadingDetail.textContent = "Waiting for the live stream…";
+        }
+    });
 
-            document.addEventListener("visibilitychange", () => {
-                if (!document.hidden && hasStarted && video.paused) {
-                    video.play().catch(() => {});
-                }
-            });
+    video.addEventListener("stalled", () => {
+        if (!started) {
+            loadingDetail.textContent = "The stream server is taking longer than expected…";
+        }
+    });
 
-            initFluidPlayer();
-        })();
-    </script>
+    video.addEventListener("error", () => {
+        if (!started) {
+            showError(describeError());
+        } else {
+            console.warn("Playback interruption:", describeError());
+        }
+    });
+
+    retryBtn.addEventListener("click", init);
+    externalBtn.addEventListener("click", openNSPlayer);
+
+    document.getElementById("backBtn").addEventListener("click", () => {
+        if (history.length > 1) history.back();
+        else location.href = "index.html";
+    });
+
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden && started && video.paused) {
+            video.play().catch(() => {});
+        }
+    });
+
+    init();
+})();
+</script>
 </body>
 </html>
