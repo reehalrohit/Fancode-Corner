@@ -32,6 +32,20 @@ function getCookie(req, name) {
   return "";
 }
 
+function validAppClient(req) {
+  const configuredToken = String(
+    process.env.APP_UA_TOKEN || 'K/4D8P7X2N9LQ'
+  );
+
+  if (!configuredToken) return false;
+
+  const userAgent = String(
+    req.headers['user-agent'] || ''
+  );
+
+  return userAgent.includes(configuredToken);
+}
+
 function validAccessToken(req) {
   const secret =
     String(process.env.ACCESS_SECRET || "");
@@ -97,6 +111,16 @@ function validAccessToken(req) {
 }
 
 export default async function handler(req, res) {
+  if (!validAppClient(req)) {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(403).json({
+      status: 'blocked',
+      code: 'APP_REQUIRED',
+      reason: 'Sports Corner is available only through the Android app.',
+      message: 'Sports Corner is available only through the Android app.'
+    });
+  }
+
   if (!validAccessToken(req)) {
     res.setHeader(
       "Cache-Control",
@@ -105,6 +129,8 @@ export default async function handler(req, res) {
 
     return res.status(403).json({
       status: "blocked",
+      code: "ACCESS_REQUIRED",
+      reason: "A valid Sports Corner access cookie is missing, expired, invalid, or bound to a different IP.",
       message:
         "Access verification required."
     });
@@ -113,27 +139,20 @@ export default async function handler(req, res) {
     {
       name: 'fancode',
       url: 'https://raw.githubusercontent.com/drmlive/fancode-live-events/main/fancode.json',
-      format: 'lowercaseMatches',
     },
     {
       name: 'sonyliv',
       url: 'https://github.com/drmlive/sliv-live-events/raw/refs/heads/main/sonyliv.json',
-      format: 'lowercaseMatches',
     },
     {
       name: 'willow',
       url: 'https://raw.githubusercontent.com/sportlive18/Willow-Cricbuzz-Prime-Video-Sport-Live-Event-Auto-Updated-Playlist/main/willow.json',
-      format: 'capitalMatches',
+      matchesKey: 'Matches',
     },
     {
-      name: 'primesport',
+      name: 'prime',
       url: 'https://raw.githubusercontent.com/sportlive18/Willow-Cricbuzz-Prime-Video-Sport-Live-Event-Auto-Updated-Playlist/main/primesport.json',
-      format: 'capitalMatches',
-    },
-    {
-      name: 'sportlink',
-      url: 'https://sportlink-playlist.pages.dev/Combined.m3u',
-      format: 'm3u',
+      matchesKey: 'Matches',
     },
   ];
 
@@ -218,156 +237,9 @@ export default async function handler(req, res) {
   }
 
   // --------------------------------------------------
-  // Sportlink M3U parser
-  // Keep HLS (.m3u8) entries only. DASH/DRM (.mpd) entries
-  // from the combined playlist are intentionally not returned.
-  // --------------------------------------------------
-  const sportlinkCache = {
-    fetchedAt: 0,
-    entries: [],
-    error: null,
-  };
-
-  function parseM3uAttributeList(attributeText) {
-    const attrs = {};
-    const regex = /([\w-]+)="((?:\"|[^"])*)"/g;
-    let match;
-
-    while ((match = regex.exec(attributeText))) {
-      attrs[match[1]] = match[2].replace(/\\"/g, '"');
-    }
-
-    return attrs;
-  }
-
-  function parseSportlinkM3u(text) {
-    const lines = String(text || '').split(/\r?\n/);
-    const entries = [];
-    let pending = null;
-
-    for (const rawLine of lines) {
-      const line = rawLine.trim();
-
-      if (!line) continue;
-
-      if (line.startsWith('#EXTINF:')) {
-        const comma = line.indexOf(',');
-        const meta = comma >= 0
-          ? line.slice(0, comma)
-          : line;
-        const title = comma >= 0
-          ? line.slice(comma + 1).trim()
-          : 'Sportlink Live Event';
-        const attributes = parseM3uAttributeList(meta);
-
-        pending = {
-          title: title || attributes['tvg-name'] || 'Sportlink Live Event',
-          tvg_id: attributes['tvg-id'] || null,
-          tvg_name: attributes['tvg-name'] || null,
-          tvg_logo: attributes['tvg-logo'] || null,
-          tvg_language: attributes['tvg-language'] || null,
-          group_title: attributes['group-title'] || 'Sportlink',
-        };
-        continue;
-      }
-
-      if (!pending || line.startsWith('#')) continue;
-
-      // M3U entries may append player directives after a pipe, for example
-      // `|User-Agent=...&Referer=...`. Keep only the actual media URL for
-      // browser/API consumers; do not expose DASH DRM properties.
-      const mediaUrl = line.split('|', 1)[0].trim();
-
-      if (/\.m3u8(?:[?#]|$)/i.test(mediaUrl)) {
-        entries.push({
-          ...pending,
-          stream_url: mediaUrl,
-          source: 'sportlink',
-          category: pending.group_title || 'Sports',
-          status: 'LIVE',
-          playable: true,
-        });
-      }
-
-      pending = null;
-    }
-
-    return entries;
-  }
-
-  async function fetchSportlinkM3u(source) {
-    const now = Date.now();
-
-    if (now - sportlinkCache.fetchedAt < 45_000) {
-      return {
-        name: source.name,
-        format: source.format,
-        available: sportlinkCache.entries.length > 0,
-        error: sportlinkCache.error,
-        data: sportlinkCache.entries,
-      };
-    }
-
-    try {
-      const response = await fetch(`${source.url}?t=${now}`, {
-        headers: {
-          Accept: 'audio/x-mpegurl, application/vnd.apple.mpegurl, text/plain, */*',
-        },
-      });
-
-      if (!response.ok) {
-        sportlinkCache.fetchedAt = now;
-        sportlinkCache.entries = [];
-        sportlinkCache.error = `HTTP ${response.status}`;
-
-        return {
-          name: source.name,
-          format: source.format,
-          available: false,
-          error: sportlinkCache.error,
-          data: null,
-        };
-      }
-
-      const text = await response.text();
-      const entries = parseSportlinkM3u(text);
-
-      sportlinkCache.fetchedAt = now;
-      sportlinkCache.entries = entries;
-      sportlinkCache.error = entries.length > 0
-        ? null
-        : 'No HLS .m3u8 entries found in playlist';
-
-      return {
-        name: source.name,
-        format: source.format,
-        available: entries.length > 0,
-        error: sportlinkCache.error,
-        data: entries,
-      };
-    } catch (error) {
-      console.error('sportlink fetch error:', error);
-      sportlinkCache.fetchedAt = now;
-      sportlinkCache.entries = [];
-      sportlinkCache.error = 'Network error';
-
-      return {
-        name: source.name,
-        format: source.format,
-        available: false,
-        error: sportlinkCache.error,
-        data: null,
-      };
-    }
-  }
-
-  // --------------------------------------------------
   // Fetch source
   // --------------------------------------------------
   async function fetchSource(source) {
-    if (source.format === 'm3u') {
-      return fetchSportlinkM3u(source);
-    }
     try {
       const response = await fetch(
         `${source.url}?t=${Date.now()}`,
@@ -381,7 +253,6 @@ export default async function handler(req, res) {
       if (!response.ok) {
         return {
           name: source.name,
-          format: source.format,
           available: false,
           error: `HTTP ${response.status}`,
           data: null,
@@ -396,7 +267,6 @@ export default async function handler(req, res) {
 
         return {
           name: source.name,
-          format: source.format,
           available: true,
           error: null,
           data,
@@ -411,7 +281,6 @@ export default async function handler(req, res) {
           if (recoveredMatches.length > 0) {
             return {
               name: source.name,
-              format: source.format,
               available: true,
               error: 'Upstream JSON truncated; recovered complete records',
               data: {
@@ -423,7 +292,6 @@ export default async function handler(req, res) {
 
         return {
           name: source.name,
-          format: source.format,
           available: false,
           error: 'Invalid JSON from upstream source',
           data: null,
@@ -437,7 +305,6 @@ export default async function handler(req, res) {
 
       return {
         name: source.name,
-        format: source.format,
         available: false,
         error: 'Network error',
         data: null,
@@ -455,24 +322,17 @@ export default async function handler(req, res) {
     // --------------------------------------------------
     // PROCESS SOURCES
     // --------------------------------------------------
-    // Willow/Prime entries are official-event metadata only.
-    // Protected DASH URLs and DRM keys are never returned.
     for (const result of results) {
       if (!result?.data) continue;
 
-      // Support the actual source shapes without modifying upstream data.
-      // Some feeds use `Matches`, others use `matches`, and a few may expose
-      // the records directly as a top-level array.
-      const items =
-        Array.isArray(result.data)
-          ? result.data
-          : Array.isArray(result.data.Matches)
+      const rawItems =
+        Array.isArray(result.data?.matches)
+          ? result.data.matches
+          : Array.isArray(result.data?.Matches)
             ? result.data.Matches
-            : Array.isArray(result.data.matches)
-              ? result.data.matches
-              : Array.isArray(result.data.events)
-                ? result.data.events
-                : [];
+            : [];
+
+      const items = rawItems;
 
       // ==================================================
       // FANCODE
@@ -542,122 +402,6 @@ export default async function handler(req, res) {
 
             start_time:
               item.startTime ||
-              null,
-          });
-        }
-      }
-
-      // ==================================================
-      // WILLOW
-      // ==================================================
-      if (result.name === 'willow') {
-        for (const item of items) {
-          const isLive =
-            String(item.status || '').toUpperCase() === 'LIVE' ||
-            item.isLive === true;
-
-          if (!isLive) continue;
-
-          const officialUrl =
-            typeof item.match_url === 'string'
-              ? item.match_url.trim()
-              : '';
-
-          if (!officialUrl) continue;
-
-          matches.push({
-            title: String(
-              item.title ||
-              item.synopsis ||
-              'Willow Live Event'
-            ).trim(),
-
-            stream_url: null,
-            official_url: officialUrl,
-            playable: false,
-
-            src_image:
-              typeof item.cover_image === 'string'
-                ? item.cover_image
-                : null,
-
-            source: 'willow',
-            category: 'Cricket',
-            status: 'LIVE',
-
-            event_name:
-              item.title ||
-              null,
-
-            match_name:
-              item.synopsis ||
-              item.title ||
-              null,
-
-            match_id:
-              item.match_id ||
-              null,
-
-            start_time:
-              item.time ||
-              null,
-          });
-        }
-      }
-
-      // ==================================================
-      // PRIME VIDEO
-      // ==================================================
-      if (result.name === 'primesport') {
-        for (const item of items) {
-          const isLive =
-            String(item.status || '').toUpperCase() === 'LIVE' ||
-            item.isLive === true;
-
-          if (!isLive) continue;
-
-          const officialUrl =
-            typeof item.match_url === 'string'
-              ? item.match_url.trim()
-              : '';
-
-          if (!officialUrl) continue;
-
-          matches.push({
-            title: String(
-              item.title ||
-              item.synopsis ||
-              'Prime Video Live Event'
-            ).trim(),
-
-            stream_url: null,
-            official_url: officialUrl,
-            playable: false,
-
-            src_image:
-              typeof item.cover_image === 'string'
-                ? item.cover_image
-                : null,
-
-            source: 'primesport',
-            category: 'Sports',
-            status: 'LIVE',
-
-            event_name:
-              item.title ||
-              null,
-
-            match_name:
-              item.synopsis ||
-              item.title ||
-              null,
-
-            match_id:
-              item.match_id ||
-              null,
-
-            start_time:
-              item.time ||
               null,
           });
         }
@@ -787,46 +531,71 @@ export default async function handler(req, res) {
       }
 
       // ==================================================
-      // SPORTLINK COMBINED M3U
-      // Only HLS (.m3u8) records are exposed. The uploaded
-      // Combined.m3u contains DASH/DRM .mpd records as well;
-      // those are deliberately excluded from this API.
+      // WILLOW / PRIME VIDEO
+      // Only live metadata + official event URL is exposed.
+      // Protected DASH URLs and DRM keys are intentionally
+      // not returned by this API.
       // ==================================================
-      if (result.name === 'sportlink') {
+      if (
+        result.name === 'willow' ||
+        result.name === 'prime'
+      ) {
         for (const item of items) {
-          if (!item?.stream_url) continue;
+          const isLive =
+            String(item?.status || '')
+              .toUpperCase() === 'LIVE';
+
+          if (!isLive) continue;
+
+          const officialUrl =
+            typeof item?.match_url === 'string'
+              ? item.match_url.trim()
+              : '';
+
+          if (!officialUrl) continue;
+
+          const source =
+            result.name === 'willow'
+              ? 'willow'
+              : 'prime';
 
           const title = String(
-            item.title ||
-            item.tvg_name ||
-            'Sportlink Live Event'
-          ).trim();
-
-          const groupTitle = String(
-            item.group_title ||
-            'Sportlink'
+            item?.title ||
+            item?.synopsis ||
+            (source === 'willow'
+              ? 'Willow Live Event'
+              : 'Prime Video Live Event')
           ).trim();
 
           matches.push({
             title,
-            stream_url: item.stream_url,
+            stream_url: null,
+            official_url: officialUrl,
             src_image:
-              typeof item.tvg_logo === 'string'
-                ? item.tvg_logo
+              typeof item?.cover_image === 'string'
+                ? item.cover_image
                 : null,
-            source: 'sportlink',
-            source_group: groupTitle,
-            category: groupTitle,
+            source,
+            category:
+              source === 'willow'
+                ? 'Cricket'
+                : 'Sports',
             status: 'LIVE',
-            event_name: title,
-            match_name: title,
-            match_id:
-              item.tvg_id ||
-              `${groupTitle}|${item.stream_url}`,
-            language:
-              item.tvg_language ||
+            event_name:
+              item?.title ||
+              item?.synopsis ||
               null,
-            playable: true,
+            match_name:
+              item?.title ||
+              item?.synopsis ||
+              null,
+            match_id:
+              item?.match_id ||
+              null,
+            start_time:
+              item?.time ||
+              null,
+            playable: false,
           });
         }
       }
@@ -839,16 +608,16 @@ export default async function handler(req, res) {
     const uniqueMatches = [];
 
     for (const match of matches) {
-      const streamKey =
-        typeof match.stream_url === 'string'
-          ? match.stream_url.split('|', 1)[0].trim()
-          : '';
-
-      const key = streamKey
-        ? `${match.source}|url|${streamKey}`
-        : match.source === 'sonyliv'
-          ? `sonyliv|${match.content_id || match.title}`
-          : `${match.source}|${match.match_id || match.title}`;
+      const key =
+        match.source === 'sonyliv'
+          ? `sonyliv|${
+              match.content_id ||
+              match.title
+            }`
+          : `${match.source}|${
+              match.match_id ||
+              match.title
+            }`;
 
       if (seen.has(key)) continue;
 
@@ -863,19 +632,22 @@ export default async function handler(req, res) {
       fancode: 0,
       sonyliv: 1,
       willow: 2,
-      primesport: 3,
-      sportlink: 4,
+      prime: 3,
     };
 
     uniqueMatches.sort((a, b) => {
-      if (a.source !== b.source) {
-        return (
-          (sourceOrder[a.source] ?? 99) -
-          (sourceOrder[b.source] ?? 99)
-        );
+      const aOrder =
+        sourceOrder[a.source] ?? 99;
+      const bOrder =
+        sourceOrder[b.source] ?? 99;
+
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder;
       }
 
-      return a.title.localeCompare(b.title);
+      return a.title.localeCompare(
+        b.title
+      );
     });
 
     // --------------------------------------------------
@@ -929,33 +701,16 @@ export default async function handler(req, res) {
             )?.error || null,
         },
 
-        primesport: {
+        prime: {
           available:
             results.find(
-              r => r?.name === 'primesport'
+              r => r?.name === 'prime'
             )?.available || false,
 
           error:
             results.find(
-              r => r?.name === 'primesport'
+              r => r?.name === 'prime'
             )?.error || null,
-        },
-
-        sportlink: {
-          available:
-            results.find(
-              r => r?.name === 'sportlink'
-            )?.available || false,
-
-          error:
-            results.find(
-              r => r?.name === 'sportlink'
-            )?.error || null,
-
-          count:
-            uniqueMatches.filter(
-              match => match.source === 'sportlink'
-            ).length,
         },
       },
 
@@ -974,8 +729,13 @@ export default async function handler(req, res) {
 
     res.status(500).json({
       status: 'error',
+      code: 'STREAM_SERVER_ERROR',
+      reason:
+        error?.message ||
+        'Unable to load stream data.',
       message:
-        'Unable to load stream data',
+        'Unable to load stream data.',
     });
   }
-            }
+
+}
