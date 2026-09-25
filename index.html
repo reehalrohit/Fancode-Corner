@@ -280,76 +280,6 @@
             box-shadow: 0 7px 18px rgba(47,111,237,.22);
         }
 
-        .source-select {
-            margin-top: 8px;
-            padding: 9px 8px 8px;
-            border-top: 1px solid rgba(255,255,255,.06);
-        }
-
-        .source-select-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            margin: 0 3px 7px;
-            font-size: .7rem;
-            font-weight: 850;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-            color: var(--muted);
-        }
-
-        #source-summary {
-            color: #a9c7ff;
-            letter-spacing: 0;
-            text-transform: none;
-        }
-
-        .source-bar {
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            scrollbar-width: none;
-        }
-        .source-bar::-webkit-scrollbar { display: none; }
-
-        .source-btn,
-        .source-action {
-            border: 1px solid rgba(255,255,255,.08);
-            border-radius: 10px;
-            padding: 8px 11px;
-            background: rgba(255,255,255,.025);
-            color: var(--muted);
-            font-size: .72rem;
-            font-weight: 850;
-            white-space: nowrap;
-            cursor: pointer;
-            transition: .18s ease;
-        }
-
-        .source-btn.active {
-            color: #fff;
-            border-color: rgba(77,141,255,.42);
-            background: rgba(47,111,237,.16);
-            box-shadow: 0 5px 14px rgba(47,111,237,.12);
-        }
-
-        .source-btn:hover,
-        .source-action:hover {
-            border-color: rgba(77,141,255,.32);
-        }
-
-        .source-actions {
-            display: flex;
-            gap: 6px;
-            margin-top: 7px;
-        }
-
-        .source-action {
-            padding: 6px 9px;
-            font-size: .66rem;
-        }
-
         #status {
             margin: 12px 0 14px;
             text-align: center;
@@ -553,12 +483,6 @@
             border-color: rgba(77,141,255,.25);
         }
 
-        .btn-official {
-            color: #fff7ed;
-            background: linear-gradient(135deg, #f97316, #ea580c);
-            box-shadow: 0 8px 20px rgba(249,115,22,.12);
-        }
-
         .empty-state {
             padding: 22px 16px;
             text-align: center;
@@ -637,6 +561,85 @@
         }
 
         #toast.show { transform: translate(-50%, 0); }
+
+
+        #app-gate {
+            position: fixed;
+            inset: 0;
+            z-index: 20000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: rgba(3,7,15,.94);
+            backdrop-filter: blur(12px);
+        }
+
+        #app-gate.show { display: flex; }
+
+        .app-gate-card {
+            width: min(410px, 100%);
+            padding: 30px 24px 26px;
+            border-radius: 24px;
+            text-align: center;
+            background: linear-gradient(145deg, #152037, #0b1220);
+            border: 1px solid rgba(77,141,255,.24);
+            box-shadow: 0 28px 70px rgba(0,0,0,.65);
+        }
+
+        .app-gate-icon {
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 14px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #45a3ff, #7c3aed);
+            color: #fff;
+            font-size: 27px;
+        }
+
+        .app-gate-card h2 {
+            margin: 0 0 8px;
+            color: #fff;
+            font-size: 1.2rem;
+        }
+
+        .app-gate-card p {
+            margin: 0;
+            color: #aebbd0;
+            line-height: 1.5;
+            font-size: .88rem;
+        }
+
+        .app-download-link {
+            display: block;
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #2d8cff, #635bff);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            line-height: 1.35;
+            box-shadow: 0 8px 24px rgba(45,140,255,.2);
+        }
+
+        .app-download-link:active {
+            transform: translateY(1px);
+        }
+
+        .app-gate-code {
+            margin-top: 16px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,255,255,.08);
+            color: #dbeafe;
+            font-size: .74rem;
+            word-break: break-word;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
 
         #mz-overlay {
             position: fixed;
@@ -755,7 +758,103 @@
         @media (min-width: 900px) {
             .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
-    </style>
+    
+
+/* Fluid Player modal */
+.fluid-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: rgba(0,0,0,.88);
+  backdrop-filter: blur(8px);
+}
+.fluid-modal.open { display: flex; }
+.fluid-player-shell {
+  width: min(1100px, 100%);
+  max-height: 94vh;
+  background: #050505;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,.55);
+}
+.fluid-player-head {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  color: #fff;
+  background: #090909;
+}
+.fluid-player-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fluid-live-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #dc2626;
+}
+.fluid-close {
+  border: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}
+.fluid-video-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+#fluid-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.fluid-player-status {
+  padding: 9px 12px 11px;
+  color: rgba(255,255,255,.68);
+  background: #090909;
+  font-size: 12px;
+}
+.fluid-player-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 12px 12px;
+  background: #090909;
+}
+.fluid-player-actions button {
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 9px;
+  padding: 8px 12px;
+  color: #fff;
+  background: rgba(255,255,255,.06);
+  cursor: pointer;
+}
+@media (max-width: 640px) {
+  .fluid-modal { padding: 0; }
+  .fluid-player-shell { border-radius: 0; width: 100%; max-height: 100vh; }
+  .fluid-player-head { min-height: 46px; }
+}
+</style>
 
 <style id="modzone-footer-styles">
 .mz-support {
@@ -818,6 +917,10 @@
 </style>
 
     <meta name="referrer" content="no-referrer-when-downgrade">
+
+    <!-- Fluid Player -->
+    <link rel="stylesheet" href="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.css">
+    <script src="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.js"></script>
 </head>
 <body>
 
@@ -833,6 +936,36 @@
 </div>
 
 <div id="toast">✅ Stream link copied!</div>
+
+<div id="app-gate" role="dialog" aria-modal="true" aria-labelledby="app-gate-title">
+    <div class="app-gate-card">
+        <div class="app-gate-icon">📱</div>
+        <h2 id="app-gate-title">Sports Corner App Required</h2>
+        <p>Download original app from the link below:</p>
+        <a class="app-download-link" href="https://appteka.store/app/640r323808" target="_blank" rel="noopener noreferrer">
+          📲 FANCODE &amp; SONYLIV LIVE EVENTS (12.7 MB)
+        </a>
+        <div class="app-gate-code">Open the downloaded app to continue.</div>
+    </div>
+</div>
+
+
+<div id="fluid-modal" class="fluid-modal" role="dialog" aria-modal="true" aria-label="Live stream player">
+  <div class="fluid-player-shell">
+    <div class="fluid-player-head">
+      <span class="fluid-live-badge">LIVE</span>
+      <div id="fluid-player-title" class="fluid-player-title">Live Sports</div>
+      <button id="fluid-close" class="fluid-close" type="button" aria-label="Close player">×</button>
+    </div>
+    <div class="fluid-video-wrap">
+      <video id="fluid-video" playsinline controls></video>
+    </div>
+    <div id="fluid-player-status" class="fluid-player-status">Preparing stream…</div>
+    <div class="fluid-player-actions">
+      <button id="fluid-external" type="button">Open in NS Player</button>
+    </div>
+  </div>
+</div>
 
 <div id="mz-overlay">
     <div class="mz-modal">
@@ -870,7 +1003,7 @@
     <section class="hero">
         <div class="hero-kicker">Live Now</div>
         <h1>Sports, right when they’re live.</h1>
-        <p class="hero-copy">Live events from FanCode, SonyLIV, Willow, Prime Video and Sportlink Combined in a cleaner, faster mobile experience.</p>
+        <p class="hero-copy">Live events from FanCode, SonyLIV, Willow and Prime Video in a cleaner, faster mobile experience.</p>
         <div class="hero-stats">
             <span class="stat">● Live events only</span>
             <span class="stat">⚡ Quick access</span>
@@ -880,7 +1013,7 @@
 
     <div class="alert-banner">
         <span>💡</span>
-        <span><strong>Watch tip:</strong> FanCode and SonyLIV entries open in NS Player when a playable stream URL is available. Willow and Prime Video entries open their official event page.</span>
+        <span><strong>Watch tip:</strong> Tap <strong>Watch Here</strong> to use the built-in Fluid Player, or <strong>Open App</strong> for NS Player. Use <strong>Open Official</strong> for events without a browser-playable stream. <a href="https://play.google.com/store/apps/details?id=com.genuine.leone" target="_blank" rel="noopener noreferrer">View app</a></span>
     </div>
 
     <div class="filter-wrap">
@@ -890,25 +1023,6 @@
             <button class="filter-btn" onclick="applyFilter('Football', this)">⚽ Football</button>
             <button class="filter-btn" onclick="applyFilter('Racing', this)">🏎️ Racing</button>
             <button class="filter-btn" onclick="applyFilter('Other', this)">🎯 Other</button>
-        </div>
-
-        <div class="source-select">
-            <div class="source-select-head">
-                <span>Sources</span>
-                <span id="source-summary">All sources</span>
-            </div>
-            <div class="source-bar" id="source-bar">
-                <button class="source-btn active" data-source="all" onclick="selectAllSources()">All Sources</button>
-                <button class="source-btn active" data-source="fancode" onclick="toggleSource('fancode')">FanCode</button>
-                <button class="source-btn active" data-source="sonyliv" onclick="toggleSource('sonyliv')">SonyLIV</button>
-                <button class="source-btn active" data-source="willow" onclick="toggleSource('willow')">Willow</button>
-                <button class="source-btn active" data-source="primesport" onclick="toggleSource('primesport')">Prime Video</button>
-                <button class="source-btn active" data-source="sportlink" onclick="toggleSource('sportlink')">Sportlink Combined</button>
-            </div>
-            <div class="source-actions">
-                <button class="source-action" type="button" onclick="selectAllSources()">✓ Select All</button>
-                <button class="source-action" type="button" onclick="clearAllSources()">Clear All</button>
-            </div>
         </div>
     </div>
 
@@ -932,7 +1046,6 @@
         <div class="grid" id="sonyliv-grid"></div>
     </section>
 
-    <!-- Official-event-only sources. Protected stream data is not exposed. -->
     <section id="willow-section" class="section">
         <div class="section-head">
             <div class="section-title">🏏 Willow Live</div>
@@ -942,22 +1055,13 @@
         <div class="grid" id="willow-grid"></div>
     </section>
 
-    <section id="primesport-section" class="section">
+    <section id="prime-section" class="section">
         <div class="section-head">
-            <div class="section-title">▶️ Prime Video Live</div>
+            <div class="section-title">🎬 Prime Video Live</div>
             <div class="section-line"></div>
-            <div class="section-count" id="primesport-count">0 events</div>
+            <div class="section-count" id="prime-count">0 events</div>
         </div>
-        <div class="grid" id="primesport-grid"></div>
-    </section>
-
-    <section id="sportlink-section" class="section">
-        <div class="section-head">
-            <div class="section-title">🔗 Sportlink Combined</div>
-            <div class="section-line"></div>
-            <div class="section-count" id="sportlink-count">0 events</div>
-        </div>
-        <div class="grid" id="sportlink-grid"></div>
+        <div class="grid" id="prime-grid"></div>
     </section>
 
     <!-- MODZONE-BOTTOM -->
@@ -979,38 +1083,83 @@
         let activeCategory = 'All';
         const DAILY_PASSCODE = "@modzone01 Telegram Channel";
 
-        const SOURCE_KEYS = [
-            'fancode',
-            'sonyliv',
-            'willow',
-            'primesport',
-            'sportlink'
-        ];
 
-        const SOURCE_LABELS = {
-            fancode: 'FanCode',
-            sonyliv: 'SonyLIV',
-            willow: 'Willow',
-            primesport: 'Prime Video',
-            sportlink: 'Sportlink Combined'
-        };
+        // App-only client signature configured in WebToApk.
+        // The server also checks this token before returning live events.
+        const APP_UA_TOKEN = 'K/4D8P7X2N9LQ';
+        let appClientApproved = false;
 
-        let activeSources = (() => {
+        function hasExpectedAppUA() {
+            return String(navigator.userAgent || '').includes(APP_UA_TOKEN);
+        }
+
+        function showAppGate(message = 'Download original app from the link below:') {
+            const gate = document.getElementById('app-gate');
+            const paragraph = gate?.querySelector('p');
+            if (paragraph) paragraph.textContent = message;
+
+            document.getElementById('mz-overlay').style.display = 'none';
+            document.getElementById('main-content').style.display = 'none';
+            gate?.classList.add('show');
+        }
+
+        function hideAppGate() {
+            document.getElementById('app-gate')?.classList.remove('show');
+        }
+
+        async function verifyAppClient() {
+            if (!hasExpectedAppUA()) {
+                showAppGate();
+                return false;
+            }
+
             try {
-                const saved = JSON.parse(
-                    localStorage.getItem('sportsCornerSources') || 'null'
-                );
+                const response = await fetch('/api/client-check', {
+                    method: 'GET',
+                    cache: 'no-store',
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' }
+                });
 
-                if (
-                    Array.isArray(saved) &&
-                    saved.every(source => SOURCE_KEYS.includes(source))
-                ) {
-                    return new Set(saved);
+                let result = {};
+                try {
+                    result = await response.json();
+                } catch {
+                    result = {};
                 }
-            } catch {}
 
-            return new Set(SOURCE_KEYS);
-        })();
+                if (!response.ok || result.allowed !== true) {
+                    const code = String(result.code || `APP_CLIENT_HTTP_${response.status}`);
+                    const message = String(
+                        result.message ||
+                        result.reason ||
+                        'This client is not authorized for Sports Corner.'
+                    );
+                    showAppGate(`${code}: ${message}`);
+                    return false;
+                }
+
+                appClientApproved = true;
+                hideAppGate();
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'UNLOCK SITE';
+                return true;
+            } catch (error) {
+                console.error('App client verification failed:', error);
+                showAppGate(
+                    `APP_CLIENT_NETWORK_ERROR: ${
+                        error?.message ||
+                        'The app verification service could not be reached.'
+                    }`
+                );
+                return false;
+            }
+        }
+
+        // Fluid Player advertising configuration.
+        // Leave empty until you have a VAST/VPAID tag from your ad provider.
+        const FLUID_AD_VAST_TAG = '';
+        const FLUID_AD_MIDROLL_SECONDS = 0;
 
         const submitBtn = document.getElementById('mz-submit-btn');
         const passInput = document.getElementById('mz-pass-input');
@@ -1022,9 +1171,44 @@
             if (e.key === 'Enter') verifyPasscode();
         });
         refreshBtn.addEventListener('click', () => fetchStreams(true));
-        updateSourceControls();
+
+        function makeAccessError(code, message, status = null) {
+            const error = new Error(message);
+            error.code = code;
+            error.status = status;
+            return error;
+        }
+
+        function formatAccessFailure(result, response) {
+            const code = String(
+                result?.code ||
+                (response?.status === 403 ? 'ACCESS_DENIED' : '') ||
+                (response?.status >= 500 ? 'SERVER_ERROR' : '') ||
+                'ACCESS_VERIFICATION_FAILED'
+            );
+
+            const reason = String(
+                result?.reason ||
+                result?.message ||
+                `Access verification failed (HTTP ${response?.status || 'unknown'}).`
+            );
+
+            return {
+                code,
+                message: reason
+            };
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'CHECKING APP...';
+        verifyAppClient();
 
         async function verifyPasscode() {
+    if (!appClientApproved) {
+        showAppGate();
+        return;
+    }
+
     const passcode = passInput.value.trim();
 
     errorMsg.style.display = 'none';
@@ -1078,6 +1262,38 @@
             );
         }
 
+        // Practical DNS/content-filtering check. Browsers cannot directly read the
+        // Android DNS server, so this verifies reachability of multiple required
+        // network endpoints while confirming same-origin connectivity.
+        const dnsCheck = await checkDnsFiltering();
+
+        if (!dnsCheck.ok) {
+            if (dnsCheck.code === 'NETWORK_TIMEOUT') {
+                throw makeAccessError(
+                    'NETWORK_TIMEOUT',
+                    'Site network probe timed out before server verification could begin.'
+                );
+            }
+
+            if (dnsCheck.code === 'NETWORK_UNAVAILABLE') {
+                throw makeAccessError(
+                    'NETWORK_UNAVAILABLE',
+                    'Site network probe could not be reached. Check your internet connection or network filtering.'
+                );
+            }
+
+            const failedDomains = Array.isArray(dnsCheck.blockedDomains)
+                ? dnsCheck.blockedDomains.join(', ')
+                : '';
+
+            throw makeAccessError(
+                'DNS_BLOCKED',
+                failedDomains
+                    ? `Network filtering blocked ${dnsCheck.blockedCount} required probe(s): ${failedDomains}`
+                    : `Network filtering blocked ${dnsCheck.blockedCount} required network probe(s).`
+            );
+        }
+
         // Server-side access verification
         const response = await fetch(
             '/api/access-check',
@@ -1100,9 +1316,11 @@
             !response.ok ||
             result.allowed !== true
         ) {
-            throw new Error(
-                result.reason ||
-                'Access verification failed.'
+            const failure = formatAccessFailure(result, response);
+            throw makeAccessError(
+                failure.code,
+                failure.message,
+                response.status
             );
         }
 
@@ -1119,12 +1337,17 @@
 
     } catch (error) {
 
-        errorMsg.textContent =
-            '🚫 ' +
-            (
-                error?.message ||
-                'Access verification failed.'
-            );
+        const code = String(error?.code || 'ACCESS_VERIFICATION_FAILED');
+        const message = String(
+            error?.message ||
+            'Access verification failed.'
+        );
+
+        errorMsg.innerHTML =
+            '🚫 <strong>' +
+            escapeHtml(code) +
+            '</strong><br>' +
+            escapeHtml(message);
 
         errorMsg.style.display = 'block';
 
@@ -1135,168 +1358,374 @@
     }
         }
 
-        function persistSourceSelection() {
-            try {
-                localStorage.setItem(
-                    'sportsCornerSources',
-                    JSON.stringify([...activeSources])
-                );
-            } catch {}
-        }
 
-        function updateSourceControls() {
-            const allSelected =
-                SOURCE_KEYS.length > 0 &&
-                SOURCE_KEYS.every(source => activeSources.has(source));
+        async function checkDnsFiltering() {
+            const timeoutMs = 3000;
+            const probes = [
+                { label: 'doubleclick.net', url: 'https://doubleclick.net/favicon.ico' },
+                { label: 'googleads.g.doubleclick.net', url: 'https://googleads.g.doubleclick.net/favicon.ico' },
+                { label: 'pagead2.googlesyndication.com', url: 'https://pagead2.googlesyndication.com/favicon.ico' },
+                { label: 'adservice.google.com', url: 'https://adservice.google.com/favicon.ico' },
+                { label: 'ads.yahoo.com', url: 'https://ads.yahoo.com/favicon.ico' },
+                { label: 'ib.adnxs.com', url: 'https://ib.adnxs.com/favicon.ico' },
+                { label: 'pixel.rubiconproject.com', url: 'https://pixel.rubiconproject.com/favicon.ico' },
+                { label: 'trc.taboola.com', url: 'https://trc.taboola.com/favicon.ico' }
+            ];
 
-            document.querySelectorAll('.source-btn').forEach(btn => {
-                const source = btn.dataset.source;
-                const active =
-                    source === 'all'
-                        ? allSelected
-                        : activeSources.has(source);
+            const withTimeout = async (url, options = {}) => {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-                btn.classList.toggle('active', active);
-                btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-            });
+                try {
+                    await fetch(url, {
+                        ...options,
+                        cache: 'no-store',
+                        signal: controller.signal
+                    });
 
-            const summary = document.getElementById('source-summary');
-            if (summary) {
-                summary.textContent = allSelected
-                    ? 'All sources'
-                    : `${activeSources.size} selected`;
-            }
-        }
+                    return {
+                        ok: true,
+                        timeout: false
+                    };
+                } catch (error) {
+                    return {
+                        ok: false,
+                        timeout: error?.name === 'AbortError'
+                    };
+                } finally {
+                    clearTimeout(timer);
+                }
+            };
 
-        function selectAllSources() {
-            activeSources = new Set(SOURCE_KEYS);
-            persistSourceSelection();
-            updateSourceControls();
-            renderCurrentView();
-        }
-
-        function clearAllSources() {
-            activeSources = new Set();
-            persistSourceSelection();
-            updateSourceControls();
-            renderCurrentView();
-        }
-
-        function toggleSource(source) {
-            if (!SOURCE_KEYS.includes(source)) return;
-
-            if (activeSources.has(source)) {
-                activeSources.delete(source);
-            } else {
-                activeSources.add(source);
-            }
-
-            persistSourceSelection();
-            updateSourceControls();
-            renderCurrentView();
-        }
-
-        function renderCurrentView() {
-            let filtered = globalMatches.filter(match =>
-                activeSources.has(match.source)
+            const networkProbe = await withTimeout(
+                `/?mz_network_probe=${Date.now()}`,
+                {
+                    method: 'HEAD',
+                    credentials: 'same-origin'
+                }
             );
 
-            if (activeCategory !== 'All') {
-                filtered = filtered.filter(match => {
-                    const haystack = [
-                        match.title,
-                        match.category,
-                        match.source_group,
-                        match.event_name,
-                        match.match_name
-                    ]
-                        .filter(Boolean)
-                        .join(' ')
-                        .toLowerCase();
+            if (!networkProbe.ok) {
+                return {
+                    ok: false,
+                    code: networkProbe.timeout
+                        ? 'NETWORK_TIMEOUT'
+                        : 'NETWORK_UNAVAILABLE',
+                    blockedCount: 0,
+                    blockedDomains: []
+                };
+            }
 
-                    const isCricket = /(t20|odi|test|tour|trophy|blast|league|kcc|tnpl|ipl|bbl|cricket|hockey)/i.test(haystack);
-                    const isFootball = /(efl|championship|fc|united|city|premier|liga|soccer|football|copa)/i.test(haystack);
-                    const isRacing = /(grand prix|f1|formula|racing|motogp|nascar)/i.test(haystack);
+            const results = await Promise.all(
+                probes.map((probe) =>
+                    withTimeout(
+                        probe.url,
+                        { mode: 'no-cors' }
+                    )
+                )
+            );
 
-                    if (activeCategory === 'Cricket') return isCricket;
-                    if (activeCategory === 'Football') return isFootball;
-                    if (activeCategory === 'Racing') return isRacing;
-                    if (activeCategory === 'Other') return !isCricket && !isFootball && !isRacing;
-                    return true;
+            const failedProbes = results
+                .map((result, index) => ({
+                    result,
+                    probe: probes[index]
+                }))
+                .filter(item => !item.result.ok);
+
+            const blockedDomains = failedProbes
+                .map(item => item.probe.label);
+
+            const blockedCount = failedProbes.length;
+
+            return {
+                ok: blockedCount < 2,
+                code: blockedCount >= 2
+                    ? 'DNS_BLOCKED'
+                    : 'DNS_OK',
+                blockedCount,
+                blockedDomains
+            };
+        }
+
+        let fluidPlayerInstance = null;
+        let activePlayerStream = '';
+
+        function isHlsStream(url) {
+            return /\.m3u8(?:$|[?#])/i.test(url);
+        }
+
+        function isDashStream(url) {
+            return /\.mpd(?:$|[?#])/i.test(url);
+        }
+
+        function buildFluidAdList() {
+            if (!FLUID_AD_VAST_TAG) return [];
+
+            const ads = [{
+                roll: 'preRoll',
+                vastTag: FLUID_AD_VAST_TAG
+            }];
+
+            if (Number(FLUID_AD_MIDROLL_SECONDS) > 0) {
+                ads.push({
+                    roll: 'midRoll',
+                    vastTag: FLUID_AD_VAST_TAG,
+                    timer: Number(FLUID_AD_MIDROLL_SECONDS)
                 });
             }
 
-            document.getElementById('live-count').textContent = `${filtered.length} LIVE`;
-            renderSections(filtered);
+            return ads;
         }
+
+        function closeFluidPlayer() {
+            const modal = document.getElementById('fluid-modal');
+            modal.classList.remove('open');
+
+            if (fluidPlayerInstance) {
+                try {
+                    fluidPlayerInstance.destroy();
+                } catch (e) {
+                    console.debug('Fluid Player destroy:', e);
+                }
+                fluidPlayerInstance = null;
+            }
+
+            const video = document.getElementById('fluid-video');
+            video.pause();
+            video.removeAttribute('src');
+            video.innerHTML = '';
+            activePlayerStream = '';
+        }
+
+        function openInNSPlayer(streamUrl) {
+            if (!streamUrl) return;
+            const cleanUrl = streamUrl.replace(/^https?:\/\//, '');
+            const intentUrl =
+                `intent://${cleanUrl}` +
+                `#Intent;package=com.genuine.leone;` +
+                `action=android.intent.action.VIEW;` +
+                `scheme=https;` +
+                `S.browser_fallback_url=${encodeURIComponent(streamUrl)};end;`;
+            window.location.href = intentUrl;
+        }
+
+        function openFluidPlayer(streamUrl, title) {
+            if (!streamUrl) {
+                showToast('❌ No playable stream available.');
+                return;
+            }
+
+            if (!isHlsStream(streamUrl) && !isDashStream(streamUrl)) {
+                showToast('⚠️ This stream format is not supported by the web player.');
+                return;
+            }
+
+            closeFluidPlayer();
+
+            const modal = document.getElementById('fluid-modal');
+            const video = document.getElementById('fluid-video');
+            const titleEl = document.getElementById('fluid-player-title');
+            const status = document.getElementById('fluid-player-status');
+
+            activePlayerStream = streamUrl;
+            titleEl.textContent = title || 'Live Sports';
+            status.textContent = FLUID_AD_VAST_TAG
+                ? 'Live stream • in-stream advertising enabled'
+                : 'Live stream • advertising tag not configured';
+
+            const source = document.createElement('source');
+            source.src = streamUrl;
+            source.type = isDashStream(streamUrl)
+                ? 'application/dash+xml'
+                : 'application/x-mpegURL';
+            video.appendChild(source);
+
+            modal.classList.add('open');
+
+            try {
+                fluidPlayerInstance = fluidPlayer('fluid-video', {
+                    layoutControls: {
+                        fillToContainer: true,
+                        autoPlay: false,
+                        mute: false,
+                        allowTheatre: true,
+                        playPauseAnimation: true,
+                        playbackRateEnabled: false,
+                        allowDownload: false,
+                        playButtonShowing: true
+                    },
+                    vastOptions: {
+                        adList: buildFluidAdList(),
+                        adCTAText: false
+                    }
+                });
+
+                status.textContent = FLUID_AD_VAST_TAG
+                    ? 'Player ready • VAST advertising enabled'
+                    : 'Player ready';
+            } catch (error) {
+                console.error('Fluid Player initialization failed:', error);
+                status.textContent = 'Unable to initialize web player. Try NS Player.';
+            }
+        }
+
+        document.getElementById('fluid-close').addEventListener('click', closeFluidPlayer);
+        document.getElementById('fluid-external').addEventListener('click', () => {
+            if (activePlayerStream) openInNSPlayer(activePlayerStream);
+        });
+        document.getElementById('fluid-modal').addEventListener('click', (event) => {
+            if (event.target.id === 'fluid-modal') closeFluidPlayer();
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeFluidPlayer();
+        });
 
         async function fetchStreams(manual = false) {
             const status = document.getElementById('status');
             status.style.display = 'block';
-            status.textContent = manual ? 'Refreshing live events…' : 'Fetching live events…';
+            status.textContent = manual
+                ? 'Refreshing live events…'
+                : 'Fetching live events…';
 
             refreshBtn.disabled = true;
             refreshBtn.style.opacity = '0.6';
 
             try {
-                let res = await fetch('/api/streams', {
+                const res = await fetch('/api/streams', {
                     cache: 'no-store',
-                    credentials: 'same-origin'
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
                 });
+
+                // Read the body once as text so we can diagnose both JSON
+                // errors and non-JSON responses from Vercel/proxies.
+                const rawBody = await res.text();
+
                 let json = {};
+                let parsedJson = true;
 
                 try {
-                    json = await res.json();
+                    json = rawBody ? JSON.parse(rawBody) : {};
                 } catch {
+                    parsedJson = false;
                     json = {};
                 }
 
-                // If the short-lived access cookie expired, refresh the
-                // server-side access check once and retry the streams API.
-                if (res.status === 403) {
-                    const gate = await fetch('/api/access-check', {
-                        method: 'GET',
-                        cache: 'no-store',
-                        credentials: 'same-origin'
-                    });
+                if (!res.ok || json.status !== 'success') {
+                    const contentType =
+                        res.headers.get('content-type') || 'unknown';
 
-                    let gateJson = {};
-                    try { gateJson = await gate.json(); } catch {}
+                    let code = String(
+                        json.code ||
+                        (res.status === 403 ? 'STREAM_ACCESS_DENIED' : '') ||
+                        (res.status >= 500 ? `STREAM_HTTP_${res.status}` : '') ||
+                        (res.status >= 400 ? `STREAM_HTTP_${res.status}` : '') ||
+                        'STREAM_API_ERROR'
+                    );
 
-                    if (gate.ok && gateJson.allowed === true) {
-                        res = await fetch('/api/streams', {
-                            cache: 'no-store',
-                            credentials: 'same-origin'
-                        });
-                        try {
-                            json = await res.json();
-                        } catch {
-                            json = {};
+                    let reason = String(
+                        json.reason ||
+                        json.message ||
+                        ''
+                    );
+
+                    const sourceDetails = Object.entries(json.sources || {})
+                        .filter(([, info]) => info && info.available === false && info.error)
+                        .map(([name, info]) => `${name}: ${info.error}`)
+                        .join(' • ');
+
+                    if (sourceDetails) {
+                        reason = reason
+                            ? `${reason} Source status — ${sourceDetails}`
+                            : `Source status — ${sourceDetails}`;
+                    }
+
+                    // When the endpoint returns HTML/plain text instead of JSON,
+                    // surface the HTTP status and a compact response preview.
+                    if (!parsedJson) {
+                        const compactBody = rawBody
+                            .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+                            .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+                            .replace(/<[^>]+>/g, ' ')
+                            .replace(/\s+/g, ' ')
+                            .trim()
+                            .slice(0, 320);
+
+                        code =
+                            res.status >= 500
+                                ? `STREAM_HTTP_${res.status}`
+                                : `STREAM_NON_JSON_${res.status}`;
+
+                        reason =
+                            `The streams API returned HTTP ${res.status}` +
+                            (res.statusText ? ` ${res.statusText}` : '') +
+                            `. Content-Type: ${contentType}.`;
+
+                        if (compactBody) {
+                            reason += ` Server response: ${compactBody}`;
                         }
                     }
+
+                    if (!reason) {
+                        reason =
+                            rawBody
+                                ? rawBody.trim().slice(0, 320)
+                                : `The streams API returned an empty response (HTTP ${res.status}).`;
+                    }
+
+                    throw makeAccessError(
+                        code,
+                        reason,
+                        res.status
+                    );
                 }
 
-                if (!res.ok || json.status !== 'success') {
-                    const reason = json.message || json.reason || `HTTP ${res.status}`;
-                    throw new Error(`Live API: ${reason}`);
-                }
+                globalMatches = Array.isArray(json.matches)
+                    ? json.matches
+                    : [];
 
-                globalMatches = Array.isArray(json.matches) ? json.matches : [];
-                updateSourceControls();
                 renderAll();
+
+                const unavailableSources = Object.entries(json.sources || {})
+                    .filter(([, info]) => info && info.available === false && info.error)
+                    .map(([name, info]) => `${name}: ${info.error}`);
 
                 if (globalMatches.length === 0) {
                     status.style.display = 'block';
-                    status.textContent = 'No live matches found right now.';
+                    status.innerHTML = unavailableSources.length
+                        ? '<strong>NO LIVE EVENTS</strong><br>' +
+                          'Source status: ' +
+                          escapeHtml(unavailableSources.join(' • '))
+                        : 'No live matches found right now.';
+                } else if (unavailableSources.length) {
+                    status.style.display = 'block';
+                    status.innerHTML =
+                        '<strong>LIVE EVENTS LOADED</strong><br>' +
+                        'Some sources are unavailable: ' +
+                        escapeHtml(unavailableSources.join(' • '));
                 } else {
                     status.style.display = 'none';
                 }
             } catch (err) {
-                console.error(err);
+                console.error('Streams API failure:', err);
+
+                const code = String(
+                    err?.code || 'STREAM_LOAD_FAILED'
+                );
+                const message = String(
+                    err?.message ||
+                    'The streams API could not be reached.'
+                );
+
                 status.style.display = 'block';
-                status.textContent = err?.message
-                    ? `${err.message} — tap refresh to try again.`
-                    : 'Failed to load live sports. Tap refresh to try again.';
+                status.innerHTML =
+                    '<strong>' + escapeHtml(code) + '</strong><br>' +
+                    escapeHtml(message) +
+                    '<div style="margin-top:10px;font-size:12px;opacity:.72;">' +
+                    'Endpoint: /api/streams' +
+                    '</div>';
             } finally {
                 refreshBtn.disabled = false;
                 refreshBtn.style.opacity = '';
@@ -1304,29 +1733,45 @@
         }
 
         function renderAll() {
-            updateSourceControls();
-            renderCurrentView();
+            document.getElementById('live-count').textContent = `${globalMatches.length} LIVE`;
+            applyFilter(activeCategory, document.querySelector('.filter-btn.active'));
         }
 
         function applyFilter(category, clickedBtn) {
             activeCategory = category;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             if (clickedBtn) clickedBtn.classList.add('active');
-            renderCurrentView();
+
+            let filtered = globalMatches;
+
+            if (category !== 'All') {
+                filtered = globalMatches.filter(match => {
+                    const title = (match.title || '').toLowerCase();
+                    const isCricket = /(t20|odi|test|tour|trophy|blast|league|kcc|tnpl|ipl|bbl|cricket|hockey)/i.test(title);
+                    const isFootball = /(efl|championship|fc|united|city|premier|liga|soccer|football|copa)/i.test(title);
+                    const isRacing = /(grand prix|f1|formula|racing|motogp|nascar)/i.test(title);
+
+                    if (category === 'Cricket') return isCricket;
+                    if (category === 'Football') return isFootball;
+                    if (category === 'Racing') return isRacing;
+                    if (category === 'Other') return !isCricket && !isFootball && !isRacing;
+                    return true;
+                });
+            }
+
+            renderSections(filtered);
         }
 
         function renderSections(matches) {
             const fancodeMatches = matches.filter(m => m.source === 'fancode');
             const sonylivMatches = matches.filter(m => m.source === 'sonyliv');
             const willowMatches = matches.filter(m => m.source === 'willow');
-            const primeSportMatches = matches.filter(m => m.source === 'primesport');
-            const sportlinkMatches = matches.filter(m => m.source === 'sportlink');
+            const primeMatches = matches.filter(m => m.source === 'prime');
 
             renderGrid('fancode-grid', 'fancode-section', 'fancode-count', fancodeMatches);
             renderGrid('sonyliv-grid', 'sonyliv-section', 'sonyliv-count', sonylivMatches);
             renderGrid('willow-grid', 'willow-section', 'willow-count', willowMatches);
-            renderGrid('primesport-grid', 'primesport-section', 'primesport-count', primeSportMatches);
-            renderGrid('sportlink-grid', 'sportlink-section', 'sportlink-count', sportlinkMatches);
+            renderGrid('prime-grid', 'prime-section', 'prime-count', primeMatches);
         }
 
         function escapeHtml(value) {
@@ -1362,15 +1807,39 @@
                 const title = escapeHtml(match.title || 'Live Sports Event');
                 const imgUrl = escapeHtml(match.src_image || fallbackImg);
                 const streamUrl = String(match.stream_url || '');
-                const source = SOURCE_LABELS[match.source] || 'Live Sports';
-                const sourceBadge =
-                    match.source === 'sportlink' && match.source_group
-                        ? `${source} • ${escapeHtml(match.source_group.replace(/\s*\|\s*Sportlink\s*$/i, ''))}`
-                        : escapeHtml(source);
                 const officialUrl = String(match.official_url || '');
-                const isOfficialOnly = match.playable === false && !!officialUrl;
-                const actionUrl = officialUrl || streamUrl;
 
+                const sourceLabels = {
+                    fancode: 'FanCode',
+                    sonyliv: 'SonyLIV',
+                    willow: 'Willow',
+                    prime: 'Prime Video'
+                };
+
+                const source = sourceLabels[match.source] || escapeHtml(match.source || 'Live');
+
+                const hasPlayableStream =
+                    Boolean(streamUrl);
+
+                const hasOfficialLink =
+                    Boolean(officialUrl);
+
+                const primaryLabel =
+                    hasPlayableStream
+                        ? '▶ Watch Here'
+                        : hasOfficialLink
+                            ? '↗ Open Official'
+                            : 'Unavailable';
+
+                const secondaryLabel =
+                    hasPlayableStream
+                        ? 'Open App'
+                        : '↗';
+
+                const secondaryTitle =
+                    hasPlayableStream
+                        ? 'Open stream in NS Player'
+                        : 'Open official event';
 
                 card.innerHTML = `
                     <div class="card-img-container">
@@ -1378,46 +1847,52 @@
                              onerror="this.onerror=null;this.src='${fallbackImg}'">
                         <div class="image-shade"></div>
                         <div class="live-badge">LIVE</div>
-                        <div class="source-badge">${sourceBadge}</div>
+                        <div class="source-badge">${source}</div>
                     </div>
                     <div class="card-content">
                         <div class="match-meta">Live now</div>
                         <div class="match-title">${title}</div>
                         <div class="button-group">
-                            <button class="btn ${isOfficialOnly ? 'btn-official' : 'btn-primary'}" type="button">${isOfficialOnly ? '↗ Open Official' : '▶ Open in App'}</button>
-                            <button class="btn btn-secondary" type="button" title="${isOfficialOnly ? 'Copy official event link' : 'Copy stream link'}" aria-label="${isOfficialOnly ? 'Copy official event link' : 'Copy stream link'}">⧉</button>
+                            <button class="btn btn-primary" type="button">${primaryLabel}</button>
+                            <button class="btn btn-secondary" type="button" title="${secondaryTitle}" aria-label="${secondaryTitle}">${secondaryLabel}</button>
+                            ${hasPlayableStream ? '<button class="btn btn-secondary" type="button" title="Copy stream link" aria-label="Copy stream link">⧉</button>' : ''}
                         </div>
                     </div>
                 `;
 
                 const buttons = card.querySelectorAll('button');
+
                 buttons[0].addEventListener('click', () => {
-                    if (!actionUrl) {
-                        showToast('❌ No event link available.');
+                    if (hasPlayableStream) {
+                        openFluidPlayer(streamUrl, match.title || 'Live Sports');
                         return;
                     }
 
-                    if (isOfficialOnly) {
-                        window.open(actionUrl, '_blank', 'noopener,noreferrer');
+                    if (hasOfficialLink) {
+                        window.open(officialUrl, '_blank', 'noopener,noreferrer');
                         return;
                     }
 
-                    // Open the stream directly in NS Player on Android.
-                    // Package used by the existing app flow.
-                    const cleanUrl = actionUrl.replace(/^https?:\/\//, '');
-                    const intentUrl =
-                        `intent://${cleanUrl}` +
-                        `#Intent;package=com.genuine.leone;` +
-                        `action=android.intent.action.VIEW;` +
-                        `scheme=https;` +
-                        `S.browser_fallback_url=${encodeURIComponent(actionUrl)};end;`;
-
-                    window.location.href = intentUrl;
+                    showToast('❌ No event link available.');
                 });
 
                 buttons[1].addEventListener('click', () => {
-                    copyToClipboard(actionUrl);
+                    if (hasPlayableStream) {
+                        openInNSPlayer(streamUrl);
+                        return;
+                    }
+
+                    if (hasOfficialLink) {
+                        window.open(officialUrl, '_blank', 'noopener,noreferrer');
+                        return;
+                    }
+
+                    showToast('❌ No event link available.');
                 });
+
+                if (hasPlayableStream && buttons[2]) {
+                    buttons[2].addEventListener('click', () => copyToClipboard(streamUrl));
+                }
 
                 grid.appendChild(card);
             });
@@ -1433,7 +1908,7 @@
 
         function copyToClipboard(text) {
             if (!text) {
-                showToast('❌ No link available.');
+                showToast('❌ No stream link available.');
                 return;
             }
 
