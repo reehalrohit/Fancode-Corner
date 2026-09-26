@@ -230,6 +230,16 @@ const SOURCES = [
     url: "https://raw.githubusercontent.com/sportlive18/playlist/main/sonyliv.m3u",
   },
 
+  // ADDITIONAL LIVE EVENTS PLAYLIST
+  // HLS entries are accepted; DASH/DRM entries are ignored.
+  {
+    name: "liveevent",
+    provider: "liveevent",
+    feed: "additional",
+    format: "m3u",
+    url: "https://raw.githubusercontent.com/sportlive18/playlist/main/LiveEvent.m3u",
+  },
+
   // EXISTING OFFICIAL-EVENT METADATA SOURCES
   {
     name: "willow",
@@ -386,13 +396,21 @@ function normalizeSonyOld(item) {
 function normalizeM3uItem(item, provider) {
   if (!isHlsUrl(item?.stream_url)) return null;
 
+  const isLiveEvent = provider === "liveevent";
+  const fallbackTitle =
+    provider === "fancode"
+      ? "FanCode Live Event"
+      : provider === "sonyliv"
+        ? "SonyLIV Live Event"
+        : "Live Event";
+
   return {
-    title: cleanText(item.title, provider === "fancode" ? "FanCode Live Event" : "SonyLIV Live Event"),
+    title: cleanText(item.title, fallbackTitle),
     stream_url: item.stream_url.trim(),
     src_image: item.tvg_logo || null,
     source: provider,
-    feed: "new",
-    category: cleanText(item.group_title, provider === "fancode" ? "FanCode" : "SonyLIV"),
+    feed: isLiveEvent ? "additional" : "new",
+    category: cleanText(item.group_title, "Sports"),
     status: "LIVE",
     event_name: item.title || null,
     match_name: item.title || null,
@@ -534,6 +552,13 @@ export default async function handler(req, res) {
         }
       }
 
+      if (result.provider === "liveevent") {
+        for (const item of items) {
+          const normalized = normalizeM3uItem(item, "liveevent");
+          if (normalized) matches.push(normalized);
+        }
+      }
+
       if (result.provider === "willow" || result.provider === "primesport") {
         for (const item of items) {
           const normalized = normalizeOfficialItem(item, result.provider);
@@ -549,6 +574,7 @@ export default async function handler(req, res) {
       sonyliv: 1,
       willow: 2,
       primesport: 3,
+      liveevent: 4,
     };
 
     uniqueMatches.sort((a, b) => {
@@ -582,6 +608,7 @@ export default async function handler(req, res) {
         },
         willow: sourceStatus("willow"),
         primesport: sourceStatus("primesport"),
+        liveevent: sourceStatus("liveevent"),
       },
       count: uniqueMatches.length,
       matches: uniqueMatches,
