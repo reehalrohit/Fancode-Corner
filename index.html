@@ -1003,7 +1003,7 @@
     <section class="hero">
         <div class="hero-kicker">Live Now</div>
         <h1>Sports, right when they’re live.</h1>
-        <p class="hero-copy">Live events from FanCode, SonyLIV, Willow, Prime Video and additional Live Events feeds in a cleaner, faster mobile experience.</p>
+        <p class="hero-copy">Live events from FanCode, SonyLIV, Willow and Prime Video in a cleaner, faster mobile experience.</p>
         <div class="hero-stats">
             <span class="stat">● Live events only</span>
             <span class="stat">⚡ Quick access</span>
@@ -1062,15 +1062,6 @@
             <div class="section-count" id="prime-count">0 events</div>
         </div>
         <div class="grid" id="prime-grid"></div>
-    </section>
-
-    <section id="liveevent-section" class="section">
-        <div class="section-head">
-            <div class="section-title">📡 Live Events</div>
-            <div class="section-line"></div>
-            <div class="section-count" id="liveevent-count">0 events</div>
-        </div>
-        <div class="grid" id="liveevent-grid"></div>
     </section>
 
     <!-- MODZONE-BOTTOM -->
@@ -1776,13 +1767,11 @@
             const sonylivMatches = matches.filter(m => m.source === 'sonyliv');
             const willowMatches = matches.filter(m => m.source === 'willow');
             const primeMatches = matches.filter(m => m.source === 'prime');
-            const liveEventMatches = matches.filter(m => m.source === 'liveevent');
 
             renderGrid('fancode-grid', 'fancode-section', 'fancode-count', fancodeMatches);
             renderGrid('sonyliv-grid', 'sonyliv-section', 'sonyliv-count', sonylivMatches);
             renderGrid('willow-grid', 'willow-section', 'willow-count', willowMatches);
             renderGrid('prime-grid', 'prime-section', 'prime-count', primeMatches);
-            renderGrid('liveevent-grid', 'liveevent-section', 'liveevent-count', liveEventMatches);
         }
 
         function escapeHtml(value) {
@@ -1824,8 +1813,7 @@
                     fancode: 'FanCode',
                     sonyliv: 'SonyLIV',
                     willow: 'Willow',
-                    prime: 'Prime Video',
-                    liveevent: 'Live Events'
+                    prime: 'Prime Video'
                 };
 
                 const source = sourceLabels[match.source] || escapeHtml(match.source || 'Live');
