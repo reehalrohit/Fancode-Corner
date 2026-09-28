@@ -1332,13 +1332,21 @@
             'Access verification failed.'
         );
 
-        errorMsg.innerHTML =
-            '🚫 <strong>' +
-            escapeHtml(code) +
-            '</strong><br>' +
-            escapeHtml(message);
+        if (code === 'DNS_BLOCKED') {
+    errorMsg.textContent =
+        '🚫 DNS BLOCKED\n' +
+        'Network filtering is preventing the site from connecting.\n' +
+        'Please disable your DNS/ad-blocking filter and try again.';
+} else {
+    errorMsg.innerHTML =
+        '🚫 <strong>' +
+        escapeHtml(code) +
+        '</strong><br>' +
+        escapeHtml(message);
+}
 
-        errorMsg.style.display = 'block';
+errorMsg.style.whiteSpace = 'pre-line';
+errorMsg.style.display = 'block';
 
     } finally {
 
