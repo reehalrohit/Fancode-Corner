@@ -1084,14 +1084,7 @@
         const DAILY_PASSCODE = "@modzone01 Telegram Channel";
 
 
-        // App-only client signature configured in WebToApk.
-        // The server also checks this token before returning live events.
-        const APP_UA_TOKEN = 'K/8V6P2M9R4T';
         let appClientApproved = false;
-
-        function hasExpectedAppUA() {
-            return String(navigator.userAgent || '').includes(APP_UA_TOKEN);
-        }
 
         function showAppGate(message = 'Download original app from the link below:') {
             const gate = document.getElementById('app-gate');
@@ -1108,10 +1101,6 @@
         }
 
         async function verifyAppClient() {
-            if (!hasExpectedAppUA()) {
-                showAppGate();
-                return false;
-            }
 
             try {
                 const response = await fetch('/api/client-check', {
