@@ -1130,69 +1130,9 @@
         const LEGAL_STORAGE_KEY = 'fancode_corner_legal_agreement_v' + LEGAL_VERSION;
 
 
-        // App-only client signature configured in WebToApk.
-        // The server also checks this token before returning live events.
-        async function verifyAppClient() {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-
-    try {
-        const response = await fetch('/api/client-check', {
-            method: 'GET',
-            cache: 'no-store',
-            credentials: 'same-origin',
-            headers: {
-                'Accept': 'application/json'
-            },
-            signal: controller.signal
-        });
-
-        let result = {};
-
-        try {
-            result = await response.json();
-        } catch {
-            result = {};
-        }
-
-        if (!response.ok || result.allowed !== true) {
-            const code = String(
-                result.code || `APP_CLIENT_HTTP_${response.status}`
-            );
-
-            const message = String(
-                result.message ||
-                result.reason ||
-                'This client is not authorized for Sports Corner.'
-            );
-
-            showAppGate(`${code}: ${message}`);
-            return false;
-        }
-
-        appClientApproved = true;
-        hideAppGate();
-
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'UNLOCK SITE';
-
-        return true;
-
-    } catch (error) {
-        console.error('App client verification failed:', error);
-
-        showAppGate(
-            error?.name === 'AbortError'
-                ? 'APP_CLIENT_TIMEOUT: Vercel verification did not respond.'
-                : 'APP_CLIENT_NETWORK_ERROR: The app verification service could not be reached.'
-        );
-
-        return false;
-
-    } finally {
-        clearTimeout(timeout);
-    }
-        }
+        // App authorization is verified server-side by Vercel.
+        // The token is intentionally NOT stored in this HTML.
+        let appClientApproved = false;
 
         function showAppGate(message = 'This service is available through the Sports Corner Android app. Open this page inside the app to continue.') {
             const gate = document.getElementById('app-gate');
@@ -1209,17 +1149,18 @@
         }
 
         async function verifyAppClient() {
-            if (!hasExpectedAppUA()) {
-                showAppGate();
-                return false;
-            }
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
 
             try {
+                // Vercel is the only source of truth for app authorization.
+                // No APP_UA_TOKEN is exposed to the browser.
                 const response = await fetch('/api/client-check', {
                     method: 'GET',
                     cache: 'no-store',
                     credentials: 'same-origin',
-                    headers: { 'Accept': 'application/json' }
+                    headers: { 'Accept': 'application/json' },
+                    signal: controller.signal
                 });
 
                 let result = {};
@@ -1230,12 +1171,15 @@
                 }
 
                 if (!response.ok || result.allowed !== true) {
-                    const code = String(result.code || `APP_CLIENT_HTTP_${response.status}`);
+                    const code = String(
+                        result.code || `APP_CLIENT_HTTP_${response.status}`
+                    );
                     const message = String(
                         result.message ||
                         result.reason ||
                         'This client is not authorized for Sports Corner.'
                     );
+
                     showAppGate(`${code}: ${message}`);
                     return false;
                 }
@@ -1245,15 +1189,20 @@
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'UNLOCK SITE';
                 return true;
+
             } catch (error) {
                 console.error('App client verification failed:', error);
+
                 showAppGate(
-                    `APP_CLIENT_NETWORK_ERROR: ${
-                        error?.message ||
-                        'The app verification service could not be reached.'
-                    }`
+                    error?.name === 'AbortError'
+                        ? 'APP_CLIENT_TIMEOUT: Vercel verification did not respond.'
+                        : 'APP_CLIENT_NETWORK_ERROR: The app verification service could not be reached.'
                 );
+
                 return false;
+
+            } finally {
+                clearTimeout(timeout);
             }
         }
 
