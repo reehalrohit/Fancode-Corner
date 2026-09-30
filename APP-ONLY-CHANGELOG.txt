@@ -1,3 +1,13 @@
+Sports Corner v0.4
+
+- Added AppMint native enhancement bridge with safe browser fallbacks.
+- Added native haptic/click feedback hooks for key controls.
+- Added AppMint fullscreen support with browser fallback and landscape attempt.
+- Added AppMint Picture-in-Picture support with browser video PiP fallback.
+- Added native sharing support with browser share/clipboard fallback.
+- Added live-event app badge support when the AppMint/runtime badge API is available.
+- DNS_BLOCKED remains intentionally user-friendly; detailed probe domains are not shown in the UI.
+
 Sports Corner — App-only integration
 
 1. Custom WebToApk User-Agent:

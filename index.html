@@ -975,7 +975,7 @@
         <h2>Enter Daily Passcode From</h2>
         <span class="mz-highlight">MODZONE</span>
         <input type="text" id="mz-pass-input" class="mz-input" placeholder="Enter Passcode..." autocomplete="off">
-        <button id="mz-submit-btn" class="mz-btn">UNLOCK SITE</button>
+        <button id="mz-submit-btn" class="mz-btn appmint-action" data-appmint-haptic="true">UNLOCK SITE</button>
         <div id="mz-error" class="error-msg">❌ Incorrect passcode. Check the Telegram channel.</div>
         <a href="https://t.me/modzone01" target="_blank" rel="noopener noreferrer" class="mz-link">📢 Get Passcode on Telegram</a>
     </div>
@@ -996,7 +996,7 @@
           <span class="live-dot"></span>
           <span id="live-count">0 LIVE</span>
         </div>
-        <button class="refresh-btn" id="refresh-btn" type="button" aria-label="Refresh live events" title="Refresh">↻</button>
+        <button class="refresh-btn appmint-action" data-appmint-haptic="true" id="refresh-btn" type="button" aria-label="Refresh live events" title="Refresh">↻</button>
       </div>
     </header>
 
@@ -1018,11 +1018,11 @@
 
     <div class="filter-wrap">
         <div class="filter-bar" id="filter-bar">
-            <button class="filter-btn active" onclick="applyFilter('All', this)">All Live</button>
-            <button class="filter-btn" onclick="applyFilter('Cricket', this)">🏏 Cricket</button>
-            <button class="filter-btn" onclick="applyFilter('Football', this)">⚽ Football</button>
-            <button class="filter-btn" onclick="applyFilter('Racing', this)">🏎️ Racing</button>
-            <button class="filter-btn" onclick="applyFilter('Other', this)">🎯 Other</button>
+            <button class="filter-btn active appmint-action" data-appmint-haptic="true" onclick="applyFilter('All', this)">All Live</button>
+            <button class="filter-btn appmint-action" data-appmint-haptic="true" onclick="applyFilter('Cricket', this)">🏏 Cricket</button>
+            <button class="filter-btn appmint-action" data-appmint-haptic="true" onclick="applyFilter('Football', this)">⚽ Football</button>
+            <button class="filter-btn appmint-action" data-appmint-haptic="true" onclick="applyFilter('Racing', this)">🏎️ Racing</button>
+            <button class="filter-btn appmint-action" data-appmint-haptic="true" onclick="applyFilter('Other', this)">🎯 Other</button>
         </div>
     </div>
 
@@ -1077,6 +1077,8 @@
 
 </main>
 
+
+    <script src="/appmint-v04.js"></script>
 
     <script>
         let globalMatches = [];
@@ -1731,6 +1733,7 @@ errorMsg.style.display = 'block';
 
         function renderAll() {
             document.getElementById('live-count').textContent = `${globalMatches.length} LIVE`;
+            if (window.AppMintV04) window.AppMintV04.setBadge(globalMatches.length);
             applyFilter(activeCategory, document.querySelector('.filter-btn.active'));
         }
 

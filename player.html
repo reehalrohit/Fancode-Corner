@@ -97,6 +97,21 @@
             text-overflow: ellipsis;
         }
 
+        .player-actions {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .player-actions .back-btn {
+            min-width: 40px;
+            min-height: 38px;
+            padding: 8px 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .overlay {
             position: fixed;
             z-index: 4000;
@@ -193,6 +208,11 @@
             <span class="live-dot"></span>
             <span id="liveTitle" class="live-title">Live Player</span>
         </div>
+        <div class="player-actions">
+            <button id="shareBtn" class="back-btn appmint-action" data-appmint-haptic="true" type="button" aria-label="Share event">↗</button>
+            <button id="pipBtn" class="back-btn appmint-action" data-appmint-haptic="true" type="button" aria-label="Picture in picture">▣</button>
+            <button id="fullscreenBtn" class="back-btn appmint-action" data-appmint-haptic="true" type="button" aria-label="Fullscreen">⛶</button>
+        </div>
     </div>
 
     <video id="video"
@@ -221,6 +241,8 @@
     </div>
 </div>
 
+<script src="/appmint-v04.js"></script>
+
 <script>
 (() => {
     "use strict";
@@ -239,6 +261,9 @@
     const liveTitle = document.getElementById("liveTitle");
     const retryBtn = document.getElementById("retryBtn");
     const externalBtn = document.getElementById("externalBtn");
+    const shareBtn = document.getElementById("shareBtn");
+    const pipBtn = document.getElementById("pipBtn");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
 
     let player = null;
     let started = false;
@@ -403,6 +428,42 @@
                 "Stream is ready. Press the play button to start playback.";
         });
     }
+
+    shareBtn.addEventListener("click", async () => {
+        const result = window.AppMintV04
+            ? await window.AppMintV04.share(title, `Watch ${title}`, location.href)
+            : false;
+
+        if (result === 'copied') {
+            showLoading("Player link copied to clipboard.");
+            setTimeout(hideLoading, 900);
+        }
+    });
+
+    pipBtn.addEventListener("click", async () => {
+        if (window.AppMintV04) {
+            const opened = await window.AppMintV04.videoPip(video);
+            if (!opened) pipBtn.hidden = true;
+        }
+    });
+
+    fullscreenBtn.addEventListener("click", async () => {
+        if (!window.AppMintV04) return;
+
+        const enabled = !window.AppMintV04.isFullscreen();
+        await window.AppMintV04.fullscreen(enabled);
+        fullscreenBtn.textContent = enabled ? "×" : "⛶";
+
+        if (enabled && screen.orientation?.lock) {
+            try { await screen.orientation.lock("landscape"); } catch (_) {}
+        } else if (!enabled && screen.orientation?.unlock) {
+            try { screen.orientation.unlock(); } catch (_) {}
+        }
+    });
+
+    window.addEventListener("appmint:pip", event => {
+        document.body.classList.toggle("pip", Boolean(event.detail?.inPip));
+    });
 
     video.addEventListener("playing", () => {
         started = true;
