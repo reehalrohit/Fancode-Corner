@@ -612,23 +612,6 @@
             font-size: .88rem;
         }
 
-        .app-download-link {
-            display: block;
-            margin-top: 18px;
-            padding: 14px 16px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #2d8cff, #635bff);
-            color: #fff;
-            text-decoration: none;
-            font-weight: 700;
-            line-height: 1.35;
-            box-shadow: 0 8px 24px rgba(45,140,255,.2);
-        }
-
-        .app-download-link:active {
-            transform: translateY(1px);
-        }
-
         .app-gate-code {
             margin-top: 16px;
             padding: 10px 12px;
@@ -641,7 +624,33 @@
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
 
-        #mz-overlay {
+        .legal-copy {
+  max-height: 45vh;
+  overflow-y: auto;
+  margin: 14px 0;
+  padding: 14px;
+  text-align: left;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 14px;
+  background: rgba(255,255,255,.035);
+  color: #cbd5e1;
+  font-size: .78rem;
+  line-height: 1.58;
+}
+.legal-copy h3 { margin: 0 0 8px; color: #fff; font-size: .92rem; }
+.legal-copy p { margin: 0 0 10px; }
+.legal-copy ul { margin: 0 0 10px 18px; }
+.legal-copy li { margin-bottom: 4px; }
+.legal-panel[hidden], .passcode-panel[hidden] { display: none !important; }
+.legal-check {
+  display: flex; align-items: flex-start; gap: 9px; margin: 13px 0; padding: 11px 12px;
+  border-radius: 12px; background: rgba(77,141,255,.07); border: 1px solid rgba(77,141,255,.18);
+  color: #e2e8f0; text-align: left; font-size: .78rem; line-height: 1.45;
+}
+.legal-check input { width: 18px; height: 18px; flex: 0 0 18px; margin-top: 1px; accent-color: #4d8dff; }
+.legal-version { margin-top: 8px; color: #718096; font-size: .65rem; }
+
+#mz-overlay {
             position: fixed;
             inset: 0;
             z-index: 9999;
@@ -940,12 +949,9 @@
 <div id="app-gate" role="dialog" aria-modal="true" aria-labelledby="app-gate-title">
     <div class="app-gate-card">
         <div class="app-gate-icon">📱</div>
-        <h2 id="app-gate-title">DOWNLOAD OFFICIAL APP</h2>
-        <p>Download original app from the link below:</p>
-        <a class="app-download-link" href="https://appteka.store/app/955r325023" target="_blank" rel="noopener noreferrer">
-         📲 Get FanCode &amp; SonyLIV Live App <span class="app-size">12.9 MB</span>
-        </a>
-        <div class="app-gate-code">Open the downloaded app to continue.</div>
+        <h2 id="app-gate-title">Sports Corner App Required</h2>
+        <p>This service is available through the Sports Corner Android app. Open this page inside the app to continue.</p>
+        <div class="app-gate-code">Client: Sports Corner Android WebView</div>
     </div>
 </div>
 
@@ -967,17 +973,55 @@
   </div>
 </div>
 
-<div id="mz-overlay">
+<div id="mz-overlay" role="dialog" aria-modal="true" aria-labelledby="gate-title">
     <div class="mz-modal">
-        <div class="mz-icon">
-            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.12.03-1.96 1.25-5.54 3.67-.52.36-.99.53-1.41.52-.46-.01-1.35-.26-2.01-.48-.81-.27-1.46-.42-1.4-.88.03-.23.35-.47.96-.73 3.76-1.64 6.27-2.72 7.52-3.24 3.57-1.48 4.32-1.74 4.81-1.75.11 0 .35.03.48.14.11.09.14.22.15.33-.01.03-.01.12 0 .17z"/></svg>
-        </div>
-        <h2>Enter Daily Passcode From</h2>
-        <span class="mz-highlight">MODZONE</span>
-        <input type="text" id="mz-pass-input" class="mz-input" placeholder="Enter Passcode..." autocomplete="off">
-        <button id="mz-submit-btn" class="mz-btn appmint-action" data-appmint-haptic="true">UNLOCK SITE</button>
-        <div id="mz-error" class="error-msg">❌ Incorrect passcode. Check the Telegram channel.</div>
-        <a href="https://t.me/modzone01" target="_blank" rel="noopener noreferrer" class="mz-link">📢 Get Passcode on Telegram</a>
+        <div class="mz-icon">⚖️</div>
+
+        <section id="legal-panel" class="legal-panel">
+            <h2 id="gate-title">Legal Notice &amp; User Agreement</h2>
+            <div class="legal-copy">
+                <h3>Third-Party Streaming Links</h3>
+                <p>Fancode-Corner does not host, upload, store, produce, own, or claim ownership of third-party video streams or other content referenced through this website.</p>
+                <p>The website may present URLs, embeds, references, or other access points to streaming resources that are publicly accessible through third-party websites or services. Public availability does not mean that a stream is licensed or authorized in every jurisdiction.</p>
+
+                <h3>No Ownership or Affiliation</h3>
+                <p>Third-party videos, broadcasts, streams, event information, images, logos, trademarks, channel names, branding, and other proprietary material remain the property of their respective owners and rights holders.</p>
+                <p>Unless expressly stated otherwise, Fancode-Corner is not affiliated with, sponsored by, endorsed by, or an authorized representative of third-party services, broadcasters, teams, events, brands, or rights holders.</p>
+
+                <h3>User Responsibility</h3>
+                <p><strong>Users are solely responsible for their use of any third-party links, streams, websites, or content accessed through Fancode-Corner.</strong></p>
+                <p>Users are responsible for determining whether their access, viewing, recording, downloading, sharing, or other use of third-party content is permitted under applicable laws, licences, contractual terms, and platform rules.</p>
+
+                <h3>No Authorization or Circumvention</h3>
+                <p>Fancode-Corner does not grant any licence or authorization to use third-party content and does not authorize or encourage circumvention of DRM, authentication or access controls, paywalls, geographic restrictions, copyright protections, or other technical restrictions.</p>
+
+                <h3>Third-Party Services</h3>
+                <p>Third-party services operate independently and may have their own terms, privacy policies, copyright policies, licensing arrangements, and access restrictions. Fancode-Corner does not guarantee their availability, accuracy, legality, quality, or continuity.</p>
+
+                <h3>Rights Complaints</h3>
+                <p>Copyright owners, rights holders, or authorized representatives may contact the project operator regarding a legitimate rights concern. Reported references may be reviewed and, where appropriate, removed or disabled.</p>
+
+                <p>Nothing in this notice constitutes legal advice or grants permission to access or use content where permission is not otherwise available.</p>
+                <div class="legal-version">Legal notice version: 1.0 • September 2026</div>
+            </div>
+
+            <label class="legal-check">
+                <input type="checkbox" id="legal-agree-checkbox">
+                <span>I have read and understood this Legal Notice. I agree that I am responsible for my own use of third-party links and content and will comply with applicable laws, licences, rights, and service terms.</span>
+            </label>
+
+            <button id="legal-continue-btn" class="mz-btn" type="button" disabled>AGREE &amp; CONTINUE</button>
+        </section>
+
+        <section id="passcode-panel" class="passcode-panel" hidden>
+            <h2>Enter Daily Passcode From</h2>
+            <span class="mz-highlight">MODZONE</span>
+            <input type="text" id="mz-pass-input" class="mz-input" placeholder="Enter Passcode..." autocomplete="off">
+            <button id="mz-submit-btn" class="mz-btn" type="button" disabled>UNLOCK SITE</button>
+            <div id="mz-error" class="error-msg" role="alert"></div>
+            <a href="https://t.me/modzone01" target="_blank" rel="noopener noreferrer" class="mz-link">📢 Get Passcode on Telegram</a>
+            <button id="legal-view-btn" class="mz-link" type="button" style="background:none;border:0;cursor:pointer;display:inline-block;margin-top:10px;">⚖️ View Legal Notice</button>
+        </section>
     </div>
 </div>
 
@@ -996,7 +1040,7 @@
           <span class="live-dot"></span>
           <span id="live-count">0 LIVE</span>
         </div>
-        <button class="refresh-btn appmint-action" data-appmint-haptic="true" id="refresh-btn" type="button" aria-label="Refresh live events" title="Refresh">↻</button>
+        <button class="refresh-btn" id="refresh-btn" type="button" aria-label="Refresh live events" title="Refresh">↻</button>
       </div>
     </header>
 
@@ -1018,11 +1062,11 @@
 
     <div class="filter-wrap">
         <div class="filter-bar" id="filter-bar">
-            <button class="filter-btn active appmint-action" data-appmint-haptic="true" onclick="applyFilter('All', this)">All Live</button>
-            <button class="filter-btn appmint-action" data-appmint-haptic="true" onclick="applyFilter('Cricket', this)">🏏 Cricket</button>
-            <button class="filter-btn appmint-action" data-appmint-haptic="true" onclick="applyFilter('Football', this)">⚽ Football</button>
-            <button class="filter-btn appmint-action" data-appmint-haptic="true" onclick="applyFilter('Racing', this)">🏎️ Racing</button>
-            <button class="filter-btn appmint-action" data-appmint-haptic="true" onclick="applyFilter('Other', this)">🎯 Other</button>
+            <button class="filter-btn active" onclick="applyFilter('All', this)">All Live</button>
+            <button class="filter-btn" onclick="applyFilter('Cricket', this)">🏏 Cricket</button>
+            <button class="filter-btn" onclick="applyFilter('Football', this)">⚽ Football</button>
+            <button class="filter-btn" onclick="applyFilter('Racing', this)">🏎️ Racing</button>
+            <button class="filter-btn" onclick="applyFilter('Other', this)">🎯 Other</button>
         </div>
     </div>
 
@@ -1078,17 +1122,24 @@
 </main>
 
 
-    <script src="/appmint-v04.js"></script>
-
     <script>
         let globalMatches = [];
         let activeCategory = 'All';
         const DAILY_PASSCODE = "@modzone01 Telegram Channel";
+        const LEGAL_VERSION = '1.0';
+        const LEGAL_STORAGE_KEY = 'fancode_corner_legal_agreement_v' + LEGAL_VERSION;
 
 
+        // App-only client signature configured in WebToApk.
+        // The server also checks this token before returning live events.
+        const APP_UA_TOKEN = 'K/4D8P7X2N9LQ';
         let appClientApproved = false;
 
-        function showAppGate(message = 'Download original app from the link below:') {
+        function hasExpectedAppUA() {
+            return String(navigator.userAgent || '').includes(APP_UA_TOKEN);
+        }
+
+        function showAppGate(message = 'This service is available through the Sports Corner Android app. Open this page inside the app to continue.') {
             const gate = document.getElementById('app-gate');
             const paragraph = gate?.querySelector('p');
             if (paragraph) paragraph.textContent = message;
@@ -1103,6 +1154,10 @@
         }
 
         async function verifyAppClient() {
+            if (!hasExpectedAppUA()) {
+                showAppGate();
+                return false;
+            }
 
             try {
                 const response = await fetch('/api/client-check', {
@@ -1152,10 +1207,61 @@
         const FLUID_AD_VAST_TAG = '';
         const FLUID_AD_MIDROLL_SECONDS = 0;
 
+        const legalPanel = document.getElementById('legal-panel');
+        const passcodePanel = document.getElementById('passcode-panel');
+        const legalCheckbox = document.getElementById('legal-agree-checkbox');
+        const legalContinueBtn = document.getElementById('legal-continue-btn');
+        const legalViewBtn = document.getElementById('legal-view-btn');
         const submitBtn = document.getElementById('mz-submit-btn');
         const passInput = document.getElementById('mz-pass-input');
         const errorMsg = document.getElementById('mz-error');
         const refreshBtn = document.getElementById('refresh-btn');
+
+        function showLegalPanel() {
+            legalPanel.hidden = false;
+            passcodePanel.hidden = true;
+            legalCheckbox.checked = false;
+            legalContinueBtn.disabled = true;
+        }
+
+        function showPasscodePanel() {
+            legalPanel.hidden = true;
+            passcodePanel.hidden = false;
+            errorMsg.style.display = 'none';
+            passInput.focus();
+        }
+
+        function hasAcceptedCurrentLegalNotice() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(LEGAL_STORAGE_KEY) || 'null');
+                return saved?.accepted === true && saved?.version === LEGAL_VERSION;
+            } catch {
+                return false;
+            }
+        }
+
+        legalCheckbox.addEventListener('change', () => {
+            legalContinueBtn.disabled = !legalCheckbox.checked;
+        });
+
+        legalContinueBtn.addEventListener('click', async () => {
+            if (!legalCheckbox.checked) return;
+            try {
+                localStorage.setItem(LEGAL_STORAGE_KEY, JSON.stringify({
+                    accepted: true,
+                    version: LEGAL_VERSION,
+                    acceptedAt: new Date().toISOString()
+                }));
+            } catch (error) {
+                console.warn('Legal agreement could not be persisted:', error);
+            }
+            showPasscodePanel();
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'CHECKING APP...';
+            await verifyAppClient();
+        });
+
+        legalViewBtn.addEventListener('click', showLegalPanel);
 
         submitBtn.addEventListener('click', verifyPasscode);
         passInput.addEventListener('keypress', (e) => {
@@ -1190,11 +1296,21 @@
             };
         }
 
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'CHECKING APP...';
-        verifyAppClient();
+        if (hasAcceptedCurrentLegalNotice()) {
+            showPasscodePanel();
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'CHECKING APP...';
+            verifyAppClient();
+        } else {
+            showLegalPanel();
+        }
 
         async function verifyPasscode() {
+    if (!hasAcceptedCurrentLegalNotice()) {
+        showLegalPanel();
+        return;
+    }
+
     if (!appClientApproved) {
         showAppGate();
         return;
@@ -1334,21 +1450,13 @@
             'Access verification failed.'
         );
 
-        if (code === 'DNS_BLOCKED') {
-    errorMsg.textContent =
-        '🚫 DNS BLOCKED\n' +
-        'Network filtering is preventing the site from connecting.\n' +
-        'Please disable your DNS/ad-blocking filter and try again.';
-} else {
-    errorMsg.innerHTML =
-        '🚫 <strong>' +
-        escapeHtml(code) +
-        '</strong><br>' +
-        escapeHtml(message);
-}
+        errorMsg.innerHTML =
+            '🚫 <strong>' +
+            escapeHtml(code) +
+            '</strong><br>' +
+            escapeHtml(message);
 
-errorMsg.style.whiteSpace = 'pre-line';
-errorMsg.style.display = 'block';
+        errorMsg.style.display = 'block';
 
     } finally {
 
@@ -1733,7 +1841,6 @@ errorMsg.style.display = 'block';
 
         function renderAll() {
             document.getElementById('live-count').textContent = `${globalMatches.length} LIVE`;
-            if (window.AppMintV04) window.AppMintV04.setBadge(globalMatches.length);
             applyFilter(activeCategory, document.querySelector('.filter-btn.active'));
         }
 
