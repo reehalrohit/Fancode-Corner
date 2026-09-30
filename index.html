@@ -1133,6 +1133,9 @@
         // App-only client signature configured in WebToApk.
         // The server also checks this token before returning live events.
         async function verifyAppClient() {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
     try {
         const response = await fetch('/api/client-check', {
             method: 'GET',
@@ -1140,7 +1143,8 @@
             credentials: 'same-origin',
             headers: {
                 'Accept': 'application/json'
-            }
+            },
+            signal: controller.signal
         });
 
         let result = {};
@@ -1178,10 +1182,15 @@
         console.error('App client verification failed:', error);
 
         showAppGate(
-            'APP_CLIENT_NETWORK_ERROR: The app verification service could not be reached.'
+            error?.name === 'AbortError'
+                ? 'APP_CLIENT_TIMEOUT: Vercel verification did not respond.'
+                : 'APP_CLIENT_NETWORK_ERROR: The app verification service could not be reached.'
         );
 
         return false;
+
+    } finally {
+        clearTimeout(timeout);
     }
         }
 
