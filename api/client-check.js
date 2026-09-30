@@ -1,13 +1,17 @@
 function validAppClient(req) {
   const configuredToken = String(
-    process.env.APP_UA_TOKEN || 'K/4D8P7X2N9LQ'
-  );
+    process.env.APP_UA_TOKEN || ''
+  ).trim();
 
   const userAgent = String(
     req.headers['user-agent'] || ''
   );
 
-  return Boolean(configuredToken) && userAgent.includes(configuredToken);
+  if (!configuredToken) {
+    return false;
+  }
+
+  return userAgent.includes(configuredToken);
 }
 
 export default function handler(req, res) {
@@ -17,6 +21,7 @@ export default function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({
       allowed: false,
+      code: 'METHOD_NOT_ALLOWED',
       message: 'Method not allowed.'
     });
   }
