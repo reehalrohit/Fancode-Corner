@@ -250,23 +250,29 @@ export default async function handler(req, res) {
     });
   }
 
-  const existingToken = getCookie(req, TOKEN_COOKIE);
-
-  if (validAccessToken(existingToken, ip, secret)) {
-    return res.status(200).json({
-      allowed: true,
-      code: "ACCESS_OK",
-      reason: "Existing access token is valid.",
-    });
-  }
-
   const apiKey = String(process.env.IPAPI_KEY || "").trim();
   const strict = String(process.env.ACCESS_STRICT || "false")
     .toLowerCase() === "true";
 
-  // IP classification is optional. Without a key, access verification
-  // still works, but VPN/proxy/Tor/datacenter classification is skipped.
-  if (apiKey) {
+  /*
+   * IMPORTANT:
+   * Network classification must run BEFORE accepting an existing
+   * sc_access cookie. Otherwise a previously issued 30-minute cookie
+   * can bypass a later VPN/proxy/Tor/datacenter check.
+   *
+   * When ACCESS_STRICT=true, IPAPI verification is mandatory.
+   */
+  if (!apiKey) {
+    if (strict) {
+      return res.status(503).json({
+        allowed: false,
+        code: "IP_PROVIDER_NOT_CONFIGURED",
+        reason:
+          "IPAPI_KEY is required when ACCESS_STRICT=true. Network verification cannot be skipped.",
+        message: "Network verification is not configured.",
+      });
+    }
+  } else {
     const provider = await checkIpProvider(ip, apiKey);
 
     if (!provider.ok) {
@@ -292,6 +298,21 @@ export default async function handler(req, res) {
         });
       }
     }
+  }
+
+  /*
+   * Only accept the existing access cookie AFTER the current network
+   * has passed IP classification.
+   */
+  const existingToken = getCookie(req, TOKEN_COOKIE);
+
+  if (validAccessToken(existingToken, ip, secret)) {
+    return res.status(200).json({
+      allowed: true,
+      code: "ACCESS_OK",
+      reason: "Existing access token is valid and current network verification passed.",
+      ip_verification: apiKey ? "enabled" : "skipped",
+    });
   }
 
   const expires =
