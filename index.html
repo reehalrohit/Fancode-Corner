@@ -1045,7 +1045,7 @@
     <section class="hero">
         <div class="hero-kicker">Live Now</div>
         <h1>Sports, right when they’re live.</h1>
-        <p class="hero-copy">Live events from FanCode, SonyLIV, Willow and Prime Video in a cleaner, faster mobile experience.</p>
+        <p class="hero-copy">Live events from FanCode, SonyLIV, Willow, Prime Video and StreamFree in a cleaner, faster mobile experience.</p>
         <div class="hero-stats">
             <span class="stat">● Live events only</span>
             <span class="stat">⚡ Quick access</span>
@@ -1095,6 +1095,15 @@
             <div class="section-count" id="willow-count">0 events</div>
         </div>
         <div class="grid" id="willow-grid"></div>
+    </section>
+
+    <section id="streamfree-section" class="section">
+        <div class="section-head">
+            <div class="section-title">🌐 StreamFree Live</div>
+            <div class="section-line"></div>
+            <div class="section-count" id="streamfree-count">0 events</div>
+        </div>
+        <div class="grid" id="streamfree-grid"></div>
     </section>
 
     <section id="prime-section" class="section">
@@ -1736,6 +1745,49 @@
                     );
                 }
 
+                // StreamFree is intentionally fetched through our server-side adapter.
+                // We consume only its documented embed_url; no underlying media URL is extracted.
+                try {
+                    const streamFreeResponse = await fetch('/api/streamfree', {
+                        method: 'GET',
+                        cache: 'no-store',
+                        credentials: 'same-origin',
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    let streamFreeJson = {};
+                    try {
+                        streamFreeJson = await streamFreeResponse.json();
+                    } catch {
+                        streamFreeJson = {};
+                    }
+
+                    if (streamFreeResponse.ok && streamFreeJson.status === 'success') {
+                        json.matches = [
+                            ...(Array.isArray(json.matches) ? json.matches : []),
+                            ...(Array.isArray(streamFreeJson.matches) ? streamFreeJson.matches : [])
+                        ];
+                        json.sources = json.sources || {};
+                        json.sources.streamfree = streamFreeJson.sources?.streamfree || {
+                            available: true,
+                            error: null
+                        };
+                    } else {
+                        json.sources = json.sources || {};
+                        json.sources.streamfree = {
+                            available: false,
+                            error: streamFreeJson.message || `HTTP ${streamFreeResponse.status}`
+                        };
+                    }
+                } catch (streamFreeError) {
+                    console.warn('StreamFree source unavailable:', streamFreeError);
+                    json.sources = json.sources || {};
+                    json.sources.streamfree = {
+                        available: false,
+                        error: 'StreamFree source unavailable'
+                    };
+                }
+
                 globalMatches = Array.isArray(json.matches)
                     ? json.matches
                     : [];
@@ -1821,11 +1873,13 @@
             const sonylivMatches = matches.filter(m => m.source === 'sonyliv');
             const willowMatches = matches.filter(m => m.source === 'willow');
             const primeMatches = matches.filter(m => m.source === 'prime');
+            const streamFreeMatches = matches.filter(m => m.source === 'streamfree');
 
             renderGrid('fancode-grid', 'fancode-section', 'fancode-count', fancodeMatches);
             renderGrid('sonyliv-grid', 'sonyliv-section', 'sonyliv-count', sonylivMatches);
             renderGrid('willow-grid', 'willow-section', 'willow-count', willowMatches);
             renderGrid('prime-grid', 'prime-section', 'prime-count', primeMatches);
+            renderGrid('streamfree-grid', 'streamfree-section', 'streamfree-count', streamFreeMatches);
         }
 
         function escapeHtml(value) {
@@ -1862,12 +1916,15 @@
                 const imgUrl = escapeHtml(match.src_image || fallbackImg);
                 const streamUrl = String(match.stream_url || '');
                 const officialUrl = String(match.official_url || '');
+                const embedUrl = String(match.embed_url || '');
+                const hasEmbedLink = /^https:\/\/streamfree\.top\/embed\//i.test(embedUrl);
 
                 const sourceLabels = {
                     fancode: 'FanCode',
                     sonyliv: 'SonyLIV',
                     willow: 'Willow',
-                    prime: 'Prime Video'
+                    prime: 'Prime Video',
+                    streamfree: 'StreamFree'
                 };
 
                 const source = sourceLabels[match.source] || escapeHtml(match.source || 'Live');
@@ -1881,9 +1938,11 @@
                 const primaryLabel =
                     hasPlayableStream
                         ? '▶ Watch Here'
-                        : hasOfficialLink
-                            ? '↗ Open Official'
-                            : 'Unavailable';
+                        : hasEmbedLink
+                            ? '▶ Open Stream'
+                            : hasOfficialLink
+                                ? '↗ Open Official'
+                                : 'Unavailable';
 
                 const secondaryLabel =
                     hasPlayableStream
@@ -1893,7 +1952,9 @@
                 const secondaryTitle =
                     hasPlayableStream
                         ? 'Open stream in NS Player'
-                        : 'Open official event';
+                        : hasEmbedLink
+                            ? 'Open StreamFree embed'
+                            : 'Open official event';
 
                 card.innerHTML = `
                     <div class="card-img-container">
@@ -1919,6 +1980,16 @@
                 buttons[0].addEventListener('click', () => {
                     if (hasPlayableStream) {
                         openFluidPlayer(streamUrl, match.title || 'Live Sports');
+                        return;
+                    }
+
+                    if (hasEmbedLink) {
+                        window.open(embedUrl, '_blank', 'noopener,noreferrer');
+                        return;
+                    }
+
+                    if (hasEmbedLink) {
+                        window.open(embedUrl, '_blank', 'noopener,noreferrer');
                         return;
                     }
 
