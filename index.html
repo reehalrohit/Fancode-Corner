@@ -1014,12 +1014,10 @@
         </section>
 
         <section id="passcode-panel" class="passcode-panel" hidden>
-            <h2>Enter Daily Passcode From</h2>
-            <span class="mz-highlight">MODZONE</span>
-            <input type="text" id="mz-pass-input" class="mz-input" placeholder="Enter Passcode..." autocomplete="off">
-            <button id="mz-submit-btn" class="mz-btn" type="button" disabled>UNLOCK SITE</button>
+            <h2>Security Verification</h2>
+            <p class="mz-highlight">App, DNS, ad-blocker and network security checks are required.</p>
+            <button id="mz-submit-btn" class="mz-btn" type="button" disabled>CHECKING APP...</button>
             <div id="mz-error" class="error-msg" role="alert"></div>
-            <a href="https://t.me/modzone01" target="_blank" rel="noopener noreferrer" class="mz-link">📢 Get Passcode on Telegram</a>
             <button id="legal-view-btn" class="mz-link" type="button" style="background:none;border:0;cursor:pointer;display:inline-block;margin-top:10px;">⚖️ View Legal Notice</button>
         </section>
     </div>
@@ -1125,13 +1123,11 @@
     <script>
         let globalMatches = [];
         let activeCategory = 'All';
-        const DAILY_PASSCODE = "@modzone01 Telegram Channel";
         const LEGAL_VERSION = '1.0';
         const LEGAL_STORAGE_KEY = 'fancode_corner_legal_agreement_v' + LEGAL_VERSION;
 
-
-        // App authorization is verified server-side by Vercel.
-        // The token is intentionally NOT stored in this HTML.
+        // App authorization is enforced server-side by /api/client-check.
+        // The app authorization token is intentionally never exposed to the browser.
         let appClientApproved = false;
 
         function showAppGate(message = 'This service is available through the Sports Corner Android app. Open this page inside the app to continue.') {
@@ -1151,59 +1147,33 @@
         async function verifyAppClient() {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 8000);
-
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'CHECKING APP...';
             try {
-                // Vercel is the only source of truth for app authorization.
-                // No APP_UA_TOKEN is exposed to the browser.
                 const response = await fetch('/api/client-check', {
-                    method: 'GET',
-                    cache: 'no-store',
-                    credentials: 'same-origin',
-                    headers: { 'Accept': 'application/json' },
-                    signal: controller.signal
+                    method: 'GET', cache: 'no-store', credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' }, signal: controller.signal
                 });
-
                 let result = {};
-                try {
-                    result = await response.json();
-                } catch {
-                    result = {};
-                }
-
+                try { result = await response.json(); } catch { result = {}; }
                 if (!response.ok || result.allowed !== true) {
-                    const code = String(
-                        result.code || `APP_CLIENT_HTTP_${response.status}`
-                    );
-                    const message = String(
-                        result.message ||
-                        result.reason ||
-                        'This client is not authorized for Sports Corner.'
-                    );
-
+                    const code = String(result.code || `APP_CLIENT_HTTP_${response.status}`);
+                    const message = String(result.message || result.reason || 'This client is not authorized for Sports Corner.');
                     showAppGate(`${code}: ${message}`);
                     return false;
                 }
-
                 appClientApproved = true;
                 hideAppGate();
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'UNLOCK SITE';
+                submitBtn.textContent = 'VERIFY ACCESS';
                 return true;
-
             } catch (error) {
                 console.error('App client verification failed:', error);
-
-                showAppGate(
-                    error?.name === 'AbortError'
-                        ? 'APP_CLIENT_TIMEOUT: Vercel verification did not respond.'
-                        : 'APP_CLIENT_NETWORK_ERROR: The app verification service could not be reached.'
-                );
-
+                showAppGate(error?.name === 'AbortError'
+                    ? 'APP_CLIENT_TIMEOUT: Vercel verification did not respond.'
+                    : 'APP_CLIENT_NETWORK_ERROR: The app verification service could not be reached.');
                 return false;
-
-            } finally {
-                clearTimeout(timeout);
-            }
+            } finally { clearTimeout(timeout); }
         }
 
         // Fluid Player advertising configuration.
@@ -1217,7 +1187,6 @@
         const legalContinueBtn = document.getElementById('legal-continue-btn');
         const legalViewBtn = document.getElementById('legal-view-btn');
         const submitBtn = document.getElementById('mz-submit-btn');
-        const passInput = document.getElementById('mz-pass-input');
         const errorMsg = document.getElementById('mz-error');
         const refreshBtn = document.getElementById('refresh-btn');
 
@@ -1232,7 +1201,6 @@
             legalPanel.hidden = true;
             passcodePanel.hidden = false;
             errorMsg.style.display = 'none';
-            passInput.focus();
         }
 
         function hasAcceptedCurrentLegalNotice() {
@@ -1251,26 +1219,15 @@
         legalContinueBtn.addEventListener('click', async () => {
             if (!legalCheckbox.checked) return;
             try {
-                localStorage.setItem(LEGAL_STORAGE_KEY, JSON.stringify({
-                    accepted: true,
-                    version: LEGAL_VERSION,
-                    acceptedAt: new Date().toISOString()
-                }));
-            } catch (error) {
-                console.warn('Legal agreement could not be persisted:', error);
-            }
+                localStorage.setItem(LEGAL_STORAGE_KEY, JSON.stringify({ accepted: true, version: LEGAL_VERSION, acceptedAt: new Date().toISOString() }));
+            } catch (error) { console.warn('Legal agreement could not be persisted:', error); }
             showPasscodePanel();
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'CHECKING APP...';
-            await verifyAppClient();
+            const appOk = await verifyAppClient();
+            if (appOk) await verifyAccess();
         });
 
         legalViewBtn.addEventListener('click', showLegalPanel);
-
-        submitBtn.addEventListener('click', verifyPasscode);
-        passInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') verifyPasscode();
-        });
+        submitBtn.addEventListener('click', verifyAccess);
         refreshBtn.addEventListener('click', () => fetchStreams(true));
 
         function makeAccessError(code, message, status = null) {
@@ -1304,37 +1261,23 @@
             showPasscodePanel();
             submitBtn.disabled = true;
             submitBtn.textContent = 'CHECKING APP...';
-            verifyAppClient();
+            (async () => {
+                const appOk = await verifyAppClient();
+                if (appOk) await verifyAccess();
+            })();
         } else {
             showLegalPanel();
         }
 
-        async function verifyPasscode() {
-    if (!hasAcceptedCurrentLegalNotice()) {
-        showLegalPanel();
-        return;
-    }
-
+        async function verifyAccess() {
+    if (!hasAcceptedCurrentLegalNotice()) { showLegalPanel(); return; }
     if (!appClientApproved) {
-        showAppGate();
-        return;
+        const appOk = await verifyAppClient();
+        if (!appOk) return;
     }
-
-    const passcode = passInput.value.trim();
-
     errorMsg.style.display = 'none';
-    passInput.style.borderColor = '';
-
-    if (passcode !== DAILY_PASSCODE) {
-        errorMsg.textContent = '❌ Invalid daily passcode.';
-        errorMsg.style.display = 'block';
-        passInput.style.borderColor = '#ef4444';
-        passInput.focus();
-        return;
-    }
-
     submitBtn.disabled = true;
-    submitBtn.textContent = 'VERIFYING...';
+    submitBtn.textContent = 'VERIFYING NETWORK...';
 
     try {
         // Basic ad-block detection
@@ -1465,7 +1408,7 @@
     } finally {
 
         submitBtn.disabled = false;
-        submitBtn.textContent = 'UNLOCK SITE';
+        submitBtn.textContent = 'RETRY SECURITY CHECK';
     }
         }
 
