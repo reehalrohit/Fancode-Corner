@@ -1561,15 +1561,64 @@
         }
 
         function openInNSPlayer(streamUrl) {
-            if (!streamUrl) return;
-            const cleanUrl = streamUrl.replace(/^https?:\/\//, '');
+            if (!streamUrl) {
+                showToast('❌ No StreamFree URL available.');
+                return;
+            }
+
+            const cleanUrl = String(streamUrl)
+                .trim()
+                .replace(/^https?:\/\//i, '');
+
             const intentUrl =
                 `intent://${cleanUrl}` +
-                `#Intent;package=com.genuine.leone;` +
-                `action=android.intent.action.VIEW;` +
+                `#Intent;action=android.intent.action.VIEW;` +
+                `package=com.genuine.leone;` +
                 `scheme=https;` +
                 `S.browser_fallback_url=${encodeURIComponent(streamUrl)};end;`;
-            window.location.href = intentUrl;
+
+            let leftPage = false;
+
+            const onVisibility = () => {
+                if (document.visibilityState === 'hidden') {
+                    leftPage = true;
+                    document.removeEventListener('visibilitychange', onVisibility);
+                }
+            };
+
+            document.addEventListener('visibilitychange', onVisibility);
+
+            // A real anchor activation is more reliably handled by Android
+            // browsers for intent:// URLs than assigning window.location.
+            const link = document.createElement('a');
+            link.href = intentUrl;
+            link.rel = 'noopener';
+            link.style.position = 'fixed';
+            link.style.left = '-10000px';
+            link.style.top = '-10000px';
+            document.body.appendChild(link);
+
+            try {
+                link.click();
+            } catch (error) {
+                console.warn('NS Player anchor launch failed:', error);
+            }
+
+            // Fallback for browsers that ignore the synthetic anchor.
+            setTimeout(() => {
+                if (!leftPage && document.visibilityState === 'visible') {
+                    try {
+                        window.location.href = intentUrl;
+                    } catch (error) {
+                        console.warn('NS Player intent launch failed:', error);
+                    }
+                }
+            }, 350);
+
+            setTimeout(() => {
+                link.remove();
+                document.removeEventListener('visibilitychange', onVisibility);
+            }, 2500);
         }
 
         function openFluidPlayer(streamUrl, title) {
@@ -1957,14 +2006,19 @@
                 const hasOfficialLink =
                     Boolean(officialUrl);
 
+                const isStreamFree =
+                    String(match.source || '').trim().toLowerCase() === 'streamfree';
+
                 const primaryLabel =
-                    hasPlayableStream
-                        ? '▶ Watch Here'
-                        : hasEmbedLink
-                            ? '▶ Open in NS Player'
-                            : hasOfficialLink
-                                ? '↗ Open Official'
-                                : 'Unavailable';
+                    isStreamFree && (hasPlayableStream || hasEmbedLink)
+                        ? '▶ Open in NS Player'
+                        : hasPlayableStream
+                            ? '▶ Watch Here'
+                            : hasEmbedLink
+                                ? '▶ Open in NS Player'
+                                : hasOfficialLink
+                                    ? '↗ Open Official'
+                                    : 'Unavailable';
 
                 const secondaryLabel =
                     hasPlayableStream
@@ -2000,6 +2054,11 @@
                 const buttons = card.querySelectorAll('button');
 
                 buttons[0].addEventListener('click', () => {
+                    if (isStreamFree && (hasPlayableStream || hasEmbedLink)) {
+                        openInNSPlayer(streamUrl || embedUrl);
+                        return;
+                    }
+
                     if (hasPlayableStream) {
                         openFluidPlayer(streamUrl, match.title || 'Live Sports');
                         return;
@@ -2019,6 +2078,11 @@
                 });
 
                 buttons[1].addEventListener('click', () => {
+                    if (isStreamFree && (hasPlayableStream || hasEmbedLink)) {
+                        openInNSPlayer(streamUrl || embedUrl);
+                        return;
+                    }
+
                     if (hasPlayableStream) {
                         openInNSPlayer(streamUrl);
                         return;
