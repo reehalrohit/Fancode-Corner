@@ -1923,9 +1923,18 @@
                     try {
                         const url = new URL(embedUrl);
                         const hostname = url.hostname.toLowerCase();
+                        const allowedHosts = new Set([
+                            'streamfree.top',
+                            'www.streamfree.top',
+                            'strmfree.st',
+                            'www.strmfree.st',
+                            'strmfree.link',
+                            'www.strmfree.link'
+                        ]);
+
                         return (
                             url.protocol === 'https:' &&
-                            (hostname === 'streamfree.top' || hostname === 'www.streamfree.top')
+                            allowedHosts.has(hostname)
                         );
                     } catch {
                         return false;
