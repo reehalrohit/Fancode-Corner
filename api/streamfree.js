@@ -44,7 +44,10 @@ function validAccessToken(req) {
   if (parts.length !== 3) return false;
 
   const [expires, ipHash, signature] = parts;
-  if (!Number.isInteger(Number(expires)) || Number(expires) <= Math.floor(Date.now() / 1000)) {
+  if (
+    !Number.isInteger(Number(expires)) ||
+    Number(expires) <= Math.floor(Date.now() / 1000)
+  ) {
     return false;
   }
 
@@ -52,10 +55,16 @@ function validAccessToken(req) {
   if (ipHash !== expectedIpHash) return false;
 
   const payload = `${expires}.${ipHash}`;
-  const expectedSignature = crypto.createHmac("sha256", secret).update(payload).digest("hex");
+  const expectedSignature = crypto
+    .createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex");
 
   try {
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
   } catch {
     return false;
   }
@@ -69,34 +78,86 @@ function cleanText(value, fallback = "") {
 function validEmbedUrl(value) {
   try {
     const url = new URL(String(value || ""));
-    return url.protocol === "https:" &&
-      url.hostname === "streamfree.top" &&
-      url.pathname.startsWith("/embed/");
+    const hostname = url.hostname.toLowerCase();
+
+    // StreamFree may change the exact embed path while keeping the
+    // embed on its own HTTPS origin. Do not silently discard valid items
+    // just because the pathname is not exactly /embed/....
+    return (
+      url.protocol === "https:" &&
+      (hostname === "streamfree.top" || hostname === "www.streamfree.top")
+    );
   } catch {
     return false;
   }
+}
+
+function extractStreams(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.streams)) return data.streams;
+  if (Array.isArray(data?.data?.streams)) return data.data.streams;
+  if (Array.isArray(data?.data)) return data.data;
+
+  // Support direct single-stream responses too.
+  if (
+    data &&
+    typeof data === "object" &&
+    (data.embed_url || data.stream_key || data.id)
+  ) {
+    return [data];
+  }
+
+  return [];
+}
+
+function normalizeCategory(value) {
+  const category = cleanText(value).toLowerCase();
+
+  const labels = {
+    soccer: "Football",
+    football: "American Football",
+    basketball: "Basketball",
+    hockey: "Hockey",
+    baseball: "Baseball",
+    combat: "Combat Sports",
+    racing: "Racing",
+    tennis: "Tennis",
+    cricket: "Cricket",
+  };
+
+  return labels[category] || cleanText(value, "Sports");
 }
 
 function normalizeStream(item) {
   const embedUrl = cleanText(item?.embed_url);
   if (!validEmbedUrl(embedUrl)) return null;
 
-  const thumbnail = cleanText(item?.thumbnail_url);
+  const title = cleanText(
+    item?.name || item?.title || item?.event_name,
+    "StreamFree Live Event"
+  );
+
+  const thumbnail = cleanText(
+    item?.thumbnail_url || item?.poster || item?.image
+  );
+
+  const streamKey = cleanText(item?.stream_key || item?.id || embedUrl);
+
   return {
-    title: cleanText(item?.name, "StreamFree Live Event"),
+    title,
     stream_url: null,
     embed_url: embedUrl,
     src_image: thumbnail || null,
     source: "streamfree",
     feed: "api",
-    category: cleanText(item?.category, "Sports"),
+    category: normalizeCategory(item?.category),
     league: cleanText(item?.league) || null,
     status: "LIVE",
-    event_name: cleanText(item?.name) || null,
-    match_name: cleanText(item?.name) || null,
-    match_id: cleanText(item?.stream_key) || null,
+    event_name: title,
+    match_name: title,
+    match_id: streamKey,
     start_time: item?.match_timestamp ?? null,
-    playable: false
+    playable: false,
   };
 }
 
@@ -107,7 +168,7 @@ export default async function handler(req, res) {
     return res.status(405).json({
       status: "error",
       code: "METHOD_NOT_ALLOWED",
-      message: "Method not allowed."
+      message: "Method not allowed.",
     });
   }
 
@@ -116,7 +177,7 @@ export default async function handler(req, res) {
     return res.status(403).json({
       status: "blocked",
       code: "STREAM_ACCESS_DENIED",
-      message: "Access verification required."
+      message: "Access verification required.",
     });
   }
 
@@ -125,21 +186,21 @@ export default async function handler(req, res) {
       method: "GET",
       headers: {
         Accept: "application/json",
-        "User-Agent": "Sports-Corner/1.0"
+        "User-Agent": "Sports-Corner/1.0",
       },
-      signal: AbortSignal.timeout(8000)
+      signal: AbortSignal.timeout(8000),
     });
 
     if (!response.ok) {
       return res.status(502).json({
         status: "error",
         code: "STREAMFREE_UPSTREAM_HTTP",
-        message: `StreamFree returned HTTP ${response.status}.`
+        message: `StreamFree returned HTTP ${response.status}.`,
       });
     }
 
     const data = await response.json();
-    const rawStreams = Array.isArray(data?.streams) ? data.streams : [];
+    const rawStreams = extractStreams(data);
     const seen = new Set();
     const matches = [];
 
@@ -160,18 +221,18 @@ export default async function handler(req, res) {
       sources: {
         streamfree: {
           available: true,
-          error: null
-        }
+          error: null,
+        },
       },
       count: matches.length,
-      matches
+      matches,
     });
   } catch (error) {
     console.error("StreamFree API error:", error);
     return res.status(502).json({
       status: "error",
       code: "STREAMFREE_UPSTREAM_UNAVAILABLE",
-      message: "StreamFree source is currently unavailable."
+      message: "StreamFree source is currently unavailable.",
     });
   }
 }
