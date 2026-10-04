@@ -574,7 +574,26 @@ export default async function handler(req, res) {
     "Cache-Control",
     "s-maxage=30, stale-while-revalidate=60"
   );
-
+// Safe diagnostic logging — never log signed stream URLs.
+console.info(
+  "StreamFree frontend payload:",
+  JSON.stringify({
+    status: "success",
+    count: uniqueMatches.length,
+    playable_count: uniqueMatches.filter(
+      (match) => match.playable
+    ).length,
+    matches: uniqueMatches.map((match) => ({
+      title: match.title,
+      category: match.category,
+      source: match.source,
+      match_id: match.match_id,
+      has_stream_url: Boolean(match.stream_url),
+      has_embed_url: Boolean(match.embed_url),
+      playable: Boolean(match.playable)
+    }))
+  })
+);
   return res.status(200).json({
     status: "success",
     sources: {
