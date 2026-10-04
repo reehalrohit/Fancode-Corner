@@ -1,16 +1,8 @@
 import crypto from "node:crypto";
 
 const ACCESS_COOKIE = "sc_access";
-
-// Try the primary API first, then StreamFree's published mirror domains.
-// This avoids losing all events if the primary origin returns a 5xx to Vercel.
-const STREAMFREE_APIS = [
-  "https://streamfree.top/api/v1/streams",
-  "https://strmfree.st/api/v1/streams",
-  "https://strmfree.link/api/v1/streams",
-];
-
-const STREAMFREE_HOSTS = new Set([
+const STREAMFREE_API = "https://streamfree.top/api/v1/streams";
+const STREAMFREE_ORIGINS = new Set([
   "streamfree.top",
   "www.streamfree.top",
   "strmfree.st",
@@ -63,7 +55,6 @@ function validAccessToken(req) {
   if (!ip || !token) return false;
 
   const parts = token.split(".");
-
   if (parts.length !== 3) return false;
 
   const [expires, ipHash, signature] = parts;
@@ -107,11 +98,9 @@ function cleanText(value, fallback = "") {
 function validStreamFreeUrl(value) {
   try {
     const url = new URL(String(value || ""));
-    const hostname = url.hostname.toLowerCase();
-
     return (
       url.protocol === "https:" &&
-      STREAMFREE_HOSTS.has(hostname)
+      STREAMFREE_ORIGINS.has(url.hostname.toLowerCase())
     );
   } catch {
     return false;
@@ -153,109 +142,65 @@ function normalizeCategory(value) {
   return labels[category] || cleanText(value, "Sports");
 }
 
-function getEmbedUrl(item) {
+/*
+ * StreamFree documents that /api/v1/streams returns a `sources` array
+ * containing the live embed variants. Use those exact URLs.
+ *
+ * Do NOT manufacture streamfree.top/embed/... when sources[] exists,
+ * because the live source may intentionally be served from a mirror such
+ * as strmfree.st.
+ */
+function chooseSource(item) {
+  const sources = Array.isArray(item?.sources)
+    ? item.sources
+        .map((value) => cleanText(value))
+        .filter(validStreamFreeUrl)
+    : [];
+
+  if (sources.length > 0) {
+    const score = (url) => {
+      const lower = url.toLowerCase();
+
+      if (/1080p2?(?:[/?#]|$)/.test(lower)) return 5;
+      if (/1080p(?:[/?#]|$)/.test(lower)) return 4;
+      if (/720p2?(?:[/?#]|$)/.test(lower)) return 3;
+      if (/720p(?:[/?#]|$)/.test(lower)) return 2;
+      if (/540p|480p|360p/.test(lower)) return 1;
+
+      return 0;
+    };
+
+    return [...sources].sort((a, b) => score(b) - score(a))[0];
+  }
+
   const direct = cleanText(item?.embed_url);
 
   if (validStreamFreeUrl(direct)) {
     return direct;
   }
 
-  const sources = Array.isArray(item?.sources)
-    ? item.sources
-    : [];
-
-  // Prefer an actual live source supplied by StreamFree.
-  // The API examples currently return strmfree.st embed URLs.
-  for (const source of sources) {
-    if (validStreamFreeUrl(source)) {
-      return String(source).trim();
-    }
-  }
-
-  // Fallback only when sources[] is absent.
-  const category = cleanText(item?.category).toLowerCase();
-  const streamKey = cleanText(item?.stream_key);
-
-  if (category && streamKey) {
-    return (
-      "https://streamfree.top/embed/" +
-      encodeURIComponent(category) +
-      "/" +
-      encodeURIComponent(streamKey)
-    );
-  }
-
   return "";
-}
-
-async function fetchStreamFree() {
-  const attempts = [];
-
-  for (const apiUrl of STREAMFREE_APIS) {
-    try {
-      const response = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "User-Agent":
-            "Mozilla/5.0 (compatible; Sports-Corner/1.0; +https://fancode-corner.vercel.app/)",
-          Referer: "https://streamfree.top/",
-        },
-        signal: AbortSignal.timeout(8000),
-      });
-
-      if (!response.ok) {
-        attempts.push(`${apiUrl}: HTTP ${response.status}`);
-        continue;
-      }
-
-      const data = await response.json();
-
-      return {
-        apiUrl,
-        data,
-        attempts,
-      };
-    } catch (error) {
-      attempts.push(
-        `${apiUrl}: ${error?.name === "AbortError" ? "timeout" : "network error"}`
-      );
-    }
-  }
-
-  return {
-    apiUrl: null,
-    data: null,
-    attempts,
-  };
 }
 
 function normalizeStream(item) {
   if (!item || typeof item !== "object") return null;
 
-  const embedUrl = getEmbedUrl(item);
+  const embedUrl = chooseSource(item);
 
-  if (!validStreamFreeUrl(embedUrl)) {
-    return null;
-  }
+  // Every displayed StreamFree event must have an actual returned source.
+  if (!embedUrl) return null;
 
   const title = cleanText(
-    item?.name ||
-      item?.title ||
-      item?.event_name,
+    item?.name || item?.title || item?.event_name,
     "StreamFree Live Event"
   );
 
   const thumbnail = cleanText(
-    item?.thumbnail_url ||
-      item?.poster ||
-      item?.image
+    item?.thumbnail_url || item?.poster || item?.image
   );
 
   const streamKey = cleanText(
-    item?.stream_key ||
-      item?.id ||
-      embedUrl
+    item?.stream_key || item?.id || embedUrl
   );
 
   const rawCategory = cleanText(
@@ -282,6 +227,62 @@ function normalizeStream(item) {
   };
 }
 
+async function requestStreamFree(attempt) {
+  const separator = STREAMFREE_API.includes("?") ? "&" : "?";
+  const url = `${STREAMFREE_API}${separator}_=${Date.now()}-${attempt}`;
+
+  return fetch(url, {
+    method: "GET",
+    cache: "no-store",
+    headers: {
+      Accept: "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (compatible; Sports-Corner/1.0; +https://fancode-corner.vercel.app/)",
+      Referer: "https://streamfree.top/",
+    },
+    signal: AbortSignal.timeout(10000),
+  });
+}
+
+async function fetchStreamFree() {
+  const attempts = [];
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const response = await requestStreamFree(attempt);
+
+      if (!response.ok) {
+        attempts.push(`attempt ${attempt}: HTTP ${response.status}`);
+
+        // Retry transient upstream/server failures.
+        if (![408, 425, 429, 500, 502, 503, 504].includes(response.status)) {
+          break;
+        }
+
+        continue;
+      }
+
+      const data = await response.json();
+
+      return {
+        data,
+        attempts,
+      };
+    } catch (error) {
+      attempts.push(
+        `attempt ${attempt}: ${
+          error?.name === "AbortError" ? "timeout" : "network error"
+        }`
+      );
+    }
+  }
+
+  return {
+    data: null,
+    attempts,
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({
@@ -301,72 +302,61 @@ export default async function handler(req, res) {
     });
   }
 
-  try {
-    const upstream = await fetchStreamFree();
+  const upstream = await fetchStreamFree();
 
-    if (!upstream.data) {
-      console.error(
-        "StreamFree all endpoints failed:",
-        upstream.attempts
-      );
-
-      return res.status(502).json({
-        status: "error",
-        code: "STREAMFREE_ALL_UPSTREAMS_FAILED",
-        message:
-          "StreamFree API is unavailable from the server right now.",
-        attempts: upstream.attempts,
-      });
-    }
-
-    const rawStreams = extractStreams(upstream.data);
-    const seen = new Set();
-    const matches = [];
-
-    for (const item of rawStreams) {
-      const normalized = normalizeStream(item);
-
-      if (!normalized) continue;
-
-      const key =
-        normalized.match_id ||
-        normalized.embed_url;
-
-      if (seen.has(key)) continue;
-
-      seen.add(key);
-      matches.push(normalized);
-    }
-
-    matches.sort((a, b) =>
-      a.title.localeCompare(b.title)
+  if (!upstream.data) {
+    console.error(
+      "StreamFree upstream failed:",
+      upstream.attempts
     );
-
-    res.setHeader(
-      "Cache-Control",
-      "s-maxage=30, stale-while-revalidate=60"
-    );
-
-    return res.status(200).json({
-      status: "success",
-      sources: {
-        streamfree: {
-          available: true,
-          error: null,
-          upstream: upstream.apiUrl,
-          upstream_attempts: upstream.attempts,
-        },
-      },
-      count: matches.length,
-      matches,
-    });
-  } catch (error) {
-    console.error("StreamFree adapter error:", error);
 
     return res.status(502).json({
       status: "error",
-      code: "STREAMFREE_ADAPTER_FAILED",
-      message: "StreamFree source could not be loaded.",
+      code: "STREAMFREE_UPSTREAM_UNAVAILABLE",
+      message: "StreamFree API is unavailable from the server right now.",
+      attempts: upstream.attempts,
     });
   }
+
+  const rawStreams = extractStreams(upstream.data);
+
+  const seen = new Set();
+  const matches = [];
+
+  for (const item of rawStreams) {
+    const normalized = normalizeStream(item);
+
+    if (!normalized) continue;
+
+    const key =
+      normalized.match_id ||
+      normalized.embed_url;
+
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    matches.push(normalized);
+  }
+
+  matches.sort((a, b) =>
+    a.title.localeCompare(b.title)
+  );
+
+  res.setHeader(
+    "Cache-Control",
+    "s-maxage=30, stale-while-revalidate=60"
+  );
+
+  return res.status(200).json({
+    status: "success",
+    sources: {
+      streamfree: {
+        available: true,
+        error: null,
+        event_count: matches.length,
+      },
+    },
+    count: matches.length,
+    matches,
+  });
 }
