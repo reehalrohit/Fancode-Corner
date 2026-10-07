@@ -336,16 +336,34 @@
     }
 
     function destroyPlayer() {
-        clearTimeout(startupTimer);
+    clearTimeout(startupTimer);
 
-        if (player && typeof player.destroy === "function") {
-            try { player.destroy(); } catch (_) {}
+    if (player && typeof player.destroy === "function") {
+        try {
+            player.destroy();
+        } catch (error) {
+            console.debug("Fluid Player destroy:", error);
+        }
+    }
+
+    player = null;
+
+    const videoElement = document.getElementById("video");
+
+    if (videoElement) {
+        try {
+            videoElement.pause();
+        } catch (error) {
+            console.debug("Video pause:", error);
         }
 
-        player = null;
-        video.pause();
-        video.removeAttribute("src");
-        video.load();
+        try {
+            videoElement.removeAttribute("src");
+            videoElement.load();
+        } catch (error) {
+            console.debug("Video cleanup:", error);
+        }
+    }
     }
 
     function init() {
