@@ -6,12 +6,7 @@
     <meta name="referrer" content="no-referrer">
     <meta name="theme-color" content="#000000">
     <title>Live Player</title>
-
-    <link rel="stylesheet"
-          href="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.css">
-    <script src="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.js"></script>
-
-    <style>
+<style>
         :root {
             --accent: #4d8dff;
             --panel: rgba(5, 10, 20, .82);
@@ -182,7 +177,7 @@
             border: 1px solid rgba(255,255,255,.15);
         }
 
-        .fluid_video_wrapper {
+        .shaka-video-wrapper {
             position: fixed !important;
             inset: 0 !important;
             width: 100% !important;
@@ -190,7 +185,7 @@
             background: #000 !important;
         }
 
-        .fluid_video_wrapper video {
+        .shaka-video-wrapper video {
             width: 100% !important;
             height: 100% !important;
             object-fit: contain !important;
@@ -241,6 +236,7 @@
     </div>
 </div>
 
+<script src="https://ajax.googleapis.com/ajax/libs/shaka-player/5.2.12/shaka-player.compiled.js"></script>
 <script src="/appmint-v04.js"></script>
 
 <script>
@@ -248,6 +244,7 @@
     "use strict";
 
     const params = new URLSearchParams(location.search);
+
     const streamUrl = params.get("stream") || "";
     const title = params.get("title") || "Live Sports Event";
     const source = params.get("source") || "";
@@ -259,6 +256,7 @@
     const errorOverlay = document.getElementById("error");
     const errorText = document.getElementById("errorText");
     const liveTitle = document.getElementById("liveTitle");
+
     const retryBtn = document.getElementById("retryBtn");
     const externalBtn = document.getElementById("externalBtn");
     const shareBtn = document.getElementById("shareBtn");
@@ -270,104 +268,140 @@
     let startupTimer = null;
 
     document.title = `${title} | Live Player`;
-    liveTitle.textContent = source ? `${source} • ${title}` : title;
 
-    if (poster) video.poster = poster;
+    if (liveTitle) {
+        liveTitle.textContent = source
+            ? `${source} - ${title}`
+            : title;
+    }
+
+    if (poster) {
+        video.poster = poster;
+    }
 
     function showLoading(message) {
-        loadingDetail.textContent = message || "Preparing the HLS player…";
-        loading.classList.remove("hidden");
-        errorOverlay.classList.add("hidden");
+        if (loadingDetail) {
+            loadingDetail.textContent =
+                message || "Preparing the Shaka player...";
+        }
+
+        loading?.classList.remove("hidden");
+        errorOverlay?.classList.add("hidden");
     }
 
     function hideLoading() {
-        loading.classList.add("hidden");
+        loading?.classList.add("hidden");
     }
 
     function showError(message) {
         clearTimeout(startupTimer);
         hideLoading();
-        errorText.textContent = message;
-        errorOverlay.classList.remove("hidden");
+
+        if (errorText) {
+            errorText.textContent = message;
+        }
+
+        errorOverlay?.classList.remove("hidden");
     }
 
-    function isHlsUrl(url) {
+    function isMediaUrl(url) {
         try {
             const u = new URL(url);
-            return (u.protocol === "https:" || u.protocol === "http:")
-                && /\.m3u8(?:$|[?#])/i.test(u.pathname + u.search);
+
+            if (u.protocol !== "https:" && u.protocol !== "http:") {
+                return false;
+            }
+
+            return /\.m3u8(?:$|[?#])/i.test(
+                u.pathname + u.search
+            ) || /\.mpd(?:$|[?#])/i.test(
+                u.pathname + u.search
+            );
         } catch {
             return false;
         }
     }
 
-    function describeError() {
-        const e = video.error;
-        if (!e) return "The browser could not start the HLS stream.";
-
-        if (e.code === MediaError.MEDIA_ERR_NETWORK) {
-            return "The browser could not fetch the HLS stream. The source may require request headers, cookies, or browser access permission.";
-        }
-        if (e.code === MediaError.MEDIA_ERR_DECODE) {
-            return "The stream was received but the browser could not decode it.";
-        }
-        if (e.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
-            return "This HLS source is not playable by the browser.";
-        }
-        if (e.code === MediaError.MEDIA_ERR_ABORTED) {
-            return "The browser aborted the stream request.";
+    function describeError(error) {
+        if (!error) {
+            return "The browser could not start the stream.";
         }
 
-        return "The browser reported an HLS playback error.";
+        const code = error.code;
+
+        if (code === 1001) {
+            return "The stream could not be loaded.";
+        }
+
+        if (code === 1002) {
+            return "The stream format is not supported by this browser.";
+        }
+
+        if (code === 1003) {
+            return "The stream could not be decoded.";
+        }
+
+        if (code === 1004) {
+            return "The stream could not be downloaded.";
+        }
+
+        if (code === 1006) {
+            return "The stream is not available or has expired.";
+        }
+
+        return error.message ||
+            "Shaka Player reported a playback error.";
     }
 
     function openNSPlayer() {
-        if (!streamUrl) return;
+        if (!streamUrl) {
+            return;
+        }
 
         const cleanUrl = streamUrl.replace(/^https?:\/\//i, "");
+
         const intent =
             `intent://${cleanUrl}` +
-            `#Intent;package=com.genuine.leone;` +
-            `action=android.intent.action.VIEW;` +
-            `scheme=https;` +
-            `S.browser_fallback_url=${encodeURIComponent(streamUrl)};end;`;
+            "#Intent;" +
+            "package=com.genuine.leone;" +
+            "action=android.intent.action.VIEW;" +
+            "scheme=https;" +
+            `S.browser_fallback_url=${encodeURIComponent(streamUrl)};` +
+            "end;";
 
-        location.href = intent;
-    }
-
-    function destroyPlayer() {
-    clearTimeout(startupTimer);
-
-    if (player && typeof player.destroy === "function") {
         try {
-            player.destroy();
-        } catch (error) {
-            console.debug("Fluid Player destroy:", error);
+            location.href = intent;
+        } catch {
+            location.href = streamUrl;
         }
     }
 
-    player = null;
+    async function destroyPlayer() {
+        clearTimeout(startupTimer);
 
-    const videoElement = document.getElementById("video");
+        if (player) {
+            try {
+                await player.destroy();
+            } catch (error) {
+                console.debug("Shaka Player destroy:", error);
+            }
+        }
 
-    if (videoElement) {
+        player = null;
+
         try {
-            videoElement.pause();
+            video.pause();
         } catch (error) {
             console.debug("Video pause:", error);
         }
 
-        try {
-            videoElement.removeAttribute("src");
-            videoElement.load();
-        } catch (error) {
-            console.debug("Video cleanup:", error);
-        }
-    }
+        video.removeAttribute("src");
+        video.load();
     }
 
-    function init() {
+    async function init() {
         clearTimeout(startupTimer);
+
         started = false;
 
         if (!streamUrl) {
@@ -375,112 +409,184 @@
             return;
         }
 
-        if (!isHlsUrl(streamUrl)) {
-            showError("The supplied stream URL is not a valid HLS (.m3u8) URL.");
+        if (!isMediaUrl(streamUrl)) {
+            showError(
+                "The supplied URL is not a supported HLS (.m3u8) " +
+                "or DASH (.mpd) media URL."
+            );
             return;
         }
 
-        if (typeof fluidPlayer !== "function") {
-            showError("Fluid Player could not be loaded. Check the network connection and retry.");
+        if (!window.shaka) {
+            showError(
+                "Shaka Player could not be loaded. " +
+                "Check the network connection and retry."
+            );
             return;
         }
 
-        destroyPlayer();
-        showLoading("Connecting to the live HLS source…");
-
-        /*
-         * Give Fluid Player the HLS source directly.
-         * Do not repeatedly destroy/recreate the player.
-         */
-        video.src = streamUrl;
-        video.muted = true;
-        video.playsInline = true;
-
-        try {
-            player = fluidPlayer("video", {
-                layoutControls: {
-                    autoPlay: true,
-                    mute: true,
-                    fillToContainer: true,
-                    posterImage: poster || "",
-                    playButtonShowing: true,
-                    allowTheatre: false,
-                    allowDownload: false,
-                    playbackRateEnabled: false,
-                    controlBar: {
-                        autoHide: true,
-                        autoHideTimeout: 3,
-                        animated: true
-                    }
-                },
-                vastOptions: {
-                    adList: []
-                }
-            });
-        } catch (err) {
-            console.error("Fluid Player initialization error:", err);
-            showError("Fluid Player failed to initialize. Try NS Player.");
+        if (!shaka.Player.isBrowserSupported()) {
+            showError(
+                "This browser does not support Shaka Player " +
+                "or the required media features."
+            );
             return;
         }
 
-        /*
-         * One timeout only. It reports the failure instead of creating
-         * an endless initialization loop.
-         */
-        startupTimer = setTimeout(() => {
+        await destroyPlayer();
+
+        showLoading("Connecting to the live stream...");
+
+        player = new shaka.Player(video);
+
+        player.addEventListener("error", event => {
+            console.error(
+                "[Player] Shaka error:",
+                event.detail
+            );
+
             if (!started) {
-                showError(
-                    "The HLS stream did not start in the browser. " +
-                    "The stream URL may have expired or the source may not permit browser playback."
+                showError(describeError(event.detail));
+            } else {
+                console.warn(
+                    "[Player] Playback interruption:",
+                    event.detail
                 );
             }
-        }, 15000);
-
-        /*
-         * Ask the browser to begin playback. Muted autoplay is used so
-         * Android WebView/browser autoplay restrictions are less likely
-         * to block startup.
-         */
-        video.play().catch(() => {
-            loadingDetail.textContent =
-                "Stream is ready. Press the play button to start playback.";
         });
+
+        try {
+            await player.load(streamUrl);
+
+            /*
+             * Muted startup helps Android/WebView autoplay.
+             * The user can unmute using the native/browser controls.
+             */
+            video.muted = true;
+            video.playsInline = true;
+
+            hideLoading();
+
+            startupTimer = setTimeout(() => {
+                if (!started) {
+                    showError(
+                        "The stream was loaded but playback did not start. " +
+                        "Press Play or use NS Player."
+                    );
+                }
+            }, 15000);
+
+            try {
+                await video.play();
+            } catch (error) {
+                console.debug(
+                    "[Player] Autoplay prevented:",
+                    error
+                );
+
+                if (loadingDetail) {
+                    loadingDetail.textContent =
+                        "Stream is ready. Press Play to start playback.";
+                }
+            }
+
+        } catch (error) {
+            console.error("[Player] Shaka load error:", error);
+            showError(describeError(error));
+        }
     }
 
-    shareBtn.addEventListener("click", async () => {
-        const result = window.AppMintV04
-            ? await window.AppMintV04.share(title, `Watch ${title}`, location.href)
-            : false;
+    retryBtn?.addEventListener("click", () => {
+        errorOverlay?.classList.add("hidden");
+        init();
+    });
 
-        if (result === 'copied') {
+    externalBtn?.addEventListener("click", openNSPlayer);
+
+    shareBtn?.addEventListener("click", async () => {
+        const shareUrl = location.href;
+
+        try {
+            const result = window.AppMintV04
+                ? await window.AppMintV04.share(
+                    title,
+                    `Watch ${title}`,
+                    shareUrl
+                )
+                : false;
+
+            if (result === "copied") {
+                showLoading("Player link copied to clipboard.");
+                setTimeout(hideLoading, 900);
+                return;
+            }
+        } catch (error) {
+            console.debug("[Player] Share failed:", error);
+        }
+
+        try {
+            await navigator.clipboard.writeText(shareUrl);
             showLoading("Player link copied to clipboard.");
             setTimeout(hideLoading, 900);
+        } catch {
+            showError("Unable to copy the player link.");
         }
     });
 
-    pipBtn.addEventListener("click", async () => {
-        if (window.AppMintV04) {
-            const opened = await window.AppMintV04.videoPip(video);
-            if (!opened) pipBtn.hidden = true;
+    pipBtn?.addEventListener("click", async () => {
+        try {
+            if (window.AppMintV04) {
+                const opened = await window.AppMintV04.videoPip(video);
+
+                if (!opened) {
+                    pipBtn.hidden = true;
+                }
+
+                return;
+            }
+
+            if (document.pictureInPictureElement) {
+                await document.exitPictureInPicture();
+            } else if (document.pictureInPictureEnabled) {
+                await video.requestPictureInPicture();
+            }
+        } catch (error) {
+            console.debug("[Player] PiP failed:", error);
         }
     });
 
-    fullscreenBtn.addEventListener("click", async () => {
-        if (!window.AppMintV04) return;
+    fullscreenBtn?.addEventListener("click", async () => {
+        try {
+            if (window.AppMintV04) {
+                const enabled = !window.AppMintV04.isFullscreen();
 
-        const enabled = !window.AppMintV04.isFullscreen();
-        await window.AppMintV04.fullscreen(enabled);
-        fullscreenBtn.textContent = enabled ? "×" : "⛶";
+                await window.AppMintV04.fullscreen(enabled);
 
-        if (enabled && screen.orientation?.lock) {
-            try { await screen.orientation.lock("landscape"); } catch (_) {}
-        } else if (!enabled && screen.orientation?.unlock) {
-            try { screen.orientation.unlock(); } catch (_) {}
+                fullscreenBtn.textContent = enabled ? "×" : "⛶";
+
+                if (enabled && screen.orientation?.lock) {
+                    try {
+                        await screen.orientation.lock("landscape");
+                    } catch {}
+                } else if (!enabled && screen.orientation?.unlock) {
+                    try {
+                        screen.orientation.unlock();
+                    } catch {}
+                }
+
+                return;
+            }
+
+            if (!document.fullscreenElement) {
+                await document.documentElement.requestFullscreen();
+                fullscreenBtn.textContent = "×";
+            } else {
+                await document.exitFullscreen();
+                fullscreenBtn.textContent = "⛶";
+            }
+        } catch (error) {
+            console.debug("[Player] Fullscreen failed:", error);
         }
-    });
-
-    window.addEventListener("appmint:pip", event => {
-        document.body.classList.toggle("pip", Boolean(event.detail?.inPip));
     });
 
     video.addEventListener("playing", () => {
@@ -490,43 +596,54 @@
     });
 
     video.addEventListener("canplay", () => {
-        if (!started) {
-            loadingDetail.textContent = "Stream is ready — starting playback…";
+        if (!started && loadingDetail) {
+            loadingDetail.textContent =
+                "Stream is ready — starting playback...";
         }
     });
 
     video.addEventListener("waiting", () => {
-        if (!started) {
-            loadingDetail.textContent = "Waiting for the live stream…";
+        if (!started && loadingDetail) {
+            loadingDetail.textContent =
+                "Waiting for the live stream...";
         }
     });
 
     video.addEventListener("stalled", () => {
-        if (!started) {
-            loadingDetail.textContent = "The stream server is taking longer than expected…";
+        if (!started && loadingDetail) {
+            loadingDetail.textContent =
+                "The stream is taking longer than expected...";
         }
     });
 
     video.addEventListener("error", () => {
         if (!started) {
-            showError(describeError());
-        } else {
-            console.warn("Playback interruption:", describeError());
+            showError(
+                "The browser reported a media playback error. " +
+                "Try NS Player."
+            );
         }
     });
 
-    retryBtn.addEventListener("click", init);
-    externalBtn.addEventListener("click", openNSPlayer);
-
-    document.getElementById("backBtn").addEventListener("click", () => {
-        if (history.length > 1) history.back();
-        else location.href = "index.html";
-    });
+    document.getElementById("backBtn")?.addEventListener(
+        "click",
+        () => {
+            if (history.length > 1) {
+                history.back();
+            } else {
+                location.href = "index.html";
+            }
+        }
+    );
 
     document.addEventListener("visibilitychange", () => {
         if (!document.hidden && started && video.paused) {
             video.play().catch(() => {});
         }
+    });
+
+    window.addEventListener("beforeunload", () => {
+        destroyPlayer();
     });
 
     init();

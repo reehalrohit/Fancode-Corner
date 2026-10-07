@@ -769,8 +769,8 @@
         }
     
 
-/* Fluid Player modal */
-.fluid-modal {
+/* Shaka Player modal */
+.player-modal {
   position: fixed;
   inset: 0;
   z-index: 9999;
@@ -781,8 +781,8 @@
   background: rgba(0,0,0,.88);
   backdrop-filter: blur(8px);
 }
-.fluid-modal.open { display: flex; }
-.fluid-player-shell {
+.player-modal.open { display: flex; }
+.player-shell {
   width: min(1100px, 100%);
   max-height: 94vh;
   background: #050505;
@@ -791,7 +791,7 @@
   overflow: hidden;
   box-shadow: 0 24px 80px rgba(0,0,0,.55);
 }
-.fluid-player-head {
+.player-head {
   min-height: 48px;
   display: flex;
   align-items: center;
@@ -800,7 +800,7 @@
   color: #fff;
   background: #090909;
 }
-.fluid-player-title {
+.player-title {
   flex: 1;
   min-width: 0;
   font-size: 14px;
@@ -809,7 +809,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.fluid-live-badge {
+.player-live-badge {
   font-size: 10px;
   font-weight: 800;
   letter-spacing: .08em;
@@ -817,7 +817,7 @@
   border-radius: 999px;
   background: #dc2626;
 }
-.fluid-close {
+.player-close {
   border: 0;
   width: 36px;
   height: 36px;
@@ -827,30 +827,30 @@
   font-size: 20px;
   cursor: pointer;
 }
-.fluid-video-wrap {
+.player-video-wrap {
   width: 100%;
   aspect-ratio: 16 / 9;
   background: #000;
 }
-#fluid-video {
+#player-video {
   width: 100%;
   height: 100%;
   display: block;
 }
-.fluid-player-status {
+.player-status {
   padding: 9px 12px 11px;
   color: rgba(255,255,255,.68);
   background: #090909;
   font-size: 12px;
 }
-.fluid-player-actions {
+.player-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
   padding: 0 12px 12px;
   background: #090909;
 }
-.fluid-player-actions button {
+.player-actions button {
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 9px;
   padding: 8px 12px;
@@ -859,9 +859,9 @@
   cursor: pointer;
 }
 @media (max-width: 640px) {
-  .fluid-modal { padding: 0; }
-  .fluid-player-shell { border-radius: 0; width: 100%; max-height: 100vh; }
-  .fluid-player-head { min-height: 46px; }
+  .player-modal { padding: 0; }
+  .player-shell { border-radius: 0; width: 100%; max-height: 100vh; }
+  .player-head { min-height: 46px; }
 }
 </style>
 
@@ -927,9 +927,9 @@
 
     <meta name="referrer" content="no-referrer-when-downgrade">
 
-    <!-- Fluid Player -->
-    <link rel="stylesheet" href="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.css">
-    <script src="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.js"></script>
+    <!-- Shaka Player 5.2.12 -->
+    <!-- HLS/DASH adaptive streaming player. -->
+    <script defer src="https://ajax.googleapis.com/ajax/libs/shaka-player/5.2.12/shaka-player.compiled.js"></script>
 </head>
 <body>
 
@@ -982,19 +982,19 @@
 </div>
 
 
-<div id="fluid-modal" class="fluid-modal" role="dialog" aria-modal="true" aria-label="Live stream player">
-  <div class="fluid-player-shell">
-    <div class="fluid-player-head">
-      <span class="fluid-live-badge">LIVE</span>
-      <div id="fluid-player-title" class="fluid-player-title">Live Sports</div>
-      <button id="fluid-close" class="fluid-close" type="button" aria-label="Close player">×</button>
+<div id="player-modal" class="player-modal" role="dialog" aria-modal="true" aria-label="Live stream player">
+  <div class="player-shell">
+    <div class="player-head">
+      <span class="player-live-badge">LIVE</span>
+      <div id="player-title" class="player-title">Live Sports</div>
+      <button id="player-close" class="player-close" type="button" aria-label="Close player">×</button>
     </div>
-    <div class="fluid-video-wrap">
-      <video id="fluid-video" playsinline controls></video>
+    <div class="player-video-wrap">
+      <video id="player-video" playsinline controls></video>
     </div>
-    <div id="fluid-player-status" class="fluid-player-status">Preparing stream…</div>
-    <div class="fluid-player-actions">
-      <button id="fluid-external" type="button">Open in NS Player</button>
+    <div id="player-status" class="player-status">Preparing stream…</div>
+    <div class="player-actions">
+      <button id="player-external" type="button">Open in NS Player</button>
     </div>
   </div>
 </div>
@@ -1081,7 +1081,7 @@
 
     <div class="alert-banner">
         <span>💡</span>
-        <span><strong>Watch tip:</strong> Tap <strong>Watch Here</strong> to use the built-in Fluid Player, or <strong>Open App</strong> for NS Player. Use <strong>Open Official</strong> for events without a browser-playable stream. <a href="https://play.google.com/store/apps/details?id=com.genuine.leone" target="_blank" rel="noopener noreferrer">View app</a></span>
+        <span><strong>Watch tip:</strong> Tap <strong>Watch Here</strong> to use the built-in Shaka Player, or <strong>Open App</strong> for NS Player. Use <strong>Open Official</strong> for events without a browser-playable stream. <a href="https://play.google.com/store/apps/details?id=com.genuine.leone" target="_blank" rel="noopener noreferrer">View app</a></span>
     </div>
 
     <div class="filter-wrap">
@@ -1237,7 +1237,7 @@
             } finally { clearTimeout(timeout); }
         }
 
-        // Fluid Player advertising configuration.
+        // Shaka Player advertising configuration.
         // Leave empty until you have a VAST/VPAID tag from your ad provider.
         const FLUID_AD_VAST_TAG = '';
         const FLUID_AD_MIDROLL_SECONDS = 0;
@@ -1562,8 +1562,9 @@
             };
         }
 
-        let fluidPlayerInstance = null;
+        let shakaPlayerInstance = null;
         let activePlayerStream = '';
+        let playerStartupTimer = null;
 
         function isHlsStream(url) {
             return /\.m3u8(?:$|[?#])/i.test(url);
@@ -1573,75 +1574,47 @@
             return /\.mpd(?:$|[?#])/i.test(url);
         }
 
-        function buildFluidAdList() {
-            if (!FLUID_AD_VAST_TAG) return [];
+        function isAdaptiveStream(url) {
+            return isHlsStream(url) || isDashStream(url);
+        }
 
-            const ads = [{
-                roll: 'preRoll',
-                vastTag: FLUID_AD_VAST_TAG
-            }];
+        async function closePlayer() {
+            clearTimeout(playerStartupTimer);
+            playerStartupTimer = null;
 
-            if (Number(FLUID_AD_MIDROLL_SECONDS) > 0) {
-                ads.push({
-                    roll: 'midRoll',
-                    vastTag: FLUID_AD_VAST_TAG,
-                    timer: Number(FLUID_AD_MIDROLL_SECONDS)
-                });
+            const modal = document.getElementById('player-modal');
+            if (modal) modal.classList.remove('open');
+
+            if (shakaPlayerInstance) {
+                try {
+                    await shakaPlayerInstance.destroy();
+                } catch (error) {
+                    console.debug('Shaka Player destroy:', error);
+                }
+                shakaPlayerInstance = null;
             }
 
-            return ads;
-        }
-
-        function closeFluidPlayer() {
-    const modal = document.getElementById('fluid-modal');
-
-    if (modal) {
-        modal.classList.remove('open');
-    }
-
-    if (fluidPlayerInstance) {
-        try {
-            if (typeof fluidPlayerInstance.destroy === 'function') {
-                fluidPlayerInstance.destroy();
+            const video = document.getElementById('player-video');
+            if (video) {
+                try { video.pause(); } catch (error) { console.debug('Video pause:', error); }
+                try {
+                    video.removeAttribute('src');
+                    video.load();
+                } catch (error) {
+                    console.debug('Video cleanup:', error);
+                }
             }
-        } catch (e) {
-            console.debug('Fluid Player destroy:', e);
-        }
 
-        fluidPlayerInstance = null;
-    }
-
-    const video = document.getElementById('fluid-video');
-
-    if (video) {
-        try {
-            video.pause();
-        } catch (e) {
-            console.debug('Video pause:', e);
-        }
-
-        try {
-            video.removeAttribute('src');
-            video.innerHTML = '';
-            video.load();
-        } catch (e) {
-            console.debug('Video cleanup:', e);
-        }
-    }
-
-    activePlayerStream = '';
+            activePlayerStream = '';
         }
 
         function openInNSPlayer(streamUrl) {
             if (!streamUrl) {
-                showToast('❌ No StreamFree URL available.');
+                showToast('❌ No stream URL available.');
                 return;
             }
 
-            const cleanUrl = String(streamUrl)
-                .trim()
-                .replace(/^https?:\/\//i, '');
-
+            const cleanUrl = String(streamUrl).trim().replace(/^https?:\/\//i, '');
             const intentUrl =
                 `intent://${cleanUrl}` +
                 `#Intent;action=android.intent.action.VIEW;` +
@@ -1650,18 +1623,14 @@
                 `S.browser_fallback_url=${encodeURIComponent(streamUrl)};end;`;
 
             let leftPage = false;
-
             const onVisibility = () => {
                 if (document.visibilityState === 'hidden') {
                     leftPage = true;
                     document.removeEventListener('visibilitychange', onVisibility);
                 }
             };
-
             document.addEventListener('visibilitychange', onVisibility);
 
-            // A real anchor activation is more reliably handled by Android
-            // browsers for intent:// URLs than assigning window.location.
             const link = document.createElement('a');
             link.href = intentUrl;
             link.rel = 'noopener';
@@ -1670,20 +1639,13 @@
             link.style.top = '-10000px';
             document.body.appendChild(link);
 
-            try {
-                link.click();
-            } catch (error) {
-                console.warn('NS Player anchor launch failed:', error);
-            }
+            try { link.click(); }
+            catch (error) { console.warn('NS Player anchor launch failed:', error); }
 
-            // Fallback for browsers that ignore the synthetic anchor.
             setTimeout(() => {
                 if (!leftPage && document.visibilityState === 'visible') {
-                    try {
-                        window.location.href = intentUrl;
-                    } catch (error) {
-                        console.warn('NS Player intent launch failed:', error);
-                    }
+                    try { window.location.href = intentUrl; }
+                    catch (error) { console.warn('NS Player intent launch failed:', error); }
                 }
             }, 350);
 
@@ -1693,75 +1655,119 @@
             }, 2500);
         }
 
-        function openFluidPlayer(streamUrl, title) {
+        async function openShakaPlayer(streamUrl, title) {
             if (!streamUrl) {
                 showToast('❌ No playable stream available.');
                 return;
             }
 
-            if (!isHlsStream(streamUrl) && !isDashStream(streamUrl)) {
-                showToast('⚠️ This stream format is not supported by the web player.');
+            if (!window.shaka) {
+                showToast('⏳ Shaka Player is still loading. Try again in a moment.');
                 return;
             }
 
-            closeFluidPlayer();
+            const modal = document.getElementById('player-modal');
+            const video = document.getElementById('player-video');
+            const titleEl = document.getElementById('player-title');
+            const status = document.getElementById('player-status');
 
-            const modal = document.getElementById('fluid-modal');
-            const video = document.getElementById('fluid-video');
-            const titleEl = document.getElementById('fluid-player-title');
-            const status = document.getElementById('fluid-player-status');
+            if (!modal || !video || !titleEl || !status) {
+                console.error('[Sports Corner] Player UI is incomplete.');
+                showToast('❌ Player UI failed to initialize.');
+                return;
+            }
 
-            activePlayerStream = streamUrl;
+            await closePlayer();
+
+            activePlayerStream = String(streamUrl).trim();
             titleEl.textContent = title || 'Live Sports';
-            status.textContent = FLUID_AD_VAST_TAG
-                ? 'Live stream • in-stream advertising enabled'
-                : 'Live stream • advertising tag not configured';
-
-            const source = document.createElement('source');
-            source.src = streamUrl;
-            source.type = isDashStream(streamUrl)
-                ? 'application/dash+xml'
-                : 'application/x-mpegURL';
-            video.appendChild(source);
-
+            status.textContent = isAdaptiveStream(activePlayerStream)
+                ? 'Loading adaptive live stream…'
+                : 'Loading media…';
             modal.classList.add('open');
 
             try {
-                fluidPlayerInstance = fluidPlayer('fluid-video', {
-                    layoutControls: {
-                        fillToContainer: true,
-                        autoPlay: false,
-                        mute: false,
-                        allowTheatre: true,
-                        playPauseAnimation: true,
-                        playbackRateEnabled: false,
-                        allowDownload: false,
-                        playButtonShowing: true
+                shaka.polyfill.installAll();
+
+                if (!shaka.Player.isBrowserSupported()) {
+                    throw new Error('Browser media support required by Shaka Player is unavailable.');
+                }
+
+                shakaPlayerInstance = new shaka.Player(video);
+
+                shakaPlayerInstance.addEventListener('error', (event) => {
+                    const detail = event && event.detail ? event.detail : event;
+                    console.error('[Sports Corner] Shaka playback error:', detail);
+                    status.textContent = 'Playback error. Try NS Player.';
+                });
+
+                shakaPlayerInstance.configure({
+                    streaming: {
+                        rebufferingGoal: 2,
+                        bufferingGoal: 10,
+                        bufferBehind: 30,
+                        retryParameters: {
+                            maxAttempts: 4,
+                            baseDelay: 500,
+                            backoffFactor: 2,
+                            fuzzFactor: 0.5,
+                            timeout: 15000
+                        }
                     },
-                    vastOptions: {
-                        adList: buildFluidAdList(),
-                        adCTAText: false
+                    abr: {
+                        enabled: true,
+                        defaultBandwidthEstimate: 4000000
                     }
                 });
 
-                status.textContent = FLUID_AD_VAST_TAG
-                    ? 'Player ready • VAST advertising enabled'
-                    : 'Player ready';
+                if (isAdaptiveStream(activePlayerStream)) {
+                    await shakaPlayerInstance.load(activePlayerStream);
+                } else {
+                    video.src = activePlayerStream;
+                    await new Promise((resolve, reject) => {
+                        const onLoaded = () => cleanup(resolve);
+                        const onError = () => cleanup(() => reject(new Error('Browser media load failed.')));
+                        const cleanup = (fn) => {
+                            video.removeEventListener('loadedmetadata', onLoaded);
+                            video.removeEventListener('error', onError);
+                            fn();
+                        };
+                        video.addEventListener('loadedmetadata', onLoaded, { once: true });
+                        video.addEventListener('error', onError, { once: true });
+                        video.load();
+                    });
+                }
+
+                status.textContent = 'Player ready • stream loaded';
+
+                playerStartupTimer = setTimeout(() => {
+                    if (video.readyState < 2 && video.currentTime === 0) {
+                        status.textContent = 'Stream is not starting. Try NS Player.';
+                    }
+                }, 15000);
+
+                try {
+                    await video.play();
+                    clearTimeout(playerStartupTimer);
+                } catch (playError) {
+                    console.debug('[Sports Corner] Play request:', playError);
+                    status.textContent = 'Stream loaded • tap Play to start';
+                }
             } catch (error) {
-                console.error('Fluid Player initialization failed:', error);
-                status.textContent = 'Unable to initialize web player. Try NS Player.';
+                console.error('[Sports Corner] Shaka Player initialization failed:', error);
+                status.textContent = 'Unable to play this stream in the browser. Try NS Player.';
             }
         }
 
-        document.getElementById('fluid-close').addEventListener('click', closeFluidPlayer);
-        document.getElementById('fluid-external').addEventListener('click', () => {
+        document.getElementById('player-close').addEventListener('click', closePlayer);
+        document.getElementById('player-external').addEventListener('click', () => {
             if (activePlayerStream) openInNSPlayer(activePlayerStream);
         });
-        document.getElementById('fluid-modal').addEventListener('click', (event) => {
-            if (event.target.id === 'fluid-modal') closeFluidPlayer();
+        document.getElementById('player-modal').addEventListener('click', (event) => {
+            if (event.target.id === 'player-modal') closePlayer();
         });
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') closeFluidPlayer();
+            if (event.key === 'Escape') closePlayer();
         });
 
         async function fetchStreams(manual = false) {
@@ -2132,7 +2138,7 @@
                     }
 
                     if (hasPlayableStream) {
-                        openFluidPlayer(streamUrl, match.title || 'Live Sports');
+                        openShakaPlayer(streamUrl, match.title || 'Live Sports');
                         return;
                     }
 
@@ -2181,7 +2187,30 @@
             });
         }
 
-        function showToast(message) {
+        function openStreamFreePlayer(embedUrl) {
+    if (!embedUrl) {
+        showToast('❌ No StreamFree player URL available.');
+        return;
+    }
+
+    let opened = null;
+    try {
+        opened = window.open(embedUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+        console.warn('StreamFree player window launch failed:', error);
+    }
+
+    if (!opened) {
+        try {
+            window.location.href = embedUrl;
+        } catch (error) {
+            console.warn('StreamFree player navigation failed:', error);
+            showToast('❌ Unable to open StreamFree Player.');
+        }
+    }
+}
+
+function showToast(message) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.classList.add('show');
