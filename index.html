@@ -1747,22 +1747,56 @@
                     }
                 });
 
+                // Tune Shaka for live HLS behaviour similar to a native
+                // network player. These settings improve buffering/retry/ABR
+                // behaviour but do not bypass browser CORS restrictions.
                 shakaPlayerInstance.configure({
                     streaming: {
-                        rebufferingGoal: 2,
-                        bufferingGoal: 10,
+                        lowLatencyMode: true,
+                        rebufferingGoal: 3,
+                        bufferingGoal: 15,
                         bufferBehind: 30,
+                        retryParameters: {
+                            maxAttempts: 6,
+                            baseDelay: 500,
+                            backoffFactor: 2,
+                            fuzzFactor: 0.5,
+                            timeout: 30000,
+                            stallTimeout: 10000,
+                            connectionTimeout: 10000
+                        }
+                    },
+                    manifest: {
+                        retryParameters: {
+                            maxAttempts: 6,
+                            baseDelay: 500,
+                            backoffFactor: 2,
+                            fuzzFactor: 0.5,
+                            timeout: 30000,
+                            stallTimeout: 10000,
+                            connectionTimeout: 10000
+                        },
+                        hls: {
+                            liveSegmentsDelay: 3
+                        }
+                    },
+                    drm: {
                         retryParameters: {
                             maxAttempts: 4,
                             baseDelay: 500,
                             backoffFactor: 2,
                             fuzzFactor: 0.5,
-                            timeout: 15000
+                            timeout: 30000,
+                            stallTimeout: 10000,
+                            connectionTimeout: 10000
                         }
                     },
                     abr: {
                         enabled: true,
-                        defaultBandwidthEstimate: 4000000
+                        defaultBandwidthEstimate: 4000000,
+                        bandwidthDowngradeTarget: 0.90,
+                        bandwidthUpgradeTarget: 0.85,
+                        switchInterval: 8
                     }
                 });
 
@@ -1838,10 +1872,15 @@
                     errorInfo.nativeMessage || ''
                 ].filter(Boolean);
 
-                status.textContent =
-                    'Playback failed — ' +
-                    (parts.join(' • ') || 'unknown browser/Shaka error') +
-                    '. Try NS Player.';
+                if (errorInfo.code === 1002) {
+                    status.textContent =
+                        'Browser playback blocked by the stream server (CORS/network policy). Try NS Player.';
+                } else {
+                    status.textContent =
+                        'Playback failed — ' +
+                        (parts.join(' • ') || 'unknown browser/Shaka error') +
+                        '. Try NS Player.';
+                }
             }
         }
 
