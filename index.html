@@ -1567,23 +1567,43 @@
         }
 
         function closeFluidPlayer() {
-            const modal = document.getElementById('fluid-modal');
-            modal.classList.remove('open');
+    const modal = document.getElementById('fluid-modal');
 
-            if (fluidPlayerInstance) {
-                try {
-                    fluidPlayerInstance.destroy();
-                } catch (e) {
-                    console.debug('Fluid Player destroy:', e);
-                }
-                fluidPlayerInstance = null;
+    if (modal) {
+        modal.classList.remove('open');
+    }
+
+    if (fluidPlayerInstance) {
+        try {
+            if (typeof fluidPlayerInstance.destroy === 'function') {
+                fluidPlayerInstance.destroy();
             }
+        } catch (e) {
+            console.debug('Fluid Player destroy:', e);
+        }
 
-            const video = document.getElementById('fluid-video');
+        fluidPlayerInstance = null;
+    }
+
+    const video = document.getElementById('fluid-video');
+
+    if (video) {
+        try {
             video.pause();
+        } catch (e) {
+            console.debug('Video pause:', e);
+        }
+
+        try {
             video.removeAttribute('src');
             video.innerHTML = '';
-            activePlayerStream = '';
+            video.load();
+        } catch (e) {
+            console.debug('Video cleanup:', e);
+        }
+    }
+
+    activePlayerStream = '';
         }
 
         function openInNSPlayer(streamUrl) {
