@@ -1697,8 +1697,54 @@
 
                 shakaPlayerInstance.addEventListener('error', (event) => {
                     const detail = event && event.detail ? event.detail : event;
-                    console.error('[Sports Corner] Shaka playback error:', detail);
-                    status.textContent = 'Playback error. Try NS Player.';
+
+                    const errorInfo = {
+                        code: detail && detail.code ? detail.code : null,
+                        category: detail && detail.category ? detail.category : null,
+                        severity: detail && detail.severity ? detail.severity : null,
+                        message: detail && detail.message ? detail.message : '',
+                        data: detail && Array.isArray(detail.data) ? detail.data : [],
+                        originalError: detail && detail.originalError
+                            ? String(detail.originalError)
+                            : ''
+                    };
+
+                    console.error('[Sports Corner] Shaka playback error:', errorInfo);
+                    console.error('[Sports Corner] Shaka raw error object:', detail);
+
+                    const parts = [
+                        errorInfo.code ? 'Code ' + errorInfo.code : '',
+                        errorInfo.category ? 'Category ' + errorInfo.category : '',
+                        errorInfo.message || '',
+                        errorInfo.data.length
+                            ? 'Data: ' + errorInfo.data.map(item => String(item)).join(' | ')
+                            : ''
+                    ].filter(Boolean);
+
+                    status.textContent =
+                        'Playback error — ' +
+                        (parts.join(' • ') || 'unknown Shaka error') +
+                        '. Try NS Player.';
+                });
+
+                video.addEventListener('error', () => {
+                    const mediaError = video.error;
+
+                    console.error('[Sports Corner] Native video error:', {
+                        code: mediaError ? mediaError.code : null,
+                        message: mediaError ? mediaError.message : '',
+                        networkState: video.networkState,
+                        readyState: video.readyState,
+                        currentSrc: video.currentSrc || activePlayerStream
+                    });
+
+                    if (mediaError) {
+                        status.textContent =
+                            'Browser media error ' +
+                            mediaError.code +
+                            (mediaError.message ? ': ' + mediaError.message : '') +
+                            '. Try NS Player.';
+                    }
                 });
 
                 shakaPlayerInstance.configure({
