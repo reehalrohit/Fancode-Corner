@@ -1273,18 +1273,56 @@
             }
         }
 
-        legalCheckbox.addEventListener('change', () => {
+        function syncLegalContinueButton() {
             legalContinueBtn.disabled = !legalCheckbox.checked;
-        });
+        }
 
-        legalContinueBtn.addEventListener('click', async () => {
-            if (!legalCheckbox.checked) return;
+        legalCheckbox.addEventListener('change', syncLegalContinueButton);
+        legalCheckbox.addEventListener('click', syncLegalContinueButton);
+
+        legalContinueBtn.addEventListener('click', async (event) => {
+            // Isolate the legal action from third-party document-level
+            // click handlers such as popunder/ad scripts.
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            if (!legalCheckbox.checked) {
+                syncLegalContinueButton();
+                return;
+            }
+
+            legalContinueBtn.disabled = true;
+            legalContinueBtn.textContent = 'CHECKING APP...';
+
             try {
-                localStorage.setItem(LEGAL_STORAGE_KEY, JSON.stringify({ accepted: true, version: LEGAL_VERSION, acceptedAt: new Date().toISOString() }));
-            } catch (error) { console.warn('Legal agreement could not be persisted:', error); }
-            showPasscodePanel();
-            const appOk = await verifyAppClient();
-            if (appOk) await verifyAccess();
+                try {
+                    localStorage.setItem(
+                        LEGAL_STORAGE_KEY,
+                        JSON.stringify({
+                            accepted: true,
+                            version: LEGAL_VERSION,
+                            acceptedAt: new Date().toISOString()
+                        })
+                    );
+                } catch (error) {
+                    console.warn('Legal agreement could not be persisted:', error);
+                }
+
+                showPasscodePanel();
+
+                const appOk = await verifyAppClient();
+                if (appOk) {
+                    await verifyAccess();
+                }
+            } catch (error) {
+                console.error('[Sports Corner] Legal verification flow failed:', error);
+                errorMsg.textContent =
+                    'Verification could not be completed. Please try again.';
+                errorMsg.style.display = 'block';
+                legalContinueBtn.disabled = false;
+                legalContinueBtn.textContent = 'AGREE & CONTINUE';
+            }
         });
 
         legalViewBtn.addEventListener('click', showLegalPanel);
