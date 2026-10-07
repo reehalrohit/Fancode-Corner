@@ -1800,8 +1800,48 @@
                     status.textContent = 'Stream loaded • tap Play to start';
                 }
             } catch (error) {
+                const shakaError = error && error.detail ? error.detail : error;
+                const mediaError = video.error;
+
+                const errorInfo = {
+                    code: shakaError && shakaError.code ? shakaError.code : null,
+                    category: shakaError && shakaError.category ? shakaError.category : null,
+                    severity: shakaError && shakaError.severity ? shakaError.severity : null,
+                    message: shakaError && shakaError.message
+                        ? shakaError.message
+                        : (error && error.message ? error.message : ''),
+                    data: shakaError && Array.isArray(shakaError.data)
+                        ? shakaError.data
+                        : [],
+                    nativeCode: mediaError ? mediaError.code : null,
+                    nativeMessage: mediaError && mediaError.message
+                        ? mediaError.message
+                        : '',
+                    networkState: video.networkState,
+                    readyState: video.readyState,
+                    currentSrc: video.currentSrc || activePlayerStream
+                };
+
                 console.error('[Sports Corner] Shaka Player initialization failed:', error);
-                status.textContent = 'Unable to play this stream in the browser. Try NS Player.';
+                console.error('[Sports Corner] Shaka failure details:', errorInfo);
+
+                const parts = [
+                    errorInfo.code ? 'Code ' + errorInfo.code : '',
+                    errorInfo.category ? 'Category ' + errorInfo.category : '',
+                    errorInfo.message || '',
+                    errorInfo.data.length
+                        ? 'Data: ' + errorInfo.data.map(item => String(item)).join(' | ')
+                        : '',
+                    errorInfo.nativeCode
+                        ? 'Browser media code ' + errorInfo.nativeCode
+                        : '',
+                    errorInfo.nativeMessage || ''
+                ].filter(Boolean);
+
+                status.textContent =
+                    'Playback failed — ' +
+                    (parts.join(' • ') || 'unknown browser/Shaka error') +
+                    '. Try NS Player.';
             }
         }
 
