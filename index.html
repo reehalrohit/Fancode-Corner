@@ -1156,6 +1156,32 @@
 
 
     <script>
+        (function installErrorDiagnostics() {
+    window.addEventListener('error', function (event) {
+        console.error('[Sports Corner] JavaScript error:', {
+            message: event.message || 'Script error',
+            source: event.filename || location.href,
+            line: event.lineno || 0,
+            column: event.colno || 0,
+            stack: event.error && event.error.stack
+                ? event.error.stack
+                : ''
+        });
+    });
+
+    window.addEventListener('unhandledrejection', function (event) {
+        const reason = event.reason;
+
+        console.error('[Sports Corner] Unhandled promise rejection:', {
+            message: reason && reason.message
+                ? reason.message
+                : String(reason || 'Unknown rejection'),
+            stack: reason && reason.stack
+                ? reason.stack
+                : ''
+        });
+    });
+})();
         let globalMatches = [];
         let activeCategory = 'All';
         const LEGAL_VERSION = '1.0';
